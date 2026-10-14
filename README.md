@@ -81,6 +81,16 @@ while not env.done:
 print(env.score())
 ```
 
+## 双边自博弈：仅终局给分
+
+新增 `TwoPlayerEpisode` 与 `env.selfplay`，提供双方独立迷雾视角、公开总分观察、合法意图菜单、终局原始分数奖励及检查点续跑。训练算法为表格蒙特卡洛基线，不使用下面的手写 greedy 策略，也不添加动作奖励。
+
+```bash
+python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 --max-steps 1000 --checkpoint /tmp/hexwar-20.json --report /tmp/hexwar-20-report.json
+```
+
+详细规则、复现与续跑方法见 [双边训练说明](docs/selfplay.md)。下方旧 `HexwarEnv` 接口仍返回分差增量；只需要终局奖励的调用方应使用新接口。
+
 ## 环境接口
 
 | 方法 | 作用 |

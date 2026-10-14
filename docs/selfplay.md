@@ -40,3 +40,18 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 \
 续跑时使用 `--resume` 并指定新的输出文件。检查点包含双方表格、已完成局数、配置及场景文件哈希；相同种子与配置支持复现。保留评测种子，不将其用于训练。
 
 仓库自带 `samples/demo` 是 `tools/make_sample.py` 生成的比赛示例场景。这里运行的是离线重建引擎。评测报告应分别记录正常结束、外部截断和失败；对照赛需要另外安排随机对手、历史版本和换边，不能把双方自博弈的胜负直接当作“优于其他智能体”的证据。
+
+## 随机对手对照赛
+
+训练完成后固定检查点，与均匀随机合法动作对手交手；每个评测种子各执一方，使用对应席位的学习表，评测期间不更新参数。
+
+```bash
+python -m env.policy_eval --snapshot samples/demo \
+  --checkpoint /tmp/hexwar-20.json \
+  --seeds 1000100 1000101 1000102 1000103 \
+  --report /tmp/hexwar-vs-random.json
+```
+
+报告按正常终局分数比较胜、平、负，外部截断单列。随机种子只改变随机过程，场景地图本身不变；这是该场景上的对照，不是跨地图泛化测试。
+
+首轮实验文件在 `docs/experiments/`。20局检查点位于 `artifacts/selfplay/checkpoint-20-20261014.json.gz`；解压为 JSON 后传给 `--resume` 或 `--checkpoint`。相邻 metadata 文件记录未压缩文件 SHA256 与运行配置摘要。
