@@ -1,6 +1,5 @@
 """Clipped surrogate derivatives, frozen batches, strict resume and legacy bytes."""
 import copy
-import hashlib
 import io
 import json
 import math
@@ -15,6 +14,7 @@ import numpy as np
 from env.match_eval import write_synthetic_snapshot
 from env.neural_policy import NeuralPolicy
 from env.neural_train import NeuralTrainer, canonical, main
+from tests.fixtures.pre_ppo_neural_policy import NeuralPolicy as PrePPOPolicy
 
 
 class ClippedPolicyTests(unittest.TestCase):
@@ -111,14 +111,33 @@ class ClippedPolicyTests(unittest.TestCase):
         self.assertEqual((p.steps, p.return_mean, p.return_count), (0, 7, 1))
 
     def test_default_checkpoint_bytes_and_arithmetic_unchanged(self):
-        # Digest produced with the pre-PPO implementation and same NumPy inputs.
-        p = NeuralPolicy(seed=17, buckets=8, hidden_dim=2)
-        for score in (12, -3, 0):
-            _, d = p.sample({"a": 2}, [1, 2, 3])
-            p.update_batch([([d, d], score), ([], 8)])
-        self.assertEqual(hashlib.sha256(canonical(p.checkpoint()).encode()).hexdigest(),
-                         "2345bc2ec2d7cc5a831b0a5ddccdbe5d30580a81ace212290bb8cc251820f450")
-        self.assertEqual(NeuralPolicy.from_checkpoint(p.checkpoint()).checkpoint(), p.checkpoint())
+        # Compare independent pre-PPO source and current source in the SAME
+        # runtime. Fixed post-update digests depend on platform/libm/BLAS last
+        # bits and cannot establish arithmetic compatibility across machines.
+        # Exact comparisons remain: no tolerances or rounded floating values.
+        for baseline_offset in ("none", "prior_batch_mean"):
+            with self.subTest(baseline_offset=baseline_offset):
+                config = dict(seed=17, buckets=8, hidden_dim=2, baseline_offset=baseline_offset)
+                current, reference = NeuralPolicy(**config), PrePPOPolicy(**config)
+                self.assertEqual(canonical(current.checkpoint()), canonical(reference.checkpoint()))
+                for score in (12, -3, 0):
+                    action, decision = current.sample({"a": 2}, [1, 2, 3])
+                    old_action, old_decision = reference.sample({"a": 2}, [1, 2, 3])
+                    self.assertEqual(action, old_action)
+                    self.assertEqual(decision.to_dict(), old_decision.to_dict())
+                    result = current.update_batch([([decision, decision], score), ([], 8)])
+                    old_result = reference.update_batch([([old_decision, old_decision], score), ([], 8)])
+                    self.assertEqual(result, old_result)
+                    # Includes exact schema/config, all tensors, optimizer state,
+                    # step counters, RNG state, and optional baseline state.
+                    self.assertEqual(canonical(current.checkpoint()), canonical(reference.checkpoint()))
+                with tempfile.TemporaryDirectory() as directory:
+                    current_path, old_path = Path(directory) / "current.json", Path(directory) / "old.json"
+                    current.save(current_path)
+                    reference.save(old_path)
+                    self.assertEqual(current_path.read_bytes(), old_path.read_bytes())
+                self.assertEqual(NeuralPolicy.from_checkpoint(reference.checkpoint()).checkpoint(),
+                                 current.checkpoint())
 
     def test_config_and_policy_checkpoint_strictness(self):
         for kwargs in ({"update_mode": "bad"}, {"ppo_clip": .2}, {"update_epochs": 2},
