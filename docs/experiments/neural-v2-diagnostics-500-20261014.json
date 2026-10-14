@@ -1,0 +1,38 @@
+{
+  "checkpoint_sha256": "2381b41ce55e825781e8cf4d2c45cba7430ee3ded99cc30208a3624f0f642ae8",
+  "scope": "Saved weights and rollout summaries only; no new rollouts or training",
+  "models": {
+    "initial": {
+      "value_prediction_global_lower_bound": -1.529802252357532,
+      "value_prediction_global_upper_bound": 1.529802252357532,
+      "decision_weighted_mean_entropy_nats": 2.850900608626852,
+      "decision_weighted_mean_candidates": 20.675274142200212,
+      "decisions": 2827,
+      "terminal_scores_above_global_value_upper_bound": 61,
+      "terminal_score_mean": 30.78125
+    },
+    "trained": {
+      "value_prediction_global_lower_bound": -5.561065008468074,
+      "value_prediction_global_upper_bound": 5.731926120423906,
+      "decision_weighted_mean_entropy_nats": 2.8915220177350465,
+      "decision_weighted_mean_candidates": 20.894698085419734,
+      "decisions": 2716,
+      "terminal_scores_above_global_value_upper_bound": 63,
+      "terminal_score_mean": 35.9375
+    }
+  },
+  "parameter_l2_change": {
+    "action": 2.0473684393745857,
+    "action_bias": 0.06789795794210388,
+    "observation": 13.792284783611882,
+    "observation_bias": 0.3119440857420758,
+    "policy": 0.11753016794087415,
+    "value": 0.7278732075624321,
+    "value_bias": 0.08543055597791575
+  },
+  "limitations": [
+    "Saved rollout records lack per-decision probabilities, candidate counts, observations and baseline predictions; exact normalized entropy, probability drift and empirical value MSE are not recoverable.",
+    "Mean entropy and mean candidate counts alone do not establish proximity to uniform: log(mean count) differs from mean(log count).",
+    "The value bounds follow from tanh hidden activations in [-1,1] and the saved value weights; underfit scale is verified, causal impact on policy improvement is only a hypothesis."
+  ]
+}
