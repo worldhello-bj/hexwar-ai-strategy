@@ -61,7 +61,7 @@ py -3.13 env/run_episode.py --agent greedy-multi --episodes 50 --json greedy.jso
 # 4) 自检裁决引擎
 py -3.13 tools/selftest_engine.py
 
-# 5) 按手册逐条验证规则实现（当前 23/23 通过）
+# 5) 按手册逐条验证规则实现（当前 29/29 通过）
 py -3.13 tools/verify_rules.py
 
 # 6) 校验裁决表数值与手册一致（当前 26/26 通过）
@@ -92,7 +92,7 @@ print(env.score())
 | `render(width, height)` | 文本态势图，调试用 |
 | `score()` | `own/enemy/diff`，口径为 `剩余兵力 + 夺控点×10 + 歼敌分值` |
 
-**动作类型**：`move` / `attack` / `grenade` / `capture` / `load` / `unload` / `hide` / `stop` / `wait`
+**动作类型**：`move` / `attack`(可 `track` 持续打击) / `area_fire`(集火) / `stop_attack` / `grenade` / `capture` / `load` / `unload` / `hide` / `stop` / `wait`
 **奖励**：`diff` 的增量，可直接当 RL 的稠密奖励。
 
 字段字典见 [`skill/hexwar-operator/references/action-schema.md`](skill/hexwar-operator/references/action-schema.md)。

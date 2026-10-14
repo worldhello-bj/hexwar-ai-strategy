@@ -75,7 +75,10 @@ class MultiUnitGreedy(GreedyAgent):
         for a in acts:
             if a["type"] == "wait":
                 continue
-            by_unit.setdefault(a["unit"], []).append(a)
+            uid = a.get("unit")
+            if uid is None:
+                continue
+            by_unit.setdefault(uid, []).append(a)
         orders = []
         for unit, alist in by_unit.items():
             cap = [a for a in alist if a["type"] == "capture"]

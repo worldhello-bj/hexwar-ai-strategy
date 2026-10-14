@@ -144,6 +144,7 @@ class Game:
         if not self.started:
             return
         self.second = int(time.time() - self.t0)
+        self.resolve_engagements()  # 手册 3.14 已设定目标的棋子自动持续打击
         self.same_hex_engage()      # 手册 4.11 同格交战自动裁决
         self._expire_states()
 
@@ -153,6 +154,7 @@ class Game:
             return self.second
         self.second += seconds
         self.t0 = time.time() - self.second
+        self.resolve_engagements()  # 手册 3.14 已设定目标的棋子自动持续打击
         self.same_hex_engage()      # 手册 4.11 同格交战自动裁决
         self._expire_states()
         return self.second
@@ -522,6 +524,98 @@ class Game:
                                               "；".join(r["detail"]), "，".join(msg) or "无效"))
         self.dirty = True
         return r, None
+
+    # ---------------- 持续打击 / 集火射击 ----------------
+    def set_engagement(self, obj_id, target_id, weapon_id=None):
+        """手册 3.14：为棋子设定打击目标后，该棋子**持续对其打击直到目标被消灭**，
+        无需重复下达指令。
+
+        选定武器必须一并记住：否则后续每次自动开火都会退回 wz[0]
+        （例如坦克的 wz[0] 是高射机枪，打装甲几乎没战果）。
+        """
+        u = self.units.get(obj_id)
+        t = self.units.get(target_id)
+        if not u or not t or not u.alive() or not t.alive():
+            return None, "棋子不存在"
+        if u.color and t.color and u.color == t.color:
+            return None, "不能攻击己方"
+        u.detail["target"] = target_id
+        u.detail["target_weapon"] = int(weapon_id or 0)
+        self.record("%s 设定打击目标：%s（将持续打击至其被消灭）"
+                    % (u.army or u.name, t.army or t.name))
+        return target_id, None
+
+    def clear_engagement(self, obj_id):
+        """取消持续打击。"""
+        u = self.units.get(obj_id)
+        if not u:
+            return None, "棋子不存在"
+        u.detail.pop("target_weapon", None)
+        return u.detail.pop("target", None), None
+
+    def resolve_engagements(self):
+        """手册 3.14：已设定打击目标的棋子自动持续打击，按攻击间隔结算。
+
+        - 目标被消灭 → 自动解除，本次不再射击；
+        - 目标暂时超出射程/不通视/己方被压制 → 本次不射击，但**目标仍然保留**，
+          条件恢复后自动继续（这才符合“持续打击直到目标被消灭”）。
+        """
+        if self.second - getattr(self, "_last_volley", -10 ** 9) < self.ATTACK_INTERVAL_SEC:
+            return []
+        self._last_volley = self.second
+        out = []
+        for u in list(self.units.values()):
+            if not u.alive() or u.detail.get("carrier"):
+                continue
+            tid = u.detail.get("target")
+            if not tid:
+                continue
+            t = self.units.get(tid)
+            if not t or not t.alive():
+                u.detail.pop("target", None)
+                u.detail.pop("target_weapon", None)
+                out.append((u.id, tid, "目标已被消灭，解除打击"))
+                continue
+            r, err = self.attack(u.id, t.id,
+                                 weapon_id=int(u.detail.get("target_weapon") or 0))
+            out.append((u.id, tid, err or r["result"]))
+        if out:
+            self.record("持续打击结算：%d 个单位" % len(out))
+        return out
+
+    def area_fire(self, unit_ids, target_hex, weapon_id=None):
+        """手册 3.16 集火射击：多个棋子对**某个六角格**实施集火。
+
+        与直瞷射击"跟踪目标并持续射击"不同：集火射击指定的目标是**格坐标**，
+        射击时目标若已离开该格，则本次集火射击**失败**，不跟踪、不持续。
+        weapon_id 为 None 时由 attack() 自行选武器。
+        """
+        shooters = [self.units.get(i) for i in unit_ids]
+        shooters = [u for u in shooters if u and u.alive()]
+        if not shooters:
+            return None, "没有可用的射击单位"
+        if not self.hex(target_hex):
+            return None, "目标格不存在"
+        color = shooters[0].color
+        targets = [u for u in self.units.values()
+                   if u.alive() and u.pos == target_hex and u.color and u.color != color
+                   and not u.detail.get("carrier")]
+        if not targets:
+            self.record("集火射击：%s 已无目标，本次射击失败（手册 3.16）"
+                        % G.hexid(target_hex))
+            return {"result": "MISS", "shots": [],
+                    "detail": ["目标已离开该格，集火射击失败"]}, None
+        shots = []
+        for s in shooters:
+            for t in targets:
+                r, err = self.attack(s.id, t.id,
+                                     weapon_id=int(weapon_id) if weapon_id else 0)
+                shots.append({"unit": s.id, "target": t.id,
+                              "result": None if err else r["result"],
+                              "error": err})
+        self.record("集火射击：%d 个单位 → %s（%d 次裁决）"
+                    % (len(shooters), G.hexid(target_hex), len(shots)))
+        return {"result": "AREA", "shots": shots}, None
 
     # ---------------- 手雷 / 同格交战 ----------------
     def grenade(self, obj_id, target_hex):

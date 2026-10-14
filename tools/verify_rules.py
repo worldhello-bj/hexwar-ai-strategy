@@ -12,8 +12,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine import crt                                   # noqa: E402
 from engine.game import Game, SUPPRESS_SEC               # noqa: E402
+from engine.equip import WEAPONS                         # noqa: E402
 from env.hexwar_env import HexwarEnv                     # noqa: E402
 from engine.geometry import distance, neighbors          # noqa: E402
+
+# 反装甲武器（用 wz[0] 可能拿到高射机枪之类的非反装甲武器，会得出 0 战果）
+ANTI_ARMOR = {"中型坦克炮", "重型坦克炮", "速射炮", "车载导弹", "便携导弹"}
+
+
+def best_gun(u):
+    """挑一把对装甲有效的武器；没有就退回首把。"""
+    for w in u.wz:
+        info = WEAPONS.get(w)
+        if info and info[0] in ANTI_ARMOR:
+            return w
+    return u.wz[0] if u.wz else 0
 
 SNAP = os.environ.get("HEXWAR_SNAP", "samples/demo")
 
@@ -296,6 +309,70 @@ else:
     check("交战间隔为正常间隔的 1/3（手册 4.11(3)）",
           g.ENGAGE_INTERVAL_SEC == max(1, g.ATTACK_INTERVAL_SEC // 3),
           "间隔=%ds" % g.ENGAGE_INTERVAL_SEC)
+
+# ----------------------------------------------------------------------
+print("\n== 3.14 设定目标后自动持续打击 ==")
+env = HexwarEnv(snapshot=SNAP, side="BLUE", fog=False, max_seconds=1800)
+env.reset(seed=5)
+g = env.game
+sh = pick(g, typeid=2, color="BLUE")
+tg = pick(g, typeid=2, color="RED")
+if sh is None or tg is None:
+    check("持续打击", False, "样例缺少红蓝车辆")
+else:
+    nbs = [n for n in neighbors(80019) if g.hex(n)]
+    put(tg, 80019)
+    put(sh, nbs[0])
+    tg.blood = 4
+    before = tg.blood
+    _o, _r, _d, info = env.step({"type": "attack", "unit": sh.id,
+                                 "target": tg.id, "weapon": best_gun(sh), "track": 1})
+    check("设定持续打击目标成功（手册 3.14）",
+          sh.detail.get("target") == tg.id, info.get("msg"))
+
+    # 之后**只等待、不再下任何命令**
+    for _ in range(30):
+        env.step({"type": "wait", "seconds": 10})
+        if tg.blood <= 0:
+            break
+    check("无需重复下令即持续造成伤害", tg.blood < before,
+          "血量 %d → %d" % (before, tg.blood))
+    check("目标被消灭后自动解除持续打击",
+          tg.blood <= 0 and not sh.detail.get("target"),
+          "血量=%d 仍挂目标=%s" % (tg.blood, sh.detail.get("target")))
+
+print("\n== 3.16 集火射击：对格坐标，目标离开即失败 ==")
+env = HexwarEnv(snapshot=SNAP, side="BLUE", fog=False, max_seconds=1800)
+env.reset(seed=6)
+g = env.game
+bs = [u for u in g.units.values() if u.typeid == 2 and u.color == "BLUE"][:2]
+rt = pick(g, typeid=2, color="RED")
+if not bs or rt is None:
+    check("集火射击", False, "样例缺少足够单位")
+else:
+    nbs = [n for n in neighbors(80019) if g.hex(n)]
+    put(bs[0], nbs[0])
+    if len(bs) > 1 and len(nbs) > 1:
+        put(bs[1], nbs[1])
+    put(rt, 80019)
+    rt.blood = 8
+    b0 = rt.blood
+    gun = best_gun(bs[0])
+    res, err = g.area_fire([u.id for u in bs], 80019, weapon_id=gun)
+    check("格内有目标时集火生效", err is None and len(res["shots"]) >= 1,
+          "裁决 %d 次" % len((res or {}).get("shots") or []))
+    check("集火造成伤害", rt.blood < b0, "血量 %d → %d" % (b0, rt.blood))
+
+    far = next((h for h in g.hexes if distance(h, 80019) > 5), None)
+    if far is None:
+        check("目标离开后集火失败", False, "找不到足够远的格子")
+    else:
+        put(rt, far)
+        b1 = rt.blood
+        res2, err2 = g.area_fire([u.id for u in bs], 80019, weapon_id=gun)
+        check("目标已离开该格 → 本次集火失败（手册 3.16，不跟踪）",
+              err2 is None and res2["result"] == "MISS" and rt.blood == b1,
+              "result=%s 血量 %d → %d" % ((res2 or {}).get("result"), b1, rt.blood))
 
 # ----------------------------------------------------------------------
 ok = sum(1 for _n, c, _m in RESULTS if c)

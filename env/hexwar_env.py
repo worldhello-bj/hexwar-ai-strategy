@@ -42,6 +42,7 @@ HIDE_SEC = 10          # 隐蔽/解除隐蔽
 WAIT_SEC = 10          # 主动等待的默认时长
 LOAD_SEC = 30          # 上/下车
 GRENADE_SEC = 10       # 投掷手雷
+AREA_FIRE_SEC = 10     # 一次集火射击（手册 3.16）
 # 手册未给出单车载员数，此处按堆叠上限（手册 4.2）假定为 4
 VEHICLE_SEATS = 4
 
@@ -105,6 +106,7 @@ class HexwarEnv:
                 "ste": u.ste,
                 "loaded_into": u.detail.get("carrier"),
                 "carrying": list(u.detail.get("carried") or []),
+                "engaging": u.detail.get("target"),
                 "weapons": [self._weapon_view(u, wid) for wid in u.wz],
                 "can_observe_range": self._observe_range(u),
             })
@@ -216,6 +218,7 @@ class HexwarEnv:
                 if not t.alive() or t.color == u.color:
                     continue
                 d = G.distance(u.pos, t.pos)
+                picked = None
                 for wid in u.wz:
                     w = WEAPONS.get(wid)
                     if not w or d > w[2]:
@@ -223,7 +226,19 @@ class HexwarEnv:
                     if not g.can_observe(u.id, t.id):
                         continue
                     acts.append({"type": "attack", "unit": u.id, "target": t.id,
-                                 "weapon": wid, "dist": d, "weapon_name": w[0]})
+                                 "weapon": wid, "dist": d, "weapon_name": w[0],
+                                 "track": 0})
+                    if picked is None:
+                        picked = (wid, w, d)
+                # 手册 3.14：设定目标后持续打击至目标被消灭（官方默认语义）
+                if picked:
+                    wid, w, d = picked
+                    acts.append({"type": "attack", "unit": u.id, "target": t.id,
+                                 "weapon": wid, "dist": d, "weapon_name": w[0],
+                                 "track": 1})
+            # 解除持续打击
+            if u.detail.get("target"):
+                acts.append({"type": "stop_attack", "unit": u.id})
             # 夺控
             for c in g.cities:
                 if c["pos"] == u.pos and c.get("flag") != self.side:
@@ -253,6 +268,25 @@ class HexwarEnv:
             if u.pos2 and u.pos2 != u.pos:
                 acts.append({"type": "stop", "unit": u.id})
         acts.append({"type": "wait", "seconds": self.dt})
+
+        # 手册 3.16 集火射击：对**六角格坐标**集火，不跟踪目标。
+        # 每个“有可见敌人的格子”一个动作，参与单位 = 能打到该格的己方单位。
+        own_alive = [u for u in g.units.values()
+                     if u.alive() and u.color == self.side
+                     and not u.detail.get("carrier") and not u.stunned(g.second)]
+        hexes = {t.pos for t in g.units.values()
+                 if t.alive() and t.color != self.side and t.pos}
+        for hx in hexes:
+            shooters = []
+            for u in own_alive:
+                d = G.distance(u.pos, hx)
+                if any((WEAPONS.get(w) or (None, None, 0))[2] >= d for w in u.wz):
+                    if g.can_observe(u.id, next((t.id for t in g.units.values()
+                                                 if t.alive() and t.pos == hx), u.id)):
+                        shooters.append(u.id)
+            if shooters:
+                acts.append({"type": "area_fire", "unit": shooters[0],
+                             "units": shooters, "target_hex": hx})
         return acts
 
     # ---------------- 执行 ----------------
@@ -330,11 +364,45 @@ class HexwarEnv:
             return None, 0.0, False, {"msg": "机动 %d 格，耗时 %ds" % (len(path), total),
                                       "seconds": total}
         if t == "attack":
+            if act.get("track"):
+                tid, err2 = g.set_engagement(u.id, act.get("target"),
+                                             weapon_id=act.get("weapon"))
+                if err2:
+                    return None, 0.0, False, {"msg": "设定目标失败：%s" % err2,
+                                              "seconds": 0}
+                r, err = g.attack(u.id, act.get("target"),
+                                  weapon_id=int(act.get("weapon") or 0))
+                u.detail["attacked_at"] = g.second
+                note = "" if err else "，首发 %s" % (r["result"],)
+                return None, 0.0, False, {
+                    "msg": "设定持续打击目标（手册 3.14）%s" % note,
+                    "seconds": ATTACK_SEC}
             r, err = g.attack(u.id, act.get("target"), weapon_id=int(act.get("weapon") or 0))
             if err:
                 return None, 0.0, False, {"msg": "射击失败：%s" % err, "seconds": 0}
             u.detail["attacked_at"] = g.second
             return None, 0.0, False, {"msg": "射击 %s" % (r["result"],), "seconds": ATTACK_SEC}
+        if t == "stop_attack":
+            old, _err = g.clear_engagement(u.id)
+            return None, 0.0, False, {
+                "msg": "已解除持续打击" if old else "本来没有打击目标",
+                "seconds": 0}
+        if t == "area_fire":
+            unit_ids = list(act.get("units") or [u.id])
+            res, err = g.area_fire(unit_ids, int(act.get("target_hex") or 0),
+                                   weapon_id=act.get("weapon"))
+            if err:
+                return None, 0.0, False, {"msg": "集火失败：%s" % err, "seconds": 0}
+            for sid in unit_ids:
+                su = g.units.get(sid)
+                if su:
+                    su.detail["attacked_at"] = g.second
+            if res["result"] == "MISS":
+                return None, 0.0, False, {
+                    "msg": "集火射击失败：目标已离开该格（手册 3.16）",
+                    "seconds": AREA_FIRE_SEC}
+            return None, 0.0, False, {
+                "msg": "集火射击 %d 次" % len(res["shots"]), "seconds": AREA_FIRE_SEC}
         if t == "capture":
             c = g.apply_city_capture(u)
             return None, 0.0, False, {
