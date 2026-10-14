@@ -55,3 +55,5 @@ python -m env.policy_eval --snapshot samples/demo \
 报告按正常终局分数比较胜、平、负，外部截断单列。随机种子只改变随机过程，场景地图本身不变；这是该场景上的对照，不是跨地图泛化测试。
 
 首轮实验文件在 `docs/experiments/`。20局检查点位于 `artifacts/selfplay/checkpoint-20-20261014.json.gz`；解压为 JSON 后传给 `--resume` 或 `--checkpoint`。相邻 metadata 文件记录未压缩文件 SHA256 与运行配置摘要。
+
+100局完整检查点备份位于 `artifacts/selfplay/checkpoint-100-20261014.json.gz`，相邻 `checkpoint-100-20261014.metadata.json` 记录压缩前后 SHA256、文件大小、运行配置及合成场景哈希。备份采用无文件名、mtime 为零的确定性 gzip；解压为 JSON 后同样可传给 `--resume` 或 `--checkpoint`。这只是已完成训练的可恢复备份，不表示策略实力提升。

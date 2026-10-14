@@ -1,0 +1,37 @@
+{
+  "algorithm": "first_visit_terminal_mc",
+  "schema_version": 1,
+  "episodes_completed": 100,
+  "episode_config": {
+    "max_seconds": 1800,
+    "max_steps": 1000
+  },
+  "epsilon": 0.2,
+  "seed": 7,
+  "train_seed_start": 0,
+  "snapshot": {
+    "files": {
+      "cities.json": "c991a3bd30c37fd76ffdba1919128299a1f20fe3d796a05bf77c4899f30fbb0c",
+      "evaluation_provenance.json": "45df40e97c7e466006a458e0f4c3acaeda029f862e7f2a7bd09ce02d3b3d87d2",
+      "map_hexes.json": "9ef0d941e1bad1b4a955ea72e6c6ea51836f7de715f165b0875f6b0b79ab2a7f",
+      "units.json": "1fe5ab93bb598003a83bd48dabcaa1aeededfce24b266874810546536e853826"
+    },
+    "provenance": {
+      "generator": "tools/make_sample.py",
+      "note": "Original generated demo fixture, not a real scenario or external service snapshot. Existing game data and rules are unchanged.",
+      "origin": "original_synthetic",
+      "purpose": "offline_synthetic_game_software_tests"
+    },
+    "sha256": "c78e2a640bf404a754459fd07201182455290dc2c99e25ef999c201c94030c07"
+  },
+  "checkpoint_sha256": "54fbad30efbf62ba07598bcaa675a2edd1336bf1bb758115139cca053fba5340",
+  "compressed_sha256": "ca4b4e26e78f0ea01b46c8508b392d3e3d87c45766fd904c74bdf7d2d974092b",
+  "compression": "gzip",
+  "compression_level": 9,
+  "gzip_mtime": 0,
+  "decompressed_bytes": 20060317,
+  "compressed_bytes": 365575,
+  "source_scenario": "samples/demo",
+  "purpose": "reproducible_training_baseline",
+  "playing_strength_established": false
+}
