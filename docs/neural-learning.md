@@ -38,3 +38,13 @@ Windows 可先设置相应环境变量，再运行同一条 Python 命令。限�
 每轮报告同时固定评测初始模型和训练后模型。两者对阵同一种随机对手，使用相同的独立种子和双方席位。主要看本方终局原始分数，同时记录分差、胜平负、截断和资源占用。
 
 少量场次用于验证代码和测量运行成本。要声称稳定提升，需要多个训练随机种子、更大的预留评测集和独立地图。当前示例场景只有一张固定地图；更换随机种子不等于测试了跨地图泛化。
+
+## 额外的全新种子评测
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m tools.evaluate_neural_checkpoint \
+  --snapshot samples/demo --checkpoint /tmp/hexwar-neural-20.json \
+  --seed-start 2100000 --seed-count 32 --report /tmp/hexwar-neural-fresh.json
+```
+
+工具保持源检查点不变，先检查种子与训练及原预留集合不重叠，再在独立内存副本中评测初始与训练后模型。报告包含各组两个席位平均后的得分变化及描述性标准误。
