@@ -91,6 +91,10 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 
 
 详细规则、复现与续跑方法见 [双边训练说明](docs/selfplay.md)。下方旧 `HexwarEnv` 接口仍返回分差增量；只需要终局奖励的调用方应使用新接口。
 
+## 共享特征的神经网络基线
+
+`env.neural_train` 使用小型 NumPy 网络与 REINFORCE，从玩家可见的 JSON 观察和候选动作学习共享特征。保留原始终局总分，不添加动作奖励。先对阵固定随机对手，再用保留种子比较训练前后模型。安装、续跑及实验口径见 [神经网络训练说明](docs/neural-learning.md)。
+
 ## 环境接口
 
 | 方法 | 作用 |

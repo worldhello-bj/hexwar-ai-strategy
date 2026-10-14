@@ -1,0 +1,481 @@
+{
+  "algorithm": "neural_terminal_reinforce_vs_random",
+  "episode_config": {
+    "max_seconds": 1800,
+    "max_steps": 1000,
+    "public_score": true
+  },
+  "episodes_attempted": 4,
+  "episodes_completed": 4,
+  "evaluation": {
+    "caveat": "Descriptive synthetic-game sample, not a strength claim; truncations excluded from score and W/D/L summaries.",
+    "comparison": "Frozen initial and trained stochastic policies versus uniform random; identical paired seeds and seats.",
+    "heldout_seeds": [
+      2000000,
+      2000001
+    ],
+    "initial": {
+      "by_seat": {
+        "BLUE": {
+          "completed": 2,
+          "draw": 0,
+          "games": 2,
+          "loss": 2,
+          "mean_own_score": 20.0,
+          "mean_score_diff": -20.0,
+          "truncated": 0,
+          "win": 0
+        },
+        "RED": {
+          "completed": 2,
+          "draw": 1,
+          "games": 2,
+          "loss": 0,
+          "mean_own_score": 35.0,
+          "mean_score_diff": 10.0,
+          "truncated": 0,
+          "win": 1
+        }
+      },
+      "games": [
+        {
+          "decisions": 52,
+          "elapsed_seconds": 1.8503762279869989,
+          "learner_side": "BLUE",
+          "max_candidates": 40,
+          "mean_candidates": 19.28846153846154,
+          "mean_entropy": 2.867120623903219,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2000000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 104,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        },
+        {
+          "decisions": 55,
+          "elapsed_seconds": 2.3773673519899603,
+          "learner_side": "RED",
+          "max_candidates": 26,
+          "mean_candidates": 16.145454545454545,
+          "mean_entropy": 2.7327109769617213,
+          "own_score": 30,
+          "result": "draw",
+          "score_diff": 0,
+          "seed": 2000000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "seconds": 1800,
+            "steps": 110,
+            "terminated": true,
+            "truncated": false,
+            "winner": null
+          }
+        },
+        {
+          "decisions": 50,
+          "elapsed_seconds": 1.9354526430252008,
+          "learner_side": "BLUE",
+          "max_candidates": 46,
+          "mean_candidates": 22.68,
+          "mean_entropy": 3.0172666443955825,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2000001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 99,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        },
+        {
+          "decisions": 36,
+          "elapsed_seconds": 1.444489633984631,
+          "learner_side": "RED",
+          "max_candidates": 19,
+          "mean_candidates": 15.555555555555555,
+          "mean_entropy": 2.7257979110809747,
+          "own_score": 40,
+          "result": "win",
+          "score_diff": 20,
+          "seed": 2000001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 73,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        }
+      ],
+      "summary": {
+        "completed": 4,
+        "draw": 1,
+        "games": 4,
+        "loss": 2,
+        "mean_own_score": 27.5,
+        "mean_score_diff": -5.0,
+        "truncated": 0,
+        "win": 1
+      }
+    },
+    "trained": {
+      "by_seat": {
+        "BLUE": {
+          "completed": 2,
+          "draw": 0,
+          "games": 2,
+          "loss": 2,
+          "mean_own_score": 20.0,
+          "mean_score_diff": -20.0,
+          "truncated": 0,
+          "win": 0
+        },
+        "RED": {
+          "completed": 2,
+          "draw": 1,
+          "games": 2,
+          "loss": 0,
+          "mean_own_score": 35.0,
+          "mean_score_diff": 10.0,
+          "truncated": 0,
+          "win": 1
+        }
+      },
+      "games": [
+        {
+          "decisions": 52,
+          "elapsed_seconds": 1.8300432079995517,
+          "learner_side": "BLUE",
+          "max_candidates": 40,
+          "mean_candidates": 19.28846153846154,
+          "mean_entropy": 2.8671135726467574,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2000000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 104,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        },
+        {
+          "decisions": 55,
+          "elapsed_seconds": 2.459925081988331,
+          "learner_side": "RED",
+          "max_candidates": 26,
+          "mean_candidates": 16.145454545454545,
+          "mean_entropy": 2.732699079400605,
+          "own_score": 30,
+          "result": "draw",
+          "score_diff": 0,
+          "seed": 2000000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "seconds": 1800,
+            "steps": 110,
+            "terminated": true,
+            "truncated": false,
+            "winner": null
+          }
+        },
+        {
+          "decisions": 50,
+          "elapsed_seconds": 1.7612991060013883,
+          "learner_side": "BLUE",
+          "max_candidates": 46,
+          "mean_candidates": 22.68,
+          "mean_entropy": 3.017259389657937,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2000001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 99,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        },
+        {
+          "decisions": 36,
+          "elapsed_seconds": 1.3427799550117925,
+          "learner_side": "RED",
+          "max_candidates": 19,
+          "mean_candidates": 15.555555555555555,
+          "mean_entropy": 2.725784482154698,
+          "own_score": 40,
+          "result": "win",
+          "score_diff": 20,
+          "seed": 2000001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 73,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        }
+      ],
+      "summary": {
+        "completed": 4,
+        "draw": 1,
+        "games": 4,
+        "loss": 2,
+        "mean_own_score": 27.5,
+        "mean_score_diff": -5.0,
+        "truncated": 0,
+        "win": 1
+      }
+    }
+  },
+  "pending_completed_episodes": 0,
+  "policy_config": {
+    "buckets": 2048,
+    "hidden_dim": 32,
+    "learning_rate": 0.001
+  },
+  "resources": {
+    "elapsed_seconds": 23.26388936699368,
+    "process_peak_rss_bytes": 127082496
+  },
+  "snapshot": {
+    "files": {
+      "cities.json": "c991a3bd30c37fd76ffdba1919128299a1f20fe3d796a05bf77c4899f30fbb0c",
+      "evaluation_provenance.json": "45df40e97c7e466006a458e0f4c3acaeda029f862e7f2a7bd09ce02d3b3d87d2",
+      "map_hexes.json": "9ef0d941e1bad1b4a955ea72e6c6ea51836f7de715f165b0875f6b0b79ab2a7f",
+      "units.json": "1fe5ab93bb598003a83bd48dabcaa1aeededfce24b266874810546536e853826"
+    },
+    "provenance": {
+      "generator": "tools/make_sample.py",
+      "note": "Original generated demo fixture, not a real scenario or external service snapshot. Existing game data and rules are unchanged.",
+      "origin": "original_synthetic",
+      "purpose": "offline_synthetic_game_software_tests"
+    },
+    "sha256": "c78e2a640bf404a754459fd07201182455290dc2c99e25ef999c201c94030c07"
+  },
+  "training": [
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.5647173860052135,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 25.45,
+      "mean_entropy": 3.205337367082616,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 0,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 80,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 48,
+      "elapsed_seconds": 1.5562266390188597,
+      "learner_side": "RED",
+      "max_candidates": 18,
+      "mean_candidates": 13.458333333333334,
+      "mean_entropy": 2.582890742813271,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 1,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.3160266670165583,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 17.952380952380953,
+      "mean_entropy": 2.7726895801924467,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 2,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 84,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 1.8484629570157267,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 15.369565217391305,
+      "mean_entropy": 2.652224879124033,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 3,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 176,
+        "gradient_norm": 37.49906500179294,
+        "loss": 4185.587312189594
+      }
+    }
+  ],
+  "training_summary": {
+    "completed": 4,
+    "draw": 2,
+    "games": 4,
+    "loss": 1,
+    "mean_own_score": 30.0,
+    "mean_score_diff": 0.0,
+    "truncated": 0,
+    "win": 1
+  },
+  "updates": 1
+}
