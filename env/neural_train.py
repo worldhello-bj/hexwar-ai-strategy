@@ -215,6 +215,10 @@ class NeuralTrainer:
             raise ValueError("checkpoint policy configuration or initialization differs")
         if trainer.policy.steps > trainer.updates:
             raise ValueError("optimizer steps exceed completed batch updates")
+        if trainer.policy.config.get("baseline_offset") == "prior_batch_mean":
+            if (initial.return_count != 0 or
+                    trainer.policy.return_count != trainer.updates * trainer.batch_episodes):
+                raise ValueError("return baseline count differs from completed batches")
         trainer.initial_policy = copy.deepcopy(data["initial_policy"])
         trainer.pending = [([Decision.from_dict(d) for d in row["decisions"]], row["return"]) for row in data["pending"]]
         if len(trainer.pending) >= trainer.batch_episodes or trainer.episodes_completed != trainer.updates * trainer.batch_episodes + len(trainer.pending):
@@ -246,6 +250,8 @@ def main(argv=None):
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--observation-schema", type=int, choices=(1, 2), default=None,
                         help="2 opts into public map/dynamic/candidate split; resume inherits saved schema")
+    parser.add_argument("--baseline-offset", choices=("none", "prior_batch_mean"), default=None,
+                        help="opt-in prior completed-batch score mean; resume inherits saved mode")
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
@@ -256,9 +262,13 @@ def main(argv=None):
         trainer = NeuralTrainer.load(args.resume, args.snapshot) if args.resume else NeuralTrainer(
             args.snapshot, observation_schema=args.observation_schema or 1, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
             heldout_seeds=args.eval_seeds, episode_config={"max_seconds": args.max_seconds, "max_steps": args.max_steps},
-            policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate})
+            policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate,
+                           **({"baseline_offset": args.baseline_offset} if args.baseline_offset is not None else {})})
         if args.observation_schema is not None and args.observation_schema != trainer.observation_schema:
             raise ValueError("requested observation schema differs from resumed checkpoint")
+        if (args.baseline_offset is not None and
+                args.baseline_offset != trainer.policy.config.get("baseline_offset", "none")):
+            raise ValueError("requested baseline offset differs from resumed checkpoint")
         start = time.perf_counter()
         records = trainer.train(args.episodes)
         evaluation = trainer.evaluate()

@@ -41,7 +41,8 @@ class Decision:
 
 class NeuralPolicy:
     def __init__(self, *, seed=0, buckets=2048, hidden_dim=32,
-                 learning_rate=0.001, gradient_clip=5.0, hash_seed=0, representation="legacy_json"):
+                 learning_rate=0.001, gradient_clip=5.0, hash_seed=0, representation="legacy_json",
+                 baseline_offset="none"):
         for name, value in (("buckets", buckets), ("hidden_dim", hidden_dim)):
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ValueError(name + " must be a positive integer")
@@ -56,6 +57,12 @@ class NeuralPolicy:
         # Omit the legacy default to preserve the original checkpoint format.
         if representation != "legacy_json":
             self.config["representation"] = representation
+        if baseline_offset not in ("none", "prior_batch_mean"):
+            raise ValueError("unsupported baseline offset")
+        if baseline_offset != "none":
+            self.config["baseline_offset"] = baseline_offset
+        self.return_mean = 0.0
+        self.return_count = 0
         self.feature_width = buckets * (2 if representation == "public_v2_split" else 1)
         self.rng = np.random.default_rng(seed)
         self.params = {"observation": self.rng.normal(0, 0.05, (self.feature_width, hidden_dim)),
@@ -188,7 +195,7 @@ class NeuralPolicy:
 
     __call__ = select
 
-    def _loss_gradients(self, examples, advantages=None, actor_normalizer=None):
+    def _loss_gradients(self, examples, advantages=None, actor_normalizer=None, baseline_offset=0.0):
         """Actor sum / actor_normalizer + mean half squared value error.
 
         Explicit advantages are for derivative checks; update computes them once
@@ -202,6 +209,10 @@ class NeuralPolicy:
             actor_normalizer = count
         if actor_normalizer <= 0:
             raise ValueError("actor normalizer must be positive")
+        # The offset is fixed from prior completed batches, never this batch.
+        # These residual targets are internal critic targets, not changed returns.
+        if baseline_offset != 0.0:
+            examples = [(d, score - baseline_offset) for d, score in examples]
         forward = [self._forward(d) for d, _ in examples]
         if advantages is None:
             advantages = [score - f[4] for (_, score), f in zip(examples, forward)]
@@ -242,16 +253,34 @@ class NeuralPolicy:
         """
         examples = []
         trajectory_count = 0
+        scores = []
         for history, score in trajectories:
             if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score):
                 raise ValueError("terminal score must be finite")
             trajectory_count += 1
+            scores.append(float(score))
             for decision in history:
                 if not isinstance(decision, Decision) or not 0 <= decision.selected < len(decision.candidates):
                     raise ValueError("invalid decision")
                 examples.append((decision, float(score)))
-        loss, gradients = self._loss_gradients(examples, actor_normalizer=trajectory_count)
+        use_offset = self.config.get("baseline_offset", "none") == "prior_batch_mean"
+        offset = self.return_mean if use_offset else 0.0
+        # Stage statistics without exposing current returns to the loss. Iterating
+        # in trajectory order makes statistics independent of batch partitioning.
+        next_mean, next_count = self.return_mean, self.return_count
+        if use_offset:
+            for score in scores:
+                next_count += 1
+                # Weighted form avoids overflow in (score - mean).
+                next_mean = next_mean * ((next_count - 1) / next_count) + score / next_count
+            if not math.isfinite(next_mean):
+                raise FloatingPointError("non-finite running mean; parameters unchanged")
+        loss, gradients = self._loss_gradients(examples, actor_normalizer=trajectory_count,
+                                              baseline_offset=offset)
         if not examples:
+            # A completed no-decision episode counts once; an empty batch does
+            # nothing. There is no optimizer step when there are no decisions.
+            self.return_mean, self.return_count = next_mean, next_count
             return {"decisions": 0, "loss": loss, "gradient_norm": 0.0}
         norm = math.sqrt(sum(float(np.sum(g * g)) for g in gradients.values()))
         if not math.isfinite(loss) or not math.isfinite(norm):
@@ -265,12 +294,15 @@ class NeuralPolicy:
             mhat = self.m[key] / (1 - 0.9 ** self.steps)
             vhat = self.v[key] / (1 - 0.999 ** self.steps)
             self.params[key] -= self.config["learning_rate"] * mhat / (np.sqrt(vhat) + 1e-8)
+        self.return_mean, self.return_count = next_mean, next_count
         return {"decisions": len(examples), "loss": loss, "gradient_norm": norm}
 
     def checkpoint(self):
         return {"schema_version": 1, "algorithm": "generic_json_reinforce",
                 "config": dict(self.config), "steps": self.steps,
                 "rng": self.rng.bit_generator.state,
+                **({"return_baseline": {"mean": self.return_mean, "count": self.return_count}}
+                   if self.config.get("baseline_offset") == "prior_batch_mean" else {}),
                 **{name: {k: v.tolist() for k, v in values.items()}
                    for name, values in (("params", self.params), ("m", self.m), ("v", self.v))}}
 
@@ -279,6 +311,18 @@ class NeuralPolicy:
         if data.get("schema_version") != 1 or data.get("algorithm") != "generic_json_reinforce":
             raise ValueError("unsupported checkpoint")
         result = cls(**data["config"])
+        if result.config.get("baseline_offset") == "prior_batch_mean":
+            state = data.get("return_baseline")
+            if not isinstance(state, dict) or set(state) != {"mean", "count"}:
+                raise ValueError("missing or invalid return baseline state")
+            mean, count = state["mean"], state["count"]
+            if (isinstance(count, bool) or not isinstance(count, int) or count < 0 or
+                    isinstance(mean, bool) or not isinstance(mean, (int, float)) or
+                    not math.isfinite(mean) or (count == 0 and mean != 0)):
+                raise ValueError("invalid return baseline statistics")
+            result.return_mean, result.return_count = float(mean), count
+        elif "return_baseline" in data:
+            raise ValueError("return baseline state requires explicit configuration")
         for name in ("params", "m", "v"):
             target = getattr(result, name)
             if set(data[name]) != set(target):
