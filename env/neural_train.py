@@ -145,6 +145,10 @@ class NeuralTrainer:
         records = []
         for _ in range(episodes):
             index = self.episodes_attempted
+            # PPO updates are atomic. Preserve the final rollout's sampling RNG
+            # too, so a failed batch can be retried or checkpointed exactly.
+            ppo_rng = (copy.deepcopy(self.policy.rng.bit_generator.state)
+                       if self.policy.config.get("update_mode") == "ppo_clip" else None)
             record, trajectory = self._rollout(self.policy, self.train_seed_start + index,
                                                SIDES[index % 2], training=True)
             self.episodes_attempted += 1
@@ -152,7 +156,15 @@ class NeuralTrainer:
                 self.episodes_completed += 1
                 self.pending.append((trajectory, record["own_score"]))
                 if len(self.pending) == self.batch_episodes:
-                    record["update"] = self.policy.update_batch(self.pending)
+                    try:
+                        record["update"] = self.policy.update_batch(self.pending)
+                    except (FloatingPointError, OverflowError, ValueError):
+                        if ppo_rng is not None:
+                            self.pending.pop()
+                            self.episodes_attempted -= 1
+                            self.episodes_completed -= 1
+                            self.policy.rng.bit_generator.state = ppo_rng
+                        raise
                     self.pending.clear()
                     self.updates += 1
             records.append(record)
@@ -179,8 +191,12 @@ class NeuralTrainer:
         reports["caveat"] = "Descriptive synthetic-game sample, not a strength claim; truncations excluded from score and W/D/L summaries."
         return reports
 
+    @property
+    def algorithm(self):
+        return "neural_terminal_ppo_clip_vs_random" if self.policy.config.get("update_mode") == "ppo_clip" else "neural_terminal_reinforce_vs_random"
+
     def checkpoint(self):
-        return copy.deepcopy({"schema_version": 1, "algorithm": "neural_terminal_reinforce_vs_random",
+        return copy.deepcopy({"schema_version": 1, "algorithm": self.algorithm,
             **({"observation_schema": 2} if self.observation_schema == 2 else {}),
             "snapshot": self.manifest, "seed": self.seed, "train_seed_start": self.train_seed_start,
             "batch_episodes": self.batch_episodes, "episode_config": self.episode_config,
@@ -197,10 +213,12 @@ class NeuralTrainer:
     @classmethod
     def load(cls, path, snapshot):
         data = json.loads(Path(path).read_text("utf-8"))
-        if data.get("schema_version") != 1 or data.get("algorithm") != "neural_terminal_reinforce_vs_random":
+        if data.get("schema_version") != 1 or data.get("algorithm") not in ("neural_terminal_reinforce_vs_random", "neural_terminal_ppo_clip_vs_random"):
             raise ValueError("unsupported checkpoint")
         trainer = cls(snapshot, observation_schema=data.get("observation_schema", 1), **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
                       "episode_config", "policy_config", "heldout_seeds")})
+        if data["algorithm"] != trainer.algorithm:
+            raise ValueError("checkpoint algorithm and update mode differ")
         if trainer.manifest != data["snapshot"]:
             raise ValueError("checkpoint snapshot does not match")
         for key in ("episodes_attempted", "episodes_completed", "updates"):
@@ -213,7 +231,8 @@ class NeuralTrainer:
         expected_config = NeuralPolicy(seed=trainer.seed, **trainer.policy_config).config
         if trainer.policy.config != expected_config or initial.config != expected_config or initial.steps != 0:
             raise ValueError("checkpoint policy configuration or initialization differs")
-        if trainer.policy.steps > trainer.updates:
+        epochs = trainer.policy.config.get("update_epochs", 1)
+        if trainer.policy.steps > trainer.updates * epochs or trainer.policy.steps % epochs:
             raise ValueError("optimizer steps exceed completed batch updates")
         if trainer.policy.config.get("baseline_offset") == "prior_batch_mean":
             if (initial.return_count != 0 or
@@ -252,6 +271,9 @@ def main(argv=None):
                         help="2 opts into public map/dynamic/candidate split; resume inherits saved schema")
     parser.add_argument("--baseline-offset", choices=("none", "prior_batch_mean"), default=None,
                         help="opt-in prior completed-batch score mean; resume inherits saved mode")
+    parser.add_argument("--update-mode", choices=("reinforce", "ppo_clip"), default=None)
+    parser.add_argument("--ppo-clip", type=float, default=None)
+    parser.add_argument("--update-epochs", type=int, default=None)
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
@@ -263,12 +285,17 @@ def main(argv=None):
             args.snapshot, observation_schema=args.observation_schema or 1, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
             heldout_seeds=args.eval_seeds, episode_config={"max_seconds": args.max_seconds, "max_steps": args.max_steps},
             policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate,
-                           **({"baseline_offset": args.baseline_offset} if args.baseline_offset is not None else {})})
+                           **({"baseline_offset": args.baseline_offset} if args.baseline_offset is not None else {}),
+                           **{k: getattr(args, k) for k in ("update_mode", "ppo_clip", "update_epochs") if getattr(args, k) is not None}})
         if args.observation_schema is not None and args.observation_schema != trainer.observation_schema:
             raise ValueError("requested observation schema differs from resumed checkpoint")
         if (args.baseline_offset is not None and
                 args.baseline_offset != trainer.policy.config.get("baseline_offset", "none")):
             raise ValueError("requested baseline offset differs from resumed checkpoint")
+        for key in ("update_mode", "ppo_clip", "update_epochs"):
+            requested = getattr(args, key)
+            if requested is not None and requested != trainer.policy.config.get(key, "reinforce" if key == "update_mode" else None):
+                raise ValueError("requested " + key + " differs from resumed checkpoint")
         start = time.perf_counter()
         records = trainer.train(args.episodes)
         evaluation = trainer.evaluate()
@@ -280,7 +307,7 @@ def main(argv=None):
             resources["process_peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
         except ImportError:
             resources["process_peak_rss_bytes"] = None
-        report = {"algorithm": "neural_terminal_reinforce_vs_random", "snapshot": trainer.manifest,
+        report = {"algorithm": trainer.algorithm, "snapshot": trainer.manifest,
                   "observation_schema": trainer.observation_schema,
                   "episode_config": trainer.episode_config, "policy_config": trainer.policy_config,
                   "training": records, "training_summary": summary(records), "evaluation": evaluation,

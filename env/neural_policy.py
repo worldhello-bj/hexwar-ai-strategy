@@ -42,7 +42,7 @@ class Decision:
 class NeuralPolicy:
     def __init__(self, *, seed=0, buckets=2048, hidden_dim=32,
                  learning_rate=0.001, gradient_clip=5.0, hash_seed=0, representation="legacy_json",
-                 baseline_offset="none"):
+                 baseline_offset="none", update_mode="reinforce", ppo_clip=None, update_epochs=None):
         for name, value in (("buckets", buckets), ("hidden_dim", hidden_dim)):
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ValueError(name + " must be a positive integer")
@@ -61,6 +61,19 @@ class NeuralPolicy:
             raise ValueError("unsupported baseline offset")
         if baseline_offset != "none":
             self.config["baseline_offset"] = baseline_offset
+        if update_mode not in ("reinforce", "ppo_clip"):
+            raise ValueError("unsupported update mode")
+        if update_mode == "reinforce":
+            if ppo_clip is not None or update_epochs is not None:
+                raise ValueError("PPO settings require update_mode=ppo_clip")
+        else:
+            ppo_clip = 0.2 if ppo_clip is None else ppo_clip
+            update_epochs = 4 if update_epochs is None else update_epochs
+            if isinstance(ppo_clip, bool) or not math.isfinite(ppo_clip) or not 0 < ppo_clip < 1:
+                raise ValueError("ppo_clip must be finite and between zero and one")
+            if isinstance(update_epochs, bool) or not isinstance(update_epochs, int) or not 1 <= update_epochs <= 100:
+                raise ValueError("update_epochs must be an integer between 1 and 100")
+            self.config.update(update_mode=update_mode, ppo_clip=ppo_clip, update_epochs=update_epochs)
         self.return_mean = 0.0
         self.return_count = 0
         self.feature_width = buckets * (2 if representation == "public_v2_split" else 1)
@@ -195,7 +208,8 @@ class NeuralPolicy:
 
     __call__ = select
 
-    def _loss_gradients(self, examples, advantages=None, actor_normalizer=None, baseline_offset=0.0):
+    def _loss_gradients(self, examples, advantages=None, actor_normalizer=None, baseline_offset=0.0,
+                        old_log_probs=None):
         """Actor sum / actor_normalizer + mean half squared value error.
 
         Explicit advantages are for derivative checks; update computes them once
@@ -216,14 +230,39 @@ class NeuralPolicy:
         forward = [self._forward(d) for d, _ in examples]
         if advantages is None:
             advantages = [score - f[4] for (_, score), f in zip(examples, forward)]
+        if old_log_probs is not None:
+            if len(old_log_probs) != count or len(advantages) != count or not np.isfinite(old_log_probs).all() or not np.isfinite(advantages).all():
+                raise ValueError("invalid frozen PPO batch")
         loss = 0.0
         h = self.config["hidden_dim"]
-        for (decision, score), adv, f in zip(examples, advantages, forward):
+        for i, ((decision, score), adv, f) in enumerate(zip(examples, advantages, forward)):
             obs, actions, joint, probs, value, log_probs = f
-            loss += -adv * log_probs[decision.selected] / actor_normalizer + 0.5 * (value - score) ** 2 / count
+            actor_weight = adv
+            if old_log_probs is None:
+                loss += -adv * log_probs[decision.selected] / actor_normalizer + 0.5 * (value - score) ** 2 / count
+            else:
+                # Compare in log space before exponentiating: favorable extreme
+                # ratios are clipped without overflow, tiny probabilities never
+                # divide by zero. Unrepresentable adverse objectives fail loudly.
+                log_ratio = float(log_probs[decision.selected] - old_log_probs[i])
+                clip = self.config["ppo_clip"]
+                clipped = ((adv > 0 and log_ratio > math.log1p(clip)) or
+                           (adv < 0 and log_ratio < math.log1p(-clip)))
+                if clipped:
+                    surrogate = adv * (1 + clip if adv > 0 else 1 - clip)
+                    actor_weight = 0.0
+                elif adv == 0:
+                    surrogate = actor_weight = 0.0
+                else:
+                    try:
+                        surrogate = math.copysign(math.exp(math.log(abs(adv)) + log_ratio), adv)
+                    except OverflowError as exc:
+                        raise FloatingPointError("unrepresentable PPO surrogate") from exc
+                    actor_weight = surrogate
+                loss += -surrogate / actor_normalizer + 0.5 * (value - score) ** 2 / count
             dlogits = probs.copy()
             dlogits[decision.selected] -= 1
-            dlogits *= adv / actor_normalizer
+            dlogits *= actor_weight / actor_normalizer
             gradients["policy"] += joint.T @ dlogits
             w = self.params["policy"]
             dobs = (dlogits[:, None] * (w[:h] + actions * w[2*h:])).sum(axis=0)
@@ -275,6 +314,10 @@ class NeuralPolicy:
                 next_mean = next_mean * ((next_count - 1) / next_count) + score / next_count
             if not math.isfinite(next_mean):
                 raise FloatingPointError("non-finite running mean; parameters unchanged")
+        if self.config.get("update_mode") == "ppo_clip" and examples:
+            result = self._update_ppo(examples, trajectory_count, offset)
+            self.return_mean, self.return_count = next_mean, next_count
+            return result
         loss, gradients = self._loss_gradients(examples, actor_normalizer=trajectory_count,
                                               baseline_offset=offset)
         if not examples:
@@ -282,6 +325,11 @@ class NeuralPolicy:
             # nothing. There is no optimizer step when there are no decisions.
             self.return_mean, self.return_count = next_mean, next_count
             return {"decisions": 0, "loss": loss, "gradient_norm": 0.0}
+        norm = self._apply_gradients(loss, gradients)
+        self.return_mean, self.return_count = next_mean, next_count
+        return {"decisions": len(examples), "loss": loss, "gradient_norm": norm}
+
+    def _apply_gradients(self, loss, gradients):
         norm = math.sqrt(sum(float(np.sum(g * g)) for g in gradients.values()))
         if not math.isfinite(loss) or not math.isfinite(norm):
             raise FloatingPointError("non-finite loss or gradient; parameters unchanged")
@@ -294,11 +342,43 @@ class NeuralPolicy:
             mhat = self.m[key] / (1 - 0.9 ** self.steps)
             vhat = self.v[key] / (1 - 0.999 ** self.steps)
             self.params[key] -= self.config["learning_rate"] * mhat / (np.sqrt(vhat) + 1e-8)
-        self.return_mean, self.return_count = next_mean, next_count
-        return {"decisions": len(examples), "loss": loss, "gradient_norm": norm}
+        return norm
+
+    def _update_ppo(self, examples, trajectory_count, offset):
+        # The trainer collects every pending trajectory under unchanged params.
+        # Recompute the behavior policy once before ANY optimizer step; never
+        # refresh old values/log-probabilities/advantages during these epochs.
+        def frozen_prediction(decision):
+            forward = self._forward(decision)
+            return float(forward[5][decision.selected]), forward[4]
+        old = tuple(frozen_prediction(d) for d, _ in examples)
+        old_log_probs = tuple(log_prob for log_prob, _ in old)
+        old_values = tuple(value for _, value in old)
+        advantages = tuple(score - offset - value for (_, score), value in zip(examples, old_values))
+        del old
+        backup = ({k: v.copy() for k, v in self.params.items()},
+                  {k: v.copy() for k, v in self.m.items()},
+                  {k: v.copy() for k, v in self.v.items()}, self.steps)
+        try:
+            for _ in range(self.config["update_epochs"]):
+                loss, gradients = self._loss_gradients(
+                    examples, advantages, actor_normalizer=trajectory_count,
+                    baseline_offset=offset, old_log_probs=old_log_probs)
+                norm = self._apply_gradients(loss, gradients)
+                if not all(np.isfinite(v).all() for group in (self.params, self.m, self.v) for v in group.values()):
+                    raise FloatingPointError("non-finite PPO optimizer state")
+        except (FloatingPointError, OverflowError, ValueError):
+            self.params, self.m, self.v, self.steps = backup
+            raise
+        return {"decisions": len(examples), "loss": loss, "gradient_norm": norm,
+                "optimizer_steps": self.config["update_epochs"]}
+
+    @property
+    def algorithm(self):
+        return "generic_json_ppo_clip" if self.config.get("update_mode") == "ppo_clip" else "generic_json_reinforce"
 
     def checkpoint(self):
-        return {"schema_version": 1, "algorithm": "generic_json_reinforce",
+        return {"schema_version": 1, "algorithm": self.algorithm,
                 "config": dict(self.config), "steps": self.steps,
                 "rng": self.rng.bit_generator.state,
                 **({"return_baseline": {"mean": self.return_mean, "count": self.return_count}}
@@ -308,9 +388,13 @@ class NeuralPolicy:
 
     @classmethod
     def from_checkpoint(cls, data):
-        if data.get("schema_version") != 1 or data.get("algorithm") != "generic_json_reinforce":
+        if data.get("schema_version") != 1 or data.get("algorithm") not in ("generic_json_reinforce", "generic_json_ppo_clip"):
             raise ValueError("unsupported checkpoint")
+        if data["algorithm"] == "generic_json_ppo_clip" and not {"update_mode", "ppo_clip", "update_epochs"} <= data["config"].keys():
+            raise ValueError("PPO checkpoint requires explicit update configuration")
         result = cls(**data["config"])
+        if data["algorithm"] != result.algorithm:
+            raise ValueError("checkpoint algorithm and update mode differ")
         if result.config.get("baseline_offset") == "prior_batch_mean":
             state = data.get("return_baseline")
             if not isinstance(state, dict) or set(state) != {"mean", "count"}:
@@ -334,6 +418,8 @@ class NeuralPolicy:
                 target[key] = array
         if isinstance(data["steps"], bool) or not isinstance(data["steps"], int) or data["steps"] < 0:
             raise ValueError("invalid optimizer step")
+        if data["steps"] % result.config.get("update_epochs", 1):
+            raise ValueError("checkpoint cannot contain a partial PPO epoch batch")
         result.steps = data["steps"]
         result.rng.bit_generator.state = data["rng"]
         return result
