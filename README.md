@@ -95,6 +95,10 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 
 
 `env.neural_train` 使用小型 NumPy 网络与 REINFORCE，从玩家可见的 JSON 观察和候选动作学习共享特征。保留原始终局总分，不添加动作奖励。先对阵固定随机对手，再用保留种子比较训练前后模型。安装、续跑及实验口径见 [神经网络训练说明](docs/neural-learning.md)。
 
+## 完整公开棋盘输入
+
+可选的 `PublicObservationAdapter`（schema v2）补齐完整静态地图、结构化行列坐标和候选动作的公开空间上下文，保持原始动作与迷雾规则。已有检查点仍使用原格式；新接口说明见 [完整公开地图与坐标](docs/public-observation.md)。
+
 ## 环境接口
 
 | 方法 | 作用 |
