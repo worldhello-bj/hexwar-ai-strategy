@@ -144,6 +144,7 @@ class Game:
         if not self.started:
             return
         self.second = int(time.time() - self.t0)
+        self.same_hex_engage()      # 手册 4.11 同格交战自动裁决
         self._expire_states()
 
     def advance(self, seconds):
@@ -152,6 +153,7 @@ class Game:
             return self.second
         self.second += seconds
         self.t0 = time.time() - self.second
+        self.same_hex_engage()      # 手册 4.11 同格交战自动裁决
         self._expire_states()
         return self.second
 
@@ -213,34 +215,61 @@ class Game:
             return 0, why
         base = {1: 60.0, 2: 12.0, 3: 6.0, 4: 999.0}.get(unit.typeid, 60.0)
         terr = self.terrain_kind(to_id)
+        # 手册 4.6.3(1)：人员被压制后不能机动；需等压制解除后才能继续（4.1.1(6)）。
+        if unit.typeid in (1, 2) and unit.stunned(self.second):
+            return 0, "被压制不能机动"
         if unit.typeid == 1:
             if terr == "过河":
-                base *= 2.0            # 步兵过河 1/2 速
+                base *= 2.0            # 手册 4.1.1(1) 步兵过河降为 1/2
             dh = abs(self.elevation(to_id) - self.elevation(from_id))
             if dh // 20 >= 4:
-                base *= 2.0
-            if unit.ste == 4:          # 冲锋
+                base *= 2.0            # 手册 4.1.1(3) 坡度等级 ≥4 → 1/2 速
+            if unit.ste == 4:          # 手册 4.1.1(4) 冲锋 = 越野速度 4 倍
+                if unit.fatigued(self.second):
+                    return 0, "疲劳状态下不能继续冲锋（手册 4.1.1(4)）"
                 base /= 4.0
-                if random.random() < 0.5:
-                    unit.fatigued_until = self.second + FATIGUE_SEC
+                self._charge_meters(unit, self.CHARGE_FATIGUE_M)
         elif unit.typeid == 2:
             if terr == "丛林地":
-                base *= 2.0
+                base *= 2.0            # 手册 4.1.2(1)
             elif terr == "居民地":
                 base *= 3.0
             dh = abs(self.elevation(to_id) - self.elevation(from_id))
+            if dh > 100:
+                return 0, "高差>100 米，车辆无法进入并通过（手册 4.1.2(3)）"
             lvl = dh // 20
-            if lvl >= 6:
-                return 0, "高差过大无法通过"
             if lvl >= 1:
                 base *= (lvl + 1)
         # 堆叠限制：同格本方地面单位不超过 4
+        # 手册 4.2：同格本方地面单位不可超过 4 个（已上车的步兵不占格位）
         n = sum(1 for u in self.units.values()
                 if u.alive() and u.color == unit.color and u.pos == to_id
-                and u.typeid in (1, 2) and u.id != unit.id)
+                and u.typeid in (1, 2) and u.id != unit.id
+                and not u.detail.get("carrier"))
         if n >= 4:
             return 0, "违反堆叠规则"
         return base, ""
+
+    CHARGE_FATIGUE_M = 200      # 手册 4.1.1(4)：每冲锋 200 米转为疲劳状态
+    # 手册 4.3(2)：空中单位和炮兵不能执行夺控任务
+    NO_CAPTURE_HINT = ("自行火炮", "榴弹炮", "加农炮", "火箭炮", "迫击炮", "炮兵")
+    # 手册 4.11(3)：同格交战的自动攻击间隔为正常攻击间隔的 1/3
+    ATTACK_INTERVAL_SEC = 10
+    ENGAGE_INTERVAL_SEC = max(1, ATTACK_INTERVAL_SEC // 3)
+
+    def _charge_meters(self, unit, meters):
+        """手册 4.1.1(4)：人员每冲锋 200 米转为疲劳状态。
+
+        一格按 200 米计，因此冲锋一格即触发；疲劳后会阻止继续冲锋（见 step_seconds）。
+        移除时机见 4.1.1(5)：停止机动并等待一个疲劳移除时长。
+        """
+        acc = unit.detail.get("charged_m", 0) + meters
+        if acc >= self.CHARGE_FATIGUE_M:
+            acc -= self.CHARGE_FATIGUE_M
+            unit.fatigued_until = self.second + FATIGUE_SEC
+            self.record("%s 冲锋达到 %d 米，转入疲劳"
+                        % (unit.army or unit.name, self.CHARGE_FATIGUE_M))
+        unit.detail["charged_m"] = acc
 
     # ---------------- 通视 / 观察 ----------------
     def _los_blocks(self, mapid, endpoint_ids):
@@ -332,7 +361,11 @@ class Game:
         if terr in ("居民地", "丛林地"):
             rng *= 0.5
         if tgt.ste == 2 or tgt.detail.get("hidden"):
-            rng *= 0.5
+            # 手册 4.5(1)：掩蔽状态下被观察距离减半。
+            # 例外（手册 4.8(1)/4.10(2)）：无人机、巡飞弹对**掩蔽中的车辆**侦察距离
+            # 不受影响，只有掩蔽中的**人员**才减半。
+            if not (obs.typeid == 3 and tgt.typeid == 2):
+                rng *= 0.5
         return rng
 
     def can_observe(self, obs_id, tgt_id):
@@ -357,8 +390,13 @@ class Game:
         return time.strftime("%Y/%m/%d %H:%M:%S")
 
     def apply_city_capture(self, unit):
-        """夺控：到达夺控点格且该格及相邻 6 格无敌方地面单位。"""
+        """夺控：到达夺控点格且该格及相邻 6 格无敌方地面单位。
+
+        手册 4.3(2)：空中单位和炮兵不能执行夺控任务。
+        """
         if unit.typeid == 3:
+            return None
+        if any(k in (unit.name or "") for k in self.NO_CAPTURE_HINT):
             return None
         for c in self.cities:
             if c["pos"] != unit.pos:
@@ -366,7 +404,8 @@ class Game:
             zone = [c["pos"]] + G.neighbors(c["pos"])
             enemy = [u for u in self.units.values()
                      if u.alive() and u.color and unit.color and u.color != unit.color
-                     and u.typeid in (1, 2) and u.pos in zone]
+                     and u.typeid in (1, 2) and u.pos in zone
+                     and not u.detail.get("carrier")]
             if enemy:
                 return None
             c["flag"] = unit.color or c.get("flag")
@@ -448,23 +487,33 @@ class Game:
         # 应用战果
         msg = []
         kills = r["kills"]
+        # 手册 4.6.3(2) 需要知道目标"原本是否已处于被压制"
+        was_stunned = t.stunned(self.second)
         if kills > 0:
             t.blood -= kills
             if t.blood < 0:
                 t.blood = 0
             msg.append("消灭 %d" % kills)
-            # 车辆被消灭，车内人员同损（手册 4.6.3）
+            # 车辆被消灭，车内人员同损（手册 4.6.3(3)）
             if t.typeid == 2:
                 for s in self.units.values():
                     if s.alive() and s.id != t.id and s.pos == t.pos and s.typeid == 1 \
-                            and s.color == t.color and s.blood > 0 and s.detail.get("carrier") == t.id:
+                            and s.color == t.color and s.blood > 0 \
+                            and s.detail.get("carrier") == t.id:
                         s.blood = max(0, s.blood - kills)
         if r["suppressed"]:
             t.keep = 1
             t.stunned_until = self.second + SUPPRESS_SEC
             msg.append("压制")
-        if t.typeid == 2 and kills > 0:
-            pass  # 表4 有效战果对车辆同时造成压制
+        # 手册 4.6.3(2)：被压制的人员再次被裁决压制，则损失 1 个兵力，剩余兵力仍
+        # 保持被压制。该条针对的是"再次压制"（本次未产生新伤亡）；若本次有伤亡，
+        # 按 4.6.1 的互斥口径只计伤亡，不叠加本条，否则会重复计数。
+        if t.typeid == 1 and was_stunned and t.blood > 0 \
+                and r["suppressed"] and kills == 0:
+            t.blood -= 1
+            t.keep = 1
+            t.stunned_until = self.second + SUPPRESS_SEC
+            msg.append("再次被压制，额外损失 1 个班（手册 4.6.3(2)）")
         if t.blood <= 0:
             msg.append("已被消灭")
         a.att = 1
@@ -473,6 +522,107 @@ class Game:
                                               "；".join(r["detail"]), "，".join(msg) or "无效"))
         self.dirty = True
         return r, None
+
+    # ---------------- 手雷 / 同格交战 ----------------
+    def grenade(self, obj_id, target_hex):
+        """手册 4.7 手雷：对目标格内**所有人员目标（含己方）**各裁决一次。
+
+        - 不能摧毁空中单位（typeid 3）和掩体（typeid 4）；
+        - 裁决有效则损失 1 个班，剩余兵力被压制（4.7(3)）；
+        - 若目标本已被压制，再次裁决有效仍损失 1 个班（4.7(4) "二次压制"）。
+        """
+        a = self.units.get(obj_id)
+        if not a or not a.alive():
+            return None, "投掷单位不存在"
+        if a.typeid != 1:
+            return None, "只有人员单位可投掷手雷（手册 3.15）"
+        if a.stunned(self.second):
+            return None, "压制状态下不能射击（手册 4.6.3(1)）"
+        if 144 not in a.wz:
+            return None, "该单位没有手雷"
+        if not self.hex(target_hex):
+            return None, "目标格不存在"
+        if G.distance(a.pos, target_hex) > 1:
+            return None, "手雷投掷范围通常为相邻格（手册 3.15）"
+        a.ammo["a5"] = max(0, a.ammo.get("a5", 0) - 1)
+        if a.ammo.get("a5", 0) <= 0:
+            a.wz = [x for x in a.wz if x != 144]
+
+        terr = self.terrain_kind(target_hex)
+        out = []
+        for u in list(self.units.values()):
+            if not u.alive() or u.pos != target_hex:
+                continue
+            if u.typeid == 3:
+                out.append((u, "空中单位不能被手雷摧毁（手册 4.7(2)）"))
+                continue
+            if u.typeid == 4:
+                out.append((u, "掩体不能被手雷摧毁（手册 4.7(2)）"))
+                continue
+            if u.typeid != 1:
+                out.append((u, "手雷只对人员单位裁决"))
+                continue
+            roll = crt.roll2d6()
+            mod = crt.situational_mod(
+                terrain=terr,
+                target_hidden=(u.ste == 2 or u.detail.get("hidden")),
+            )
+            corrected = roll + mod
+            v = crt.result_grenade(corrected)
+            if v and v >= 1:
+                second = u.stunned(self.second)
+                u.blood = max(0, u.blood - 1)
+                u.keep = 1
+                u.stunned_until = self.second + SUPPRESS_SEC
+                out.append((u, "损失 1 个班%s，剩余被压制（手册 4.7(%d)）"
+                            % ("（二次压制）" if second else "", 4 if second else 3)))
+            else:
+                out.append((u, "无效"))
+            if u.blood <= 0:
+                out.append((u, "已被消灭"))
+
+        self.record("手雷：%s → %s（%s）" % (
+            a.army or a.name, G.hexid(target_hex), "；".join(
+                "%s %s" % (u.army or u.name, m) for u, m in out) or "格内无目标"))
+        self.dirty = True
+        return out, None
+
+    def same_hex_engage(self):
+        """手册 4.11 同格交战。
+
+        一方地面棋子进入另一方地面棋子所在格即自动触发；格内棋子自动交战、
+        被攻击者自动还击，攻击间隔为正常攻击间隔的 1/3。这里实现为
+        "每次推进时钟最多结算一轮"，攻击顺序按 uid（近似"进入该格的先后"）。
+        手册 4.11(5)：AI 控制的棋子不发起同格交战。
+        """
+        if self.second - getattr(self, "_last_engage", -10 ** 9) < self.ENGAGE_INTERVAL_SEC:
+            return []
+        self._last_engage = self.second
+
+        by_hex = {}
+        for u in self.units.values():
+            # 已上车的步兵随车机动，不单独参与同格交战
+            if u.alive() and u.typeid in (1, 2) and not u.detail.get("carrier"):
+                by_hex.setdefault(u.pos, []).append(u)
+
+        rounds = []
+        for pos, us in by_hex.items():
+            if len({u.color for u in us if u.color}) < 2:
+                continue
+            order = sorted(us, key=lambda x: (x.uid or 0, x.id))
+            for atk in order:
+                if not atk.alive() or atk.ai:
+                    continue
+                for dfn in order:
+                    if dfn is atk or not dfn.alive() or dfn.color == atk.color:
+                        continue
+                    r, err = self.attack(atk.id, dfn.id, dist=0)
+                    rounds.append((atk.id, dfn.id, err or r.get("result")))
+                    break
+        if rounds:
+            self.record("同格交战：%d 次裁决（间隔 %d 秒，手册 4.11(3)）"
+                        % (len(rounds), self.ENGAGE_INTERVAL_SEC))
+        return rounds
 
     # ---------------- ObjAjax 快照 ----------------
     def obj_state(self, u):

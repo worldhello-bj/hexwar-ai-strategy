@@ -231,6 +231,7 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
     detail.append("随机数 %d，状态修正 %+d → %d" % (roll, smod, corrected))
 
     # 4) 装甲修正（表5，仅对车辆战损）
+    corrected_raw = corrected        # 手册 4.6.2(5) 需保留"修正前"的战果
     if target.get("typeid") == 2 and not is_air_target:
         am = armor_mod(corrected, target.get("armor", "无装甲"))
         if am:
@@ -249,12 +250,17 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
                     detail=detail, table=table_used)
 
     if target.get("typeid") == 2 or weapon_name == "步兵轻武器":
-        kills = result_vehicle(lvl, shooter.get("units", 1), corrected)
-        kills = max(0, kills)
-        suppressed = kills > 0
+        kills_raw = max(0, result_vehicle(lvl, shooter.get("units", 1), corrected_raw))
+        kills = max(0, result_vehicle(lvl, shooter.get("units", 1), corrected))
+        # 手册 4.6.2(4)(5)：对车辆只要产生过有效战果（含被防护力修正为 0），
+        # 就同时造成压制；这是车辆与人员不同的地方。
+        suppressed = kills_raw > 0 or kills > 0
+        if kills_raw > 0 and kills == 0:
+            detail.append("战果被防护力修正为 0 → 仅压制（手册 4.6.2(5)）")
         detail.append("表4 → 消灭 %d 车" % kills)
         return dict(result=(kills or INVALID), kills=kills, suppressed=suppressed,
-                    roll=roll, level=lvl, detail=detail, table=table_used)
+                    kills_raw=kills_raw, roll=roll, level=lvl, detail=detail,
+                    table=table_used)
 
     # 人员：表6 + 表7
     rf = fix_person_result(corrected)
@@ -268,6 +274,8 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
                     detail=detail, table=table_used)
     kills = int(v) if v else 0
     detail.append("表6 → 消灭 %d 班" % kills)
+    # 手册 4.6.1：人员战果为"消灭 n 个班 / 无效 / 压制"三者之一，消灭与压制**互斥**。
+    # （车辆才规定"产生有效战果同时造成压制"，见 4.6.2(4)。）
     return dict(result=(kills or INVALID), kills=kills,
-                suppressed=(kills > 0), roll=roll, level=lvl,
+                suppressed=False, roll=roll, level=lvl,
                 detail=detail, table=table_used)

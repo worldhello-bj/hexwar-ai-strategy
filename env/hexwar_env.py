@@ -41,6 +41,9 @@ CAPTURE_SEC = 30       # 夺控判定耗时
 HIDE_SEC = 10          # 隐蔽/解除隐蔽
 WAIT_SEC = 10          # 主动等待的默认时长
 LOAD_SEC = 30          # 上/下车
+GRENADE_SEC = 10       # 投掷手雷
+# 手册未给出单车载员数，此处按堆叠上限（手册 4.2）假定为 4
+VEHICLE_SEATS = 4
 
 MAX_BLOOD = {}         # 初始兵力缓存（按 data 记）
 
@@ -100,6 +103,8 @@ class HexwarEnv:
                 "armor": u.armor,
                 "hidden": 1 if u.ste == 2 else 0,
                 "ste": u.ste,
+                "loaded_into": u.detail.get("carrier"),
+                "carrying": list(u.detail.get("carried") or []),
                 "weapons": [self._weapon_view(u, wid) for wid in u.wz],
                 "can_observe_range": self._observe_range(u),
             })
@@ -181,6 +186,7 @@ class HexwarEnv:
         acts = []
         units = [u for u in g.units.values()
                  if u.alive() and u.color == self.side
+                 and not u.detail.get("carrier")      # 已上车的不再独立行动
                  and (unit_id is None or u.id == unit_id)]
         for u in units:
             if u.stunned(g.second):
@@ -222,9 +228,27 @@ class HexwarEnv:
             for c in g.cities:
                 if c["pos"] == u.pos and c.get("flag") != self.side:
                     acts.append({"type": "capture", "unit": u.id})
-            # 隐蔽切换
-            acts.append({"type": "hide", "unit": u.id,
-                         "on": 0 if u.ste == 2 else 1})
+            # 隐蔽切换（手册 4.5(2)：打击间隔期间不允许掩蔽）
+            if not self._in_attack_gap(u):
+                acts.append({"type": "hide", "unit": u.id,
+                             "on": 0 if u.ste == 2 else 1})
+            # 上车（手册 3.3）：人员与车辆同格
+            if u.typeid == 1:
+                for c in g.units.values():
+                    if (c.alive() and c.typeid == 2 and c.color == u.color
+                            and c.pos == u.pos and not c.stunned(g.second)
+                            and not c.detail.get("carrier")
+                            and self._seat_left(c) > 0):
+                        acts.append({"type": "load", "unit": u.id, "carrier": c.id})
+            # 下车（手册 3.3）：由车辆下达
+            if u.typeid == 2 and u.detail.get("carried"):
+                acts.append({"type": "unload", "unit": u.id})
+            # 手雷（手册 3.15 / 4.7）：投掷范围通常为相邻格
+            if u.typeid == 1 and 144 in u.wz and u.ammo.get("a5", 0) > 0:
+                for nb in [u.pos] + list(G.neighbors(u.pos)):
+                    if g.hex(nb):
+                        acts.append({"type": "grenade", "unit": u.id,
+                                     "target_hex": nb})
             # 停止机动（清空 pos2）
             if u.pos2 and u.pos2 != u.pos:
                 acts.append({"type": "stop", "unit": u.id})
@@ -276,6 +300,9 @@ class HexwarEnv:
         if u is None and t != "wait":
             return None, 0.0, False, {"msg": "单位不存在", "seconds": 0}
         if t == "move":
+            if u.detail.get("carrier"):
+                return None, 0.0, False, {"msg": "已上车，随载具机动（手册 3.3）",
+                                          "seconds": 0}
             path = list(act.get("path") or [])
             # 允许 path 带上起点（legal_actions 给出的就是含起点的完整路径），
             # 起点自身不产生机动耗时。
@@ -292,6 +319,12 @@ class HexwarEnv:
                 u.rot = self._rot(cur, step_to)
                 total += sec
                 cur = step_to
+            # 手册 3.3：已完成上车的步兵随车辆机动
+            for pid in list(u.detail.get("carried") or []):
+                p = g.units.get(pid)
+                if p and p.alive():
+                    p.pos = u.pos
+                    p.pos2 = u.pos
             g.apply_city_capture(u)
             g.dirty = True
             return None, 0.0, False, {"msg": "机动 %d 格，耗时 %ds" % (len(path), total),
@@ -300,6 +333,7 @@ class HexwarEnv:
             r, err = g.attack(u.id, act.get("target"), weapon_id=int(act.get("weapon") or 0))
             if err:
                 return None, 0.0, False, {"msg": "射击失败：%s" % err, "seconds": 0}
+            u.detail["attacked_at"] = g.second
             return None, 0.0, False, {"msg": "射击 %s" % (r["result"],), "seconds": ATTACK_SEC}
         if t == "capture":
             c = g.apply_city_capture(u)
@@ -307,12 +341,60 @@ class HexwarEnv:
                 "msg": "夺控成功" if c else "夺控条件不满足",
                 "seconds": CAPTURE_SEC}
         if t == "hide":
+            if self._in_attack_gap(u):
+                return None, 0.0, False, {
+                    "msg": "打击间隔期间不允许掩蔽（手册 4.5(2)）", "seconds": 0}
             u.ste = 2 if act.get("on") else 0
-            return None, 0.0, False, {"msg": "隐蔽切换", "seconds": HIDE_SEC}
+            return None, 0.0, False, {"msg": "掩蔽切换", "seconds": HIDE_SEC}
+        if t == "load":
+            car = g.units.get(act.get("carrier"))
+            if not car or not car.alive():
+                return None, 0.0, False, {"msg": "载具不存在", "seconds": 0}
+            if car.pos != u.pos:
+                return None, 0.0, False, {"msg": "人与车必须同格（手册 3.3）", "seconds": 0}
+            if u.stunned(g.second) or car.stunned(g.second):
+                return None, 0.0, False, {
+                    "msg": "被压制不能上/下车（手册 4.6.3(1)）", "seconds": 0}
+            if self._seat_left(car) <= 0:
+                return None, 0.0, False, {"msg": "载员已满", "seconds": 0}
+            u.detail["carrier"] = car.id
+            car.detail.setdefault("carried", []).append(u.id)
+            return None, 0.0, False, {"msg": "上车完成", "seconds": LOAD_SEC}
+        if t == "unload":
+            if u.stunned(g.second):
+                return None, 0.0, False, {
+                    "msg": "车辆被压制时人员不能下车（手册 4.6.3(1)(4)）", "seconds": 0}
+            out = []
+            for pid in list(u.detail.get("carried") or []):
+                p = g.units.get(pid)
+                if not p or not p.alive():
+                    continue
+                p.pos = u.pos
+                p.pos2 = u.pos
+                p.detail.pop("carrier", None)
+                out.append(p.id)
+            u.detail["carried"] = []
+            return None, 0.0, False, {"msg": "下车 %d 个" % len(out), "seconds": LOAD_SEC}
+        if t == "grenade":
+            res, err = g.grenade(u.id, int(act.get("target_hex") or u.pos))
+            if err:
+                return None, 0.0, False, {"msg": "手雷失败：%s" % err, "seconds": 0}
+            return None, 0.0, False, {
+                "msg": "手雷裁决 %d 个目标" % len(res), "seconds": GRENADE_SEC}
         if t == "stop":
             u.pos2 = u.pos
             return None, 0.0, False, {"msg": "停止", "seconds": 0}
         return None, 0.0, False, {"msg": "未知动作", "seconds": 0}
+
+    # ---------------- 规则辅助 ----------------
+    def _in_attack_gap(self, u):
+        """手册 4.5(2)：棋子在打击间隔期间不允许掩蔽。"""
+        return (self.game.second - u.detail.get("attacked_at", -10 ** 9)) < ATTACK_SEC
+
+    @staticmethod
+    def _seat_left(car):
+        """车辆剩余载员位（手册未给载员数，按 VEHICLE_SEATS 假定）。"""
+        return VEHICLE_SEATS - len(car.detail.get("carried") or [])
 
     @staticmethod
     def _rot(a, b):
