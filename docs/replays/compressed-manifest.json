@@ -1,0 +1,18 @@
+[
+  {
+    "file": "ppo-100-seed-2700000-blue.json.gz",
+    "bytes": 66263,
+    "sha256": "31e2bdb21a18c5fe6f7e886b79ca9e0b16d76707ef47a83667651705b59855ff",
+    "restored_file": "ppo-100-seed-2700000-blue.json",
+    "restored_bytes": 1686760,
+    "restored_sha256": "1f4f9b71fd371dc1453461897ecf58a2c46fc7bb57daaf342bc738f59c885cfc"
+  },
+  {
+    "file": "ppo-100-seed-2700000-red.json.gz",
+    "bytes": 33149,
+    "sha256": "2c2069d12ed49431af346a01abb164532eec54508490fa59948c7ed52e99dfbf",
+    "restored_file": "ppo-100-seed-2700000-red.json",
+    "restored_bytes": 1238739,
+    "restored_sha256": "3ce03daf7d3fb111d18a40199ee079e1de90fdd73798045c8df400a3d6f9724d"
+  }
+]
