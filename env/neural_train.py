@@ -18,6 +18,7 @@ import numpy as np
 from .episode_api import TwoPlayerEpisode
 from .match_eval import SIDES, _positive_int, snapshot_manifest
 from .neural_policy import NeuralPolicy, Decision
+from .public_observation import PublicObservationAdapter
 
 
 def canonical(value):
@@ -45,7 +46,8 @@ class NeuralTrainer:
     construction and cannot subsequently be used as training input.
     """
     def __init__(self, snapshot, *, seed=0, train_seed_start=0, batch_episodes=4,
-                 episode_config=None, policy_config=None, heldout_seeds=(1000000, 1000001)):
+                 episode_config=None, policy_config=None, heldout_seeds=(1000000, 1000001),
+                 observation_schema=1):
         for name, value in (("seed", seed), ("train_seed_start", train_seed_start)):
             _positive_int(name, value, True)
         _positive_int("batch_episodes", batch_episodes)
@@ -60,7 +62,15 @@ class NeuralTrainer:
             raise ValueError("reserve 1 to 256 unique heldout seeds")
         for value in self.heldout_seeds:
             _positive_int("heldout seed", value, True)
+        if isinstance(observation_schema, bool) or not isinstance(observation_schema, int) or observation_schema not in (1, 2):
+            raise ValueError("observation_schema must be 1 or 2")
+        self.observation_schema = observation_schema
         self.policy_config = copy.deepcopy(policy_config or {})
+        representation = "public_v2_split" if observation_schema == 2 else "legacy_json"
+        if self.policy_config.get("representation", representation) != representation:
+            raise ValueError("policy representation does not match observation schema")
+        if observation_schema == 2:
+            self.policy_config["representation"] = representation
         self.policy = NeuralPolicy(seed=seed, **self.policy_config)
         self.initial_policy = copy.deepcopy(self.policy.checkpoint())
         self.episodes_attempted = 0
@@ -73,6 +83,7 @@ class NeuralTrainer:
             raise ValueError("synthetic snapshot changed")
         start = time.perf_counter()
         episode = TwoPlayerEpisode(self.snapshot, **self.episode_config)
+        public_episode = PublicObservationAdapter(episode) if self.observation_schema == 2 else episode
         status = episode.reset(seed=episode_seed)
         opponent_rng = random.Random(derived_seed(self.seed, episode_seed, learner_side, "opponent"))
         eval_rng = np.random.default_rng(derived_seed(self.seed, episode_seed, learner_side, "evaluation"))
@@ -80,14 +91,16 @@ class NeuralTrainer:
         decisions = 0
         while not status["terminated"] and not status["truncated"]:
             side = status["current_actor"]
-            candidates = episode.legal_actions(side)
+            candidates = (public_episode.candidate_views(side)
+                          if side == learner_side and self.observation_schema == 2
+                          else episode.legal_actions(side))
             if not candidates:
                 status = {**status, "terminated": False, "truncated": True,
                           "reason": "no_legal_actions", "winner": None, "final_scores": None,
                           "rewards": {s: 0 for s in SIDES}}
                 break
             if side == learner_side:
-                observation = episode.observe(side)
+                observation = public_episode.observe(side)
                 probs = policy.probabilities(observation, candidates)
                 entropies.append(float(-np.sum(probs * np.log(np.maximum(probs, 1e-300)))))
                 counts.append(len(candidates))
@@ -100,6 +113,8 @@ class NeuralTrainer:
             else:
                 # No opposing observation is ever fetched or supplied to learner.
                 action = opponent_rng.choice(candidates)
+            if side == learner_side and self.observation_schema == 2:
+                action = action["action"]
             status = episode.step(action, side=side)
             if not status["terminated"] and any(status["rewards"].values()):
                 raise ValueError("episode violated terminal-only reward contract")
@@ -166,6 +181,7 @@ class NeuralTrainer:
 
     def checkpoint(self):
         return copy.deepcopy({"schema_version": 1, "algorithm": "neural_terminal_reinforce_vs_random",
+            **({"observation_schema": 2} if self.observation_schema == 2 else {}),
             "snapshot": self.manifest, "seed": self.seed, "train_seed_start": self.train_seed_start,
             "batch_episodes": self.batch_episodes, "episode_config": self.episode_config,
             "policy_config": self.policy_config, "heldout_seeds": self.heldout_seeds,
@@ -183,7 +199,7 @@ class NeuralTrainer:
         data = json.loads(Path(path).read_text("utf-8"))
         if data.get("schema_version") != 1 or data.get("algorithm") != "neural_terminal_reinforce_vs_random":
             raise ValueError("unsupported checkpoint")
-        trainer = cls(snapshot, **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
+        trainer = cls(snapshot, observation_schema=data.get("observation_schema", 1), **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
                       "episode_config", "policy_config", "heldout_seeds")})
         if trainer.manifest != data["snapshot"]:
             raise ValueError("checkpoint snapshot does not match")
@@ -203,7 +219,7 @@ class NeuralTrainer:
         trainer.pending = [([Decision.from_dict(d) for d in row["decisions"]], row["return"]) for row in data["pending"]]
         if len(trainer.pending) >= trainer.batch_episodes or trainer.episodes_completed != trainer.updates * trainer.batch_episodes + len(trainer.pending):
             raise ValueError("invalid batch counters")
-        buckets = trainer.policy.config["buckets"]
+        buckets = trainer.policy.feature_width
         if any((features[0] >= buckets).any() for history, _ in trainer.pending for decision in history
                for features in (decision.observation, *decision.candidates)):
             raise ValueError("pending feature index exceeds policy buckets")
@@ -228,6 +244,8 @@ def main(argv=None):
     parser.add_argument("--buckets", type=int, default=2048)
     parser.add_argument("--hidden-dim", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
+    parser.add_argument("--observation-schema", type=int, choices=(1, 2), default=None,
+                        help="2 opts into public map/dynamic/candidate split; resume inherits saved schema")
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
@@ -236,9 +254,11 @@ def main(argv=None):
         parser.error("choose separate new checkpoint and report paths")
     try:
         trainer = NeuralTrainer.load(args.resume, args.snapshot) if args.resume else NeuralTrainer(
-            args.snapshot, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
+            args.snapshot, observation_schema=args.observation_schema or 1, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
             heldout_seeds=args.eval_seeds, episode_config={"max_seconds": args.max_seconds, "max_steps": args.max_steps},
             policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate})
+        if args.observation_schema is not None and args.observation_schema != trainer.observation_schema:
+            raise ValueError("requested observation schema differs from resumed checkpoint")
         start = time.perf_counter()
         records = trainer.train(args.episodes)
         evaluation = trainer.evaluate()
@@ -251,6 +271,7 @@ def main(argv=None):
         except ImportError:
             resources["process_peak_rss_bytes"] = None
         report = {"algorithm": "neural_terminal_reinforce_vs_random", "snapshot": trainer.manifest,
+                  "observation_schema": trainer.observation_schema,
                   "episode_config": trainer.episode_config, "policy_config": trainer.policy_config,
                   "training": records, "training_summary": summary(records), "evaluation": evaluation,
                   "episodes_attempted": trainer.episodes_attempted, "episodes_completed": trainer.episodes_completed,

@@ -77,6 +77,7 @@ def evaluate_checkpoint(checkpoint, snapshot, *, seed_start, seed_count):
     return {"schema_version": 1, "evaluation_type": "fresh_frozen_neural_vs_uniform_random",
             "source_checkpoint_sha256": hashlib.sha256(original_bytes).hexdigest(),
             "source_checkpoint_bytes": len(original_bytes), "snapshot": trainer.manifest,
+            "observation_schema": trainer.observation_schema,
             "episode_config": trainer.episode_config, "policy_config": trainer.policy.config,
             "training_seed_interval": {"start_inclusive": start, "end_exclusive": end},
             "training_episodes_attempted": trainer.episodes_attempted,

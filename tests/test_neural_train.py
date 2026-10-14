@@ -166,5 +166,137 @@ class NeuralTrainingTests(unittest.TestCase):
         self.assertEqual(json.loads(second.read_text())["episodes_attempted"], 4)
 
 
+class PublicNeuralTrainingTests(NeuralTrainingTests):
+    def trainer(self, **kwargs):
+        return super().trainer(observation_schema=2, **kwargs)
+
+    # These inherited tests intentionally exercise a legacy-only fake or width.
+    def test_only_own_observations_and_raw_terminal_targets(self):
+        from env.public_observation import PublicObservationAdapter
+        trainer = self.trainer(batch_episodes=2)
+        original_sample = trainer.policy.sample
+        original_step = TwoPlayerEpisode.step
+        selected, observations, batches = [], [], []
+        original_update = trainer.policy.update_batch
+        def sample(obs, candidates):
+            observations.append(copy.deepcopy(obs))
+            choice, record = original_sample(obs, candidates)
+            selected.append(choice["action"])
+            return choice, record
+        def step(episode, action, **kwargs):
+            self.assertNotIn("public_context", action)
+            if selected:
+                self.assertIs(action, selected.pop())
+            return original_step(episode, action, **kwargs)
+        def update(batch):
+            batches.extend(score for _, score in batch)
+            return original_update(batch)
+        with patch.object(trainer.policy, "sample", side_effect=sample), \
+                patch.object(trainer.policy, "update_batch", side_effect=update), \
+                patch.object(TwoPlayerEpisode, "step", new=step):
+            records = trainer.train(2)
+        self.assertEqual(batches, [r["status"]["final_scores"][r["learner_side"]] for r in records])
+        self.assertEqual([o["side"] for o in observations],
+                         [s for s, r in zip(SIDES, records) for _ in range(r["decisions"])])
+        for obs in observations:
+            self.assertEqual(obs["schema_version"], 2)
+            self.assertIn("enemy", obs["score"])
+            self.assertIn("board", obs)
+
+    def test_malformed_pending_features_rejected_at_load(self):
+        trainer = self.trainer(batch_episodes=2)
+        trainer.train(1)
+        data = trainer.checkpoint()
+        data["pending"][0]["decisions"][0]["observation"][0][0] = 64
+        path = self.root / "invalid.json"
+        path.write_text(json.dumps(data))
+        with self.assertRaises(ValueError):
+            NeuralTrainer.load(path, self.snapshot)
+
+    def test_truncation_never_updates_or_enters_pending(self):
+        trainer = NeuralTrainer(self.snapshot, observation_schema=2,
+                                episode_config={"max_seconds": 999, "max_steps": 2},
+                                policy_config={"buckets": 32, "hidden_dim": 4}, batch_episodes=1)
+        before = copy.deepcopy(trainer.policy.checkpoint())
+        records = trainer.train(2)
+        self.assertEqual(trainer.observation_schema, 2)
+        self.assertEqual(trainer.policy.config["representation"], "public_v2_split")
+        for row in records:
+            self.assertTrue(row["status"]["truncated"])
+            self.assertFalse(row["status"]["terminated"])
+            self.assertIsNone(row["status"]["final_scores"])
+            self.assertIsNone(row["own_score"])
+            self.assertEqual(row["status"]["rewards"], {s: 0 for s in SIDES})
+        self.assertEqual(trainer.updates, 0)
+        self.assertEqual(trainer.pending, [])
+        after = trainer.policy.checkpoint()
+        for key in ("params", "m", "v", "steps"):
+            self.assertEqual(before[key], after[key])
+
+    def test_schema_explicit_and_mismatch_rejected(self):
+        trainer = self.trainer()
+        self.assertEqual(trainer.checkpoint()["observation_schema"], 2)
+        self.assertEqual(trainer.policy.config["representation"], "public_v2_split")
+        for schema in (True, 0, 3, 2.0):
+            with self.assertRaises(ValueError):
+                NeuralTrainer(self.snapshot, observation_schema=schema)
+        with self.assertRaises(ValueError):
+            NeuralTrainer(self.snapshot, observation_schema=2,
+                          policy_config={"representation": "legacy_json"})
+        path = self.root / "schema.json"
+        trainer.save(path)
+        data = json.loads(path.read_text())
+        data.pop("observation_schema")
+        path.write_text(json.dumps(data))
+        with self.assertRaises(ValueError):
+            NeuralTrainer.load(path, self.snapshot)
+
+    def test_public_cli_resume_inherits_schema_and_rejects_override(self):
+        path, report = self.root / "v2.json", self.root / "v2-report.json"
+        args = ["--snapshot", str(self.snapshot), "--episodes", "1", "--buckets", "16",
+                "--hidden-dim", "4", "--max-seconds", "10", "--max-steps", "20"]
+        main(args + ["--observation-schema", "2", "--checkpoint", str(path), "--report", str(report)])
+        self.assertEqual(json.loads(report.read_text())["observation_schema"], 2)
+        resumed, report2 = self.root / "resumed.json", self.root / "resumed-report.json"
+        main(args + ["--resume", str(path), "--checkpoint", str(resumed), "--report", str(report2)])
+        self.assertEqual(json.loads(resumed.read_text())["observation_schema"], 2)
+        bad, bad_report = self.root / "bad.json", self.root / "bad-report.json"
+        with self.assertRaises(SystemExit):
+            main(args + ["--resume", str(path), "--observation-schema", "1",
+                         "--checkpoint", str(bad), "--report", str(bad_report)])
+        self.assertFalse(bad.exists())
+        self.assertFalse(bad_report.exists())
+
+    def test_hidden_changes_leave_encoded_policy_input_unchanged(self):
+        from engine.game import Game
+        from env.public_observation import PublicObservationAdapter
+        trainer = self.trainer()
+        with patch.object(Game, "can_observe", return_value=False):
+            episode = TwoPlayerEpisode(self.snapshot)
+            episode.reset(seed=1)
+            adapter = PublicObservationAdapter(episode)
+            before = trainer.policy._decision(adapter.observe("BLUE"), adapter.candidate_views("BLUE"))
+            hidden = episode._session.env.game.units["red"]
+            hidden.pos = 20008
+            hidden.blood = 9
+            hidden.ammo["a5"] = 999
+            hidden.detail["target"] = "secret"
+            after = trainer.policy._decision(adapter.observe("BLUE"), adapter.candidate_views("BLUE"))
+        self.assertEqual(before.to_dict(), after.to_dict())
+
+    def test_legacy_checkpoint_format_still_loads_without_new_config(self):
+        trainer = NeuralTrainer(self.snapshot, policy_config={"buckets": 16, "hidden_dim": 4},
+                                episode_config={"max_seconds": 10, "max_steps": 20})
+        trainer.train(1)
+        data = trainer.checkpoint()
+        self.assertNotIn("observation_schema", data)
+        self.assertNotIn("representation", data["policy"]["config"])
+        path = self.root / "old.json"
+        trainer.save(path)
+        restored = NeuralTrainer.load(path, self.snapshot)
+        self.assertEqual(restored.checkpoint(), data)
+        self.assertEqual(restored.observation_schema, 1)
+
+
 if __name__ == "__main__":
     unittest.main()

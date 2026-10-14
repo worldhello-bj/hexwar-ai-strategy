@@ -83,5 +83,22 @@ class NeuralCheckpointEvaluationTests(unittest.TestCase):
         self.assertTrue(json.loads(output.read_text())["models_and_source_checkpoint_unchanged"])
 
 
+class PublicNeuralCheckpointEvaluationTests(NeuralCheckpointEvaluationTests):
+    def setUp(self):
+        super().setUp()
+        self.trainer = NeuralTrainer(self.snapshot, observation_schema=2,
+            train_seed_start=10, batch_episodes=2, policy_config={"buckets": 16, "hidden_dim": 4},
+            episode_config={"max_seconds": 10, "max_steps": 20}, heldout_seeds=[90])
+        self.trainer.train(2)
+        self.path = self.root / "public-checkpoint.json"
+        self.trainer.save(self.path)
+
+    def test_frozen_evaluator_reports_checkpoint_schema(self):
+        report = evaluate_checkpoint(self.path, self.snapshot, seed_start=100, seed_count=1)
+        self.assertEqual(report["observation_schema"], 2)
+        self.assertEqual(report["policy_config"]["representation"], "public_v2_split")
+        self.assertTrue(report["models_and_source_checkpoint_unchanged"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -136,5 +136,93 @@ class NeuralPolicyTests(unittest.TestCase):
         self.assertNotIn("getattr(env", source)
 
 
+class SplitPublicPolicyTests(unittest.TestCase):
+    def fixture(self):
+        policy = NeuralPolicy(buckets=64, hidden_dim=3, representation="public_v2_split")
+        obs = {"schema_version": 2, "score": {"own": 3, "enemy": 7},
+               "time_left": 100, "board": {"cells": {"1": {"elevation": 2}}}}
+        candidates = [{"action": {"type": "move", "unit": "a", "path": [1, 2]},
+                       "public_context": {"path": [{"elevation": 1}, {"elevation": 2}]}},
+                      {"action": {"type": "wait"}, "public_context": {}}]
+        return policy, obs, candidates
+
+    def test_independent_banks_preserve_dynamic_features_with_320_cells(self):
+        import copy
+        policy, obs, candidates = self.fixture()
+        first = policy._decision(obs, candidates)
+        bigger = copy.deepcopy(obs)
+        bigger["board"]["cells"] = {str(i): {"elevation": i, "terrain_code": "8"} for i in range(320)}
+        second = policy._decision(bigger, candidates)
+        def bank(features, upper):
+            indices, values = features
+            keep = indices >= 64 if upper else indices < 64
+            return indices[keep], values[keep]
+        for a, b in zip(bank(first.observation, False), bank(second.observation, False)):
+            np.testing.assert_array_equal(a, b)
+        self.assertAlmostEqual(np.linalg.norm(bank(second.observation, False)[1]), 1)
+        self.assertAlmostEqual(np.linalg.norm(bank(second.observation, True)[1]), 1)
+        self.assertGreater(np.max(abs(policy.probabilities(obs, candidates) -
+                                     policy.probabilities(bigger, candidates))), 1e-10)
+        changed_score = copy.deepcopy(bigger)
+        changed_score["score"]["enemy"] = 8
+        third = policy._decision(changed_score, candidates)
+        self.assertFalse(np.array_equal(bank(second.observation, False)[1], bank(third.observation, False)[1]))
+        for a, b in zip(bank(second.observation, True), bank(third.observation, True)):
+            np.testing.assert_array_equal(a, b)
+
+    def test_board_cache_reuses_only_unchanged_public_content(self):
+        from unittest.mock import patch
+        policy, obs, candidates = self.fixture()
+        with patch.object(policy, "_features", wraps=policy._features) as features:
+            policy.probabilities(obs, candidates)
+            first_calls = features.call_count
+            policy.probabilities(obs, candidates)
+            self.assertEqual(features.call_count - first_calls, first_calls - 1)
+            previous = features.call_count
+            obs["board"]["cells"]["1"]["elevation"] = 9
+            changed = policy.probabilities(obs, candidates)
+            self.assertEqual(features.call_count - previous, first_calls)
+        restored = NeuralPolicy.from_checkpoint(policy.checkpoint())
+        np.testing.assert_array_equal(changed, restored.probabilities(obs, candidates))
+
+    def test_candidate_action_and_context_independent_and_original_identity(self):
+        import copy
+        policy, obs, candidates = self.fixture()
+        first = policy._decision(obs, candidates).candidates[0]
+        changed = copy.deepcopy(candidates)
+        changed[0]["public_context"] = {"path": [{"elevation": i} for i in range(320)]}
+        second = policy._decision(obs, changed).candidates[0]
+        for a, b in zip(first, second):
+            np.testing.assert_array_equal(a[first[0] < 64], b[second[0] < 64])
+        choice, record = policy.sample(obs, candidates)
+        self.assertIs(choice, candidates[record.selected])
+        with self.assertRaises(ValueError):
+            policy.probabilities({}, candidates)
+        with self.assertRaises(ValueError):
+            policy.probabilities(obs, [c["action"] for c in candidates])
+
+    def test_split_banks_gradients_and_checkpoint_roundtrip(self):
+        policy, obs, candidates = self.fixture()
+        decision = policy._decision(obs, candidates)
+        examples = [(decision, 5)]
+        advantages = [5 - policy._forward(decision)[4]]
+        _, gradients = policy._loss_gradients(examples, advantages)
+        # Both map/dynamic and action/context banks receive correct derivatives.
+        for name, feature in (("observation", decision.observation), ("action", decision.candidates[0])):
+            for bank in (False, True):
+                index = int(feature[0][(feature[0] >= 64) == bank][0])
+                old = policy.params[name][index, 0]
+                policy.params[name][index, 0] = old + 1e-5
+                plus = policy._loss_gradients(examples, advantages)[0]
+                policy.params[name][index, 0] = old - 1e-5
+                minus = policy._loss_gradients(examples, advantages)[0]
+                policy.params[name][index, 0] = old
+                self.assertAlmostEqual(gradients[name][index, 0], (plus - minus) / 2e-5, places=7)
+        policy.update_batch([([decision], 5)])
+        restored = NeuralPolicy.from_checkpoint(policy.checkpoint())
+        self.assertEqual(restored.checkpoint(), policy.checkpoint())
+        np.testing.assert_array_equal(policy.probabilities(obs, candidates), restored.probabilities(obs, candidates))
+
+
 if __name__ == "__main__":
     unittest.main()

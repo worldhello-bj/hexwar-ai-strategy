@@ -41,7 +41,7 @@ class Decision:
 
 class NeuralPolicy:
     def __init__(self, *, seed=0, buckets=2048, hidden_dim=32,
-                 learning_rate=0.001, gradient_clip=5.0, hash_seed=0):
+                 learning_rate=0.001, gradient_clip=5.0, hash_seed=0, representation="legacy_json"):
         for name, value in (("buckets", buckets), ("hidden_dim", hidden_dim)):
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ValueError(name + " must be a positive integer")
@@ -51,9 +51,15 @@ class NeuralPolicy:
         self.config = dict(seed=seed, buckets=buckets, hidden_dim=hidden_dim,
                            learning_rate=learning_rate, gradient_clip=gradient_clip,
                            hash_seed=hash_seed)
+        if representation not in ("legacy_json", "public_v2_split"):
+            raise ValueError("unsupported policy representation")
+        # Omit the legacy default to preserve the original checkpoint format.
+        if representation != "legacy_json":
+            self.config["representation"] = representation
+        self.feature_width = buckets * (2 if representation == "public_v2_split" else 1)
         self.rng = np.random.default_rng(seed)
-        self.params = {"observation": self.rng.normal(0, 0.05, (buckets, hidden_dim)),
-                       "action": self.rng.normal(0, 0.05, (buckets, hidden_dim)),
+        self.params = {"observation": self.rng.normal(0, 0.05, (self.feature_width, hidden_dim)),
+                       "action": self.rng.normal(0, 0.05, (self.feature_width, hidden_dim)),
                        "observation_bias": np.zeros(hidden_dim),
                        "action_bias": np.zeros(hidden_dim),
                        "policy": self.rng.normal(0, 0.05, 3 * hidden_dim),
@@ -134,9 +140,38 @@ class NeuralPolicy:
         value = float(obs @ p["value"] + p["value_bias"][0])
         return obs, actions, joint, probs, value, log_probs
 
+    def _split_features(self, first, second, *, cache_second=False):
+        """Separate learned banks with independent unit norms, no joint norm.
+
+        A board of any size therefore cannot change or collide with the dynamic
+        features. The same generic operation separates action from its supplied
+        public context. It introduces no distance, target or tactical features.
+        """
+        left = self._features(first)
+        if cache_second:
+            # Cache only a canonical immutable key and derived features. Input
+            # mutation invalidates the cache; no engine state or RNG is cached.
+            key = json.dumps(second, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            if key != getattr(self, "_board_cache_key", None):
+                self._board_cache_features = self._features(second)
+                self._board_cache_key = key
+            right = self._board_cache_features
+        else:
+            right = self._features(second)
+        return (np.concatenate((left[0], right[0] + self.config["buckets"])),
+                np.concatenate((left[1], right[1])))
+
     def _decision(self, observation, candidates, selected=0):
         if not candidates:
             raise ValueError("policy needs at least one supplied candidate")
+        if self.config.get("representation", "legacy_json") == "public_v2_split":
+            if not isinstance(observation, dict) or observation.get("schema_version") != 2 or "board" not in observation:
+                raise ValueError("public_v2_split requires a schema-v2 public observation")
+            if any(not isinstance(a, dict) or set(a) != {"action", "public_context"} for a in candidates):
+                raise ValueError("public_v2_split requires public candidate views")
+            dynamic = {k: v for k, v in observation.items() if k != "board"}
+            return Decision(self._split_features(dynamic, observation["board"], cache_second=True),
+                            tuple(self._split_features(a["action"], a["public_context"]) for a in candidates), selected)
         return Decision(self._features(observation), tuple(self._features(a) for a in candidates), selected)
 
     def probabilities(self, observation, candidates):
