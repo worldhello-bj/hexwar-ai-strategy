@@ -6,8 +6,9 @@ import re
 import json
 import requests
 
-BASE = "http://www.hexwar.cn/WARGAMEAI/"
-B7 = "http://www.hexwar.cn/WARGAMEAI7/"
+_HOST = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn")
+BASE = _HOST + "/WARGAMEAI/"
+B7 = _HOST + "/WARGAMEAI7/"
 RAW = r"d:\兵推\snapshot\raw3"
 os.makedirs(RAW, exist_ok=True)
 LOG = r"d:\兵推\analysis\rule_probe.md"

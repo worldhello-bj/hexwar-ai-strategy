@@ -8,7 +8,7 @@ import pickle
 import requests
 from bs4 import BeautifulSoup
 
-BASE = "http://www.hexwar.cn/WARGAMEAI/"
+BASE = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn") + "/WARGAMEAI/"
 OUTDIR = r"d:\兵推\snapshot"
 os.makedirs(OUTDIR, exist_ok=True)
 LOG = r"d:\兵推\analysis\explore.md"

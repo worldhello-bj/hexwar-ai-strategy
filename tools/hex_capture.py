@@ -10,8 +10,10 @@ import json
 import math
 import requests
 
-BASE = "http://www.hexwar.cn/WARGAMEAI/"
-BASE7 = "http://www.hexwar.cn/WARGAMEAI7/"
+# 主机可用 HEXWAR_BASE 覆盖，以便指向比赛服（默认练习服）
+_HOST = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn")
+BASE = _HOST + "/WARGAMEAI/"
+BASE7 = _HOST + "/WARGAMEAI7/"
 SNAP = r"d:\兵推\snapshot"
 RAW = os.path.join(SNAP, "raw")
 os.makedirs(RAW, exist_ok=True)

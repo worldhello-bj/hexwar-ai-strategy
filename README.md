@@ -63,6 +63,9 @@ py -3.13 tools/selftest_engine.py
 
 # 5) 按手册逐条验证规则实现（当前 23/23 通过）
 py -3.13 tools/verify_rules.py
+
+# 6) 校验裁决表数值与手册一致（当前 26/26 通过）
+py -3.13 tools/verify_tables.py
 ```
 
 最小代码闭环：
@@ -119,7 +122,9 @@ $env:HEXWAR_SNAP="D:\你的快照目录"
 | 练习服务器 1 | `http://www.hexwar.cn/WARGAMEAI` | 练习模式 |
 | 练习服务器 2 | `http://43.143.209.228/WARGAMEAI` | **比赛模式** |
 
-实测两台客户端**是同一份**（`main.html` 均为 7,759 字节 / GBK / 同标题），
+实测两台客户端**是同一份**（`main.html` 均为 7,759 字节 / GBK / 同标题）。
+`tools/compare_servers.py` 逐字节比对 17 项公开资源：**16 项 sha1 完全相同**，
+唯一不同的是 `GetServerTime.asp`（本就只是当前时间）。
 所以本仓库的离线客户端对两台都适用。但**比赛模式**有额外限制：
 禁用 Ctrl 批量机动、仅无人装备可使用 AI。
 
@@ -146,7 +151,7 @@ $env:HEXWAR_SNAP="D:\你的快照目录"
 | `engine/` | 裁决引擎：几何、装备库、裁决表、对局状态机 |
 | `env/` | 策略搜索环境、参考智能体、跑分台 |
 | `offline/` | 官方前端离线运行所需的桩服务器（需自备前端资源） |
-| `tools/` | 采集、解析、构建、自检脚本（含站点探测 `probe_site.py`、指令词汇提取 `extract_commands.py`、规则验证 `verify_rules.py`） |
+| `tools/` | 采集、解析、构建、自检脚本（含站点探测 `probe_site.py`、端点勘察 `probe_endpoints.py`、双服比对 `compare_servers.py`、指令词汇 `extract_commands.py`、规则验证 `verify_rules.py`、裁决表校验 `verify_tables.py`） |
 | `samples/demo/` | 自带合成想定（原创数据） |
 | `skill/` | AI 助手用的 skill 包 |
 | `docs/` | 接口对照表、裁决引擎说明、离线客户端说明、[站点探测记录](docs/站点探测.md)、[规则符合性对照](docs/规则符合性.md) |

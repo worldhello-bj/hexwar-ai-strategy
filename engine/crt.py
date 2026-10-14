@@ -127,6 +127,15 @@ def result_grenade(roll):
     return T["grenade_result"].get(str(min(max(int(roll), 2), 12)), 0)
 
 
+def armor_known(armor):
+    """该装甲级别是否在手册表5 中有定义。
+
+    官方软件（`Caijue.asp` 模板）还会出现「反应装甲」，但**手册表5 没有它**，
+    因此其修正值不可知。这种情况必须显式报出，不能静默当成 0。
+    """
+    return armor in T["table5"]["by_armor"]
+
+
 def armor_mod(corrected_roll, armor):
     """表5：按防护力对（车辆）战损随机数再做修正。"""
     tbl = T["table5"]["by_armor"].get(armor)
@@ -233,6 +242,9 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
     # 4) 装甲修正（表5，仅对车辆战损）
     corrected_raw = corrected        # 手册 4.6.2(5) 需保留"修正前"的战果
     if target.get("typeid") == 2 and not is_air_target:
+        if not armor_known(target.get("armor", "无装甲")):
+            detail.append("⚠ 装甲级别「%s」不在手册表5 中，未作修正（需人工确认）"
+                          % target.get("armor"))
         am = armor_mod(corrected, target.get("armor", "无装甲"))
         if am:
             corrected += am

@@ -8,11 +8,14 @@ import pickle
 import requests
 from bs4 import BeautifulSoup
 
-BASE = "http://www.hexwar.cn/WARGAMEAI/"
-BASE7 = "http://www.hexwar.cn/WARGAMEAI7/"
-OUTDIR = r"d:\兵推\snapshot"
+# 主机可用 HEXWAR_BASE 覆盖，以便指向比赛服（默认练习服）
+_HOST = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn")
+BASE = _HOST + "/WARGAMEAI/"
+BASE7 = _HOST + "/WARGAMEAI7/"
+# 输出目录与日志也可用环境变量覆盖，便于把两台服务器的抓取分开存放
+OUTDIR = os.environ.get("HEXWAR_OUT", r"d:\兵推\snapshot")
 os.makedirs(OUTDIR, exist_ok=True)
-LOG = r"d:\兵推\analysis\login_step1.md"
+LOG = os.environ.get("HEXWAR_LOG", r"d:\兵推\analysis\login_step1.md")
 
 USERNAME = os.environ.get("HEXWAR_USER", "")
 PASSWORD = os.environ.get("HEXWAR_PASS", "")
