@@ -232,7 +232,7 @@ class Bridge:
         if not u or not mid.isdigit():
             return b"0", "text/html; charset=gbk"
         to_id = int(mid)
-        sec, why = self.g.step_seconds(u, u.pos, to_id)
+        sec, why = self.g.commit_step(u, u.pos, to_id)
         if sec <= 0:
             return b"0", "text/html; charset=gbk"
         u.pos = to_id

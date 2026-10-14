@@ -9,9 +9,12 @@ import re
 import json
 import math
 import requests
+from urllib.parse import urlsplit
 
 # 主机可用 HEXWAR_BASE 覆盖，以便指向比赛服（默认练习服）
 _HOST = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn")
+if urlsplit(_HOST).scheme.lower() != "https":
+    sys.exit("Refusing to send credentials over HTTP. Configure a verified HTTPS endpoint; if unavailable, do not use this login script.")
 BASE = _HOST + "/WARGAMEAI/"
 BASE7 = _HOST + "/WARGAMEAI7/"
 SNAP = r"d:\兵推\snapshot"
@@ -57,10 +60,12 @@ w()
 
 # ---------- 1. 登录 ----------
 s.get(BASE, timeout=30)
-s.post(BASE + "login/", data={"UserName": USERNAME, "UserPassword": PASSWORD},
-       timeout=30, allow_redirects=True)
+login_response = s.post(BASE + "login/", data={"UserName": USERNAME, "UserPassword": PASSWORD},
+       timeout=30, allow_redirects=False)
+if 300 <= login_response.status_code < 400:
+    sys.exit("Login redirect stopped. Verify the destination manually before continuing.")
 w("## 1. 登录")
-w("- cookies: %s" % requests.utils.dict_from_cookiejar(s.cookies))
+w("- cookies: %s" % "[REDACTED]")
 w()
 
 # ---------- 2. 进入推演室 ----------
@@ -72,7 +77,7 @@ r = s.post(BASE + "SetUp/SetUpSave.asp", data={
 w("## 2. 进入推演室")
 w("- POST SetUp/SetUpSave.asp -> status=%s  Location=%s" % (r.status_code, r.headers.get("Location")))
 loc = r.headers.get("Location", "")
-w("- cookies: %s" % requests.utils.dict_from_cookiejar(s.cookies))
+w("- cookies: %s" % "[REDACTED]")
 w()
 if loc:
     r2 = s.get(requests.compat.urljoin(BASE + "SetUp/", loc), timeout=30, allow_redirects=True)

@@ -48,7 +48,7 @@ class Unit:
         self.rot = int(d.get("rot") or 0)
         self.blood = int(d.get("blood") or 0)
         self.space = int(d.get("space") or 0)
-        self.score = int(d.get("score") or eq[3])
+        self.score = int(eq[3] if d.get("score") in (None, "") else d["score"])
         self.armor = eq[2]
         self.units = max(1, int(d.get("blood") or 1)) if self.typeid in (1, 2) else 1
         self.wz = [int(x) for x in (d.get("wz") or "").replace(" ", "").split(",") if x.strip().isdigit()]
@@ -104,20 +104,23 @@ class Game:
     """一局推演。完全本地，无外部依赖。"""
 
     def __init__(self, seed=None, snapshot=None):
-        if seed is not None:
-            random.seed(seed)
+        self.rng = random.Random(seed)
         snap = snapshot or SNAP
         self.snap_dir = snap
         self.hexes = {}
         p = os.path.join(snap, "map_hexes.json")
-        raw = json.load(open(p, encoding="utf-8"))
+        with open(p, encoding="utf-8") as stream:
+            raw = json.load(stream)
         for k, v in raw.items():
             self.hexes[int(k)] = v
-        self.cities = json.load(open(os.path.join(snap, "cities.json"), encoding="utf-8"))
+        with open(os.path.join(snap, "cities.json"), encoding="utf-8") as stream:
+            self.cities = json.load(stream)
         for c in self.cities:
             c["pos"] = int(c.get("pos") or 0)
         self.units = {}
-        for u in json.load(open(os.path.join(snap, "units.json"), encoding="utf-8")):
+        with open(os.path.join(snap, "units.json"), encoding="utf-8") as stream:
+            raw_units = json.load(stream)
+        for u in raw_units:
             uu = Unit(u)
             self.units[uu.id] = uu
 
@@ -150,6 +153,8 @@ class Game:
 
     def advance(self, seconds):
         """把推演时钟向前推进若干秒（供无头模拟/策略搜索使用，与真实时钟无关）。"""
+        if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not math.isfinite(seconds):
+            raise ValueError("seconds must be a finite number")
         if seconds <= 0:
             return self.second
         self.second += seconds
@@ -212,6 +217,10 @@ class Game:
 
     def step_seconds(self, unit, from_id, to_id):
         """返回进入 to_id 一格所需秒数（客户端会 ×1000 作为动画时长）。"""
+        if not unit.alive() or unit.detail.get("carrier"):
+            return 0, "单位不能独立移动"
+        if not self.hex(from_id) or G.distance(from_id, to_id) != 1:
+            return 0, "必须移动到相邻格"
         ok, why = self.passable(to_id, unit)
         if not ok:
             return 0, why
@@ -230,7 +239,6 @@ class Game:
                 if unit.fatigued(self.second):
                     return 0, "疲劳状态下不能继续冲锋（手册 4.1.1(4)）"
                 base /= 4.0
-                self._charge_meters(unit, self.CHARGE_FATIGUE_M)
         elif unit.typeid == 2:
             if terr == "丛林地":
                 base *= 2.0            # 手册 4.1.2(1)
@@ -251,6 +259,17 @@ class Game:
         if n >= 4:
             return 0, "违反堆叠规则"
         return base, ""
+
+    def commit_step(self, unit, from_id, to_id):
+        """Validate a step and commit its costs; the caller updates positions.
+
+        Unlike step_seconds(), this is a mutating operation. Call once for
+        each accepted step, before updating the unit's position.
+        """
+        seconds, why = self.step_seconds(unit, from_id, to_id)
+        if seconds > 0 and unit.typeid == 1 and unit.ste == 4:
+            self._charge_meters(unit, self.CHARGE_FATIGUE_M)
+        return seconds, why
 
     CHARGE_FATIGUE_M = 200      # 手册 4.1.1(4)：每冲锋 200 米转为疲劳状态
     # 手册 4.3(2)：空中单位和炮兵不能执行夺控任务
@@ -396,7 +415,8 @@ class Game:
 
         手册 4.3(2)：空中单位和炮兵不能执行夺控任务。
         """
-        if unit.typeid == 3:
+        if (not unit.alive() or not unit.color or unit.detail.get("carrier")
+                or unit.blood < CAPTURE_MIN_BLOOD or unit.typeid == 3):
             return None
         if any(k in (unit.name or "") for k in self.NO_CAPTURE_HINT):
             return None
@@ -439,7 +459,7 @@ class Game:
             a.keep = 1
             return None, "压制状态下不能射击"
         # 同格交战
-        if a.pos == t.pos and a.color == t.color:
+        if a.color == t.color:
             return None, "不能攻击己方"
 
         units = max(1, a.blood if a.typeid in (1, 2) else 1)
@@ -449,8 +469,11 @@ class Game:
             return None, "无可用武器"
         wname, ammo_type, wrange = w
 
-        if dist is None:
-            dist = G.distance(a.pos, t.pos)
+        actual_dist = G.distance(a.pos, t.pos)
+        if dist is not None and (isinstance(dist, bool) or not isinstance(dist, int)
+                                 or dist != actual_dist):
+            return None, "距离与棋盘坐标不符"
+        dist = actual_dist
         if dist > wrange:
             return None, "超出射程(%d格>%d格)" % (dist, wrange)
 
@@ -478,7 +501,7 @@ class Game:
                          stunned=a.stunned(self.second)),
             target=dict(typeid=t.typeid, armor=t.armor, hidden=(t.ste == 2),
                         moving=t.moving(self.second), stacked=stacked),
-            weapon_name=wname, dist=dist, dh_m=dh, terrain=terr,
+            weapon_name=wname, dist=dist, dh_m=dh, terrain=terr, rng=self.rng,
         )
         if r["result"] == "NO_WEAPON":
             return None, "；".join(r["detail"])
@@ -638,6 +661,8 @@ class Game:
             return None, "目标格不存在"
         if G.distance(a.pos, target_hex) > 1:
             return None, "手雷投掷范围通常为相邻格（手册 3.15）"
+        if a.ammo.get("a5", 0) <= 0:
+            return None, "弹药不足"
         a.ammo["a5"] = max(0, a.ammo.get("a5", 0) - 1)
         if a.ammo.get("a5", 0) <= 0:
             a.wz = [x for x in a.wz if x != 144]
@@ -656,7 +681,7 @@ class Game:
             if u.typeid != 1:
                 out.append((u, "手雷只对人员单位裁决"))
                 continue
-            roll = crt.roll2d6()
+            roll = crt.roll2d6(self.rng)
             mod = crt.situational_mod(
                 terrain=terr,
                 target_hidden=(u.ste == 2 or u.detail.get("hidden")),

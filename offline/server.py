@@ -13,6 +13,7 @@ import sys
 import posixpath
 import urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from security_helpers import confined_path, safe_log_target
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.join(ROOT, "site")
@@ -109,7 +110,7 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(parsed.path)
 
-        log("%-4s %s" % (method, self.path))
+        log("%-4s %s" % (method, safe_log_target(self.path)))
 
         # 根路径
         if path in ("/", "/WARGAMEAI", "/WARGAMEAI/"):
@@ -133,8 +134,11 @@ class Handler(BaseHTTPRequestHandler):
         else:
             rel = rel.lstrip("/")
 
-        rel = posixpath.normpath(rel).replace("\\", "/")
-        if rel.startswith(".."):
+        rel = posixpath.normpath(rel.replace("\\", "/"))
+        try:
+            site_path = confined_path(SITE, rel)
+            mock_path = confined_path(MOCK, rel)
+        except (ValueError, OSError, RuntimeError):
             return self._send(403, "forbidden", "text/plain")
 
         # 0) 裁决引擎优先接管动态接口
@@ -154,8 +158,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # 1) 桩数据优先（.asp）
         if rel.lower().endswith(".asp"):
-            for cand in (os.path.join(MOCK, rel.replace("/", os.sep)),
-                         os.path.join(MOCK, os.path.basename(rel))):
+            for cand in (mock_path, confined_path(MOCK, os.path.basename(rel))):
                 if os.path.isfile(cand):
                     b = open(cand, "rb").read()
                     # 官方 ASP 输出为 GBK 字节，必须声明 gbk，否则客户端解码乱码
@@ -164,7 +167,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, "", "text/html; charset=gbk")
 
         # 2) 静态文件
-        p = os.path.join(SITE, rel.replace("/", os.sep))
+        p = site_path
         if os.path.isfile(p):
             return self._serve_file(p)
 
@@ -176,12 +179,16 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, "not found: " + rel, "text/plain; charset=utf-8")
 
     def _serve_file(self, p):
+        try:
+            p = confined_path(SITE, os.path.relpath(p, SITE))
+        except (ValueError, OSError, RuntimeError):
+            return self._send(403, "forbidden", "text/plain")
         ext = os.path.splitext(p)[1].lower()
         ctype = MIME.get(ext, "application/octet-stream")
         try:
             b = open(p, "rb").read()
         except Exception as e:
-            return self._send(500, repr(e), "text/plain")
+            return self._send(500, "file unavailable", "text/plain")
         if ext in TEXT_MIME:
             cs = detect_charset(b)
             if cs:

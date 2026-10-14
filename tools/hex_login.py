@@ -6,10 +6,13 @@ import sys
 import json
 import pickle
 import requests
+from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
 
 # 主机可用 HEXWAR_BASE 覆盖，以便指向比赛服（默认练习服）
 _HOST = os.environ.get("HEXWAR_BASE", "http://www.hexwar.cn")
+if urlsplit(_HOST).scheme.lower() != "https":
+    sys.exit("Refusing to send credentials over HTTP. Configure a verified HTTPS endpoint; if unavailable, do not use this login script.")
 BASE = _HOST + "/WARGAMEAI/"
 BASE7 = _HOST + "/WARGAMEAI7/"
 # 输出目录与日志也可用环境变量覆盖，便于把两台服务器的抓取分开存放
@@ -46,7 +49,7 @@ w()
 
 # --- 1. 打开入口页，拿会话 cookie ---
 r0 = s.get(BASE, timeout=30)
-w("- 入口页: %s  status=%s  cookies=%s" % (r0.url, r0.status_code, requests.utils.dict_from_cookiejar(s.cookies)))
+w("- 入口页: %s  status=%s  cookies=%s" % (r0.url, r0.status_code, "[REDACTED]"))
 html0 = r0.content.decode("utf-8", errors="replace")
 w("- 入口页含 'md5': %s" % ("md5" in html0.lower()))
 w("- 入口页含 'UserPassword': %s" % ("UserPassword" in html0))
@@ -54,13 +57,15 @@ w()
 
 # --- 2. 提交登录 ---
 r1 = s.post(BASE + "login/", data={"UserName": USERNAME, "UserPassword": PASSWORD},
-            timeout=30, allow_redirects=True)
+            timeout=30, allow_redirects=False)
+if 300 <= r1.status_code < 400:
+    sys.exit("Login redirect stopped. Verify the destination manually before continuing.")
 w("## 登录请求")
 w()
 w("- POST %slogin/  (UserName=%s)" % (BASE, USERNAME))
 w("- 状态: %s   最终 URL: %s" % (r1.status_code, r1.url))
 w("- 重定向链: %s" % [(h.status_code, h.headers.get("Location")) for h in r1.history])
-w("- 登录后 cookies: %s" % requests.utils.dict_from_cookiejar(s.cookies))
+w("- 登录后 cookies: %s" % "[REDACTED]")
 w()
 p, ln = dump("after_login.html", r1)
 w("- 响应体(%d 字节) -> `%s`" % (ln, p))

@@ -145,6 +145,8 @@ p = pick(g, typeid=1, color="BLUE")
 p.ste = 4
 nbs = [n for n in neighbors(p.pos) if g.hex(n)]
 sec, _ = g.step_seconds(p, p.pos, nbs[0])
+if sec > 0:
+    g.commit_step(p, p.pos, nbs[0])
 charged = p.fatigued(g.second)
 sec2, why2 = g.step_seconds(p, p.pos, nbs[1])
 check("冲锋 200 米后进入疲劳", charged, "疲劳标记=%s" % charged)
