@@ -17,6 +17,9 @@ offline/server_access.log
 # 抓取到的服务端数据与本地会话（含 Set-Cookie）
 snapshot/
 
+# 实测采集产物：服务端下发的单位/地图快照，属服务端数据（结论见 docs/运输机制实测.md）
+7527_transport_capture/
+
 # 分析中间产物：手册文本/页面渲染、客户端函数摘录、HAR 报告
 analysis/
 
