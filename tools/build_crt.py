@@ -274,10 +274,21 @@ for _r in AIR_RESULT:
 #    `tools/verify_unfavorable.py` D/E 段有零残差断言守住它。
 TABLE4["7"][16] = 3
 
+# 3) 表4 **列映射**（`table4_columns`）在右端也会偏：PDF 第 29 页网格斜，
+#    用单调性择优反解出的列号在「攻级 10」处偏了 4 列（units=1 得 13、units=2 得 12）。
+#    线上 35 条实测样本（`tools/hex_table4_sweep.py` + `hex_experiment_suite.py --modes matrix`）
+#    反解出攻级 10 的真实列号 ∈ {16, 17}（列 16 与列 17 在全部随机数行上取值相同 ⇒ 取 17，
+#    与 units=3/4 一致）。反解工具 `tools/derive_table4_columns.py`，
+#    对账 `tools/verify_live_crttables.py`（改后 0 残差），回归 `tests/test_crt_live.py`。
+#    攻级 7 的实测样本允许 {8,9,10} 与现映射 9 相容 ⇒ 未动；攻级 ≤6、8、9 尚无实测样本。
+for _n, _a in (("1", "10"), ("2", "10")):
+    COL4[int(_n)][int(_a)] = 17
+
 NOTE = ("由 docs/WARGAMEAI.pdf 第 27-31 页重建；表4/表5 存在网格歧义，可人工校正；"
         "表10(air_result) 已按手册从左到右(攻级1..11)重排（2026-10-15 逐页核对修正）；"
         "表4 的 table4[\"7\"][16] 已由 3 条实测样本（128246/128249/128264，"
-        "攻级10/随机数1=7）校正为 3（原为 4）")
+        "攻级10/随机数1=7）校正为 3（原为 4）；"
+        "表4 列映射 table4_columns[1/2][10] 已由 35 条线上样本反解校正为 17（原 13/12）")
 
 data = {
     "note": NOTE,

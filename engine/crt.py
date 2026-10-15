@@ -204,6 +204,25 @@ def ladder_of(value):
     return v if v > 0 else INVALID_LEVEL
 
 
+def combine_result(table_value, fix):
+    """最终战果 = 战斗结果 + 修正结果（手册 4.6.2(5)(6)）。
+
+    ⚠️ 但**加法是在「消灭数」上做的**，不是在有符号阶梯值上：
+    表4/表6 的空白格（页面显示「无效」）等于「消灭 0 个」，
+    一个正的修正结果会直接把它抬成「消灭 n」。
+
+    实测证据（练习服 7527，裁决 #129365，人员 攻级8 / 随机数1=5）：
+    页面写「战斗结果 = 无效、修正结果 = +1、最终战果 = 1」。
+    若按“无效 = −1”相加会得到 0（压制），与页面不符；
+    按“无效 = 消灭 0”相加得 1 ✓。
+    同批还观察到：无效 + 0 → 无效（#129366）、压制 + 0 → 压制（#129373）、
+    消灭1 + （−1）→ 压制、消灭1 + （−3）→ 无效 ⇒ 其余情形与阶梯加法等价。
+    """
+    if table_value in (INVALID, None, ""):
+        return fix if fix > 0 else INVALID_LEVEL
+    return ladder_of(table_value) + fix
+
+
 # ---------------- 高层裁决入口 ----------------
 
 def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
@@ -318,8 +337,9 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
             detail.append("⚠ 装甲级别「%s」不在手册表5 中，未作修正（需人工确认）" % armor)
         am = armor_mod(fixed, armor)
         detail.append("表5[%s][修正后随机数 %d] → 修正结果 %+d" % (armor, fixed, am))
-        total = base + am                                  # 手册 4.6.2(5)(6)
-        detail.append("最终战果 %d = 战斗结果 %d + 修正结果 %+d" % (total, base, am))
+        total = combine_result(raw, am)                    # 手册 4.6.2(5)(6)
+        detail.append("最终战果 %d = 战斗结果 %s + 修正结果 %+d"
+                      % (total, base if raw else "无效(消灭0)", am))
         if base > 0 and total == 0:
             detail.append("战果被防护力修正为 0 → 仅压制（手册 4.6.2(5)）")
         elif total < 0:
@@ -335,12 +355,13 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
     rv = result_person(lvl, roll)
     base = ladder_of(rv)
     rf = fix_person_result(fixed)
-    total = base + rf
+    total = combine_result(rv, rf)
     detail.append("表6[攻击等级 %d][随机数1 %d] → 战斗结果 %s"
                   % (lvl, roll, "无效" if rv == INVALID else
                      ("压制" if rv == PUSH else rv)))
     detail.append("表7[修正后随机数 %d] → 结果修正 %+d" % (fixed, rf))
-    detail.append("最终战果 %d = 战斗结果 %d + 结果修正 %+d" % (total, base, rf))
+    detail.append("最终战果 %d = 战斗结果 %s + 结果修正 %+d"
+                  % (total, base if rv != INVALID else "无效(消灭0)", rf))
     # 手册 4.6.1：人员战果为"消灭 n 个班 / 无效 / 压制"三者之一，消灭与压制**互斥**。
     # （车辆才规定"产生有效战果同时造成压制"，见 4.6.2(4)。）
     if total > 0:

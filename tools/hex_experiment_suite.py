@@ -6,6 +6,9 @@
             to.step/cond/hextype) → updatePos 毫秒 / 是否可走。
   combat    接近到相邻 → 重复开火（表4 采样）+ 逐距离开火（表2 攻击等级曲线）。
   timing    攻击间隔（连续裁决时间差）+ 压制时长（keep 由 1 回 0 的秒数）。
+  matrix    系统采样：目标（人员/各装甲车辆）× 目标姿态（机动/掩蔽/卧倒/潜伏）
+            × 射手状态（静止/机动中）—— 已采样本只覆盖“复合装甲 + 射手机动中”一角。
+  pose      目标姿态对裁决的影响（每个姿态用**未被压制**的新目标；卧倒在平台里是 keep=3）。
   special   间瞄 jmFire / 空中(typeid=3) / 巡飞弹(typeid=5) 的接口尝试与观测。
 
 用法：
@@ -434,6 +437,193 @@ def exp_special(sess, base7):
         w("   GET %s -> %r" % (ep, str(resp)[:100]))
 
 
+def set_pose(sess, base7, uid, code, name, direct=True):
+    """给单位设姿态。
+
+    协议（从 war.min.js 挖出）：
+      * 姿态码：101 机动 / 103 卧倒 / 104 潜伏 / 105 静坐 / 0 地上 / -100 地下 / 20·200·500 高度；
+      * **推演中**客户端走 `ComPost({"<ObjID>":{"height":<code>}})` **排队**，
+        必须再取一次 `ComAjax.asp` 才会执行（只发 ComPost 不取回 ⇒ 命令永远躺在队列里）；
+      * 未开始时客户端直调 `com/ObjHeight.asp?ObjID=&Flag=<code>`；两种都试。
+      * 掩蔽是另一个字段：`{"<ObjID>":{"stat":2}}`。
+      * ★ 平台把**卧倒存在 `keep=3`**（客户端逻辑：`3==keep → 下拉选 103`）；
+        而 `ste`：1 动摇 / 2 掩蔽 / 5 潜伏 / 6 静坐。被压制（keep=1/2）时改姿态会被拒。
+    """
+    rec = CR.snapshot(sess, base7)
+    u = rec["units"].get(uid) or {}
+    kind, val = ("stat", 2) if code == 2 else ("height", code)
+    out = {"code": code, "name": name}
+    out["com_post"] = str(CR.jget(
+        sess, base7, "com/ComPost.asp", ObjID=uid,
+        Command=json.dumps({uid: {kind: val}}, ensure_ascii=False),
+        ObjColor=u.get("color") or "", TaskName=name,
+        ObjPos=GEO.hexid(int(u.get("pos") or 0)), MapID=""))[:60]
+    out["comajax"] = str(CR.jget(sess, base7, "com/ComAjax.asp"))[:120]
+    time.sleep(1)
+    dyn = H.parse_obj_ajax(CR.jget(sess, base7, "ObjAjax.asp"))
+    d = dyn.get(uid) or {}
+    out["keep"] = d.get("keep")
+    out["ste"] = d.get("ste")
+    applied = (code == 2 and str(out["ste"]) == "2") or \
+        (code == 103 and str(out["keep"]) == "3") or \
+        (code == 104 and str(out["ste"]) == "5") or \
+        (code == 101 and str(out["keep"]) not in ("3",) and str(out["ste"]) not in ("5", "6"))
+    if direct and not applied:
+        out["obj_height"] = str(CR.jget(sess, base7, "com/ObjHeight.asp",
+                                        ObjID=uid, Flag=code))[:60]
+        time.sleep(1.5)
+        dyn = H.parse_obj_ajax(CR.jget(sess, base7, "ObjAjax.asp"))
+        d = dyn.get(uid) or {}
+        out["keep2"] = d.get("keep")
+        out["ste2"] = d.get("ste")
+    return out
+
+
+def exp_pose(sess, base7, harvest, shots=3, minutes=20):
+    """E14 目标姿态对裁决的影响：**每个姿态用一个未被压制的新目标**。
+
+    上一版把姿态设在“已经被打了半天、正在被压制”的目标上 ⇒ 平台拒收，
+    所有裁决的目标状态仍是“机动”（白跑一轮）。这里改成先设姿态、再只打 2–3 发。
+    """
+    w("")
+    w("## E14 目标姿态（机动/卧倒/潜伏/掩蔽）对裁决的影响")
+    deadline = time.time() + minutes * 60
+    poses = [("机动(基线)", 101, "机动"), ("卧倒", 103, "卧倒"),
+             ("潜伏", 104, "潜伏"), ("掩蔽", 2, "掩蔽")]
+    used = set()
+    for label, code, name in poses:
+        if time.time() > deadline:
+            break
+        rec = CR.snapshot(sess, base7)
+        units = rec["units"]
+        reds = [k for k, a in units.items()
+                if a.get("color") == "RED" and str(a.get("blood")) not in ("0", "")
+                and str(a.get("typeid")) in ("1", "2") and k not in used
+                and str(a.get("keep", "0")) in ("0", "")]
+        if not reds:
+            w("- 没有未被压制的红方目标了，跳过 %s" % label)
+            continue
+        # 选一个蓝方能打出战果的目标
+        chosen = None
+        for tgt in reds:
+            for a in units:
+                if units[a].get("color") != "BLUE" or str(units[a].get("blood")) == "0":
+                    continue
+                pick = CR.best_weapon(units, a, tgt, 1)
+                if pick and pick[3] is not None:
+                    chosen = (tgt, a, pick)
+                    break
+            if chosen:
+                break
+        if not chosen:
+            w("- 找不到可用组合，跳过 %s" % label)
+            continue
+        tgt, atk, pick = chosen
+        used.add(tgt)
+        w("\n- 【%s】目标 %s(%s typeid=%s) ← 射手 %s 武器 %s"
+          % (label, tgt, units[tgt].get("ico"), units[tgt].get("typeid"),
+             atk, pick[2][0]))
+        steps, d0 = approach(sess, base7, atk, tgt, units)
+        st = set_pose(sess, base7, tgt, code, name)
+        w("  姿态已下达：ComPost=%r ComAjax=%r ObjHeight=%r ⇒ keep=%s ste=%s（二次 keep=%s ste=%s）"
+          % (st["com_post"], st.get("comajax"), st.get("obj_height"),
+             st["keep"], st["ste"], st.get("keep2"), st.get("ste2")))
+        w("  逼近 %d 步后距 %d 格" % (steps, d0))
+        got = []
+        for _ in range(shots):
+            if time.time() > deadline:
+                break
+            r = fire_once(sess, base7, atk, tgt, harvest, timeout_s=30)
+            if not r or r.get("dead"):
+                break
+            got += [{"目标状态": c.get("目标状态"), "射手状态": c.get("射击方状态"),
+                     "随机数2": c.get("修正前"), "修正结果": c.get("修正结果")}
+                    for c in (r.get("caijue") or [])]
+        RES.setdefault("pose", []).append({"pose": label, "code": code,
+                                           "state": {k: st.get(k) for k in
+                                                     ("keep", "ste", "keep2", "ste2", "obj_height")},
+                                           "samples": got})
+        w("  样本 %d：%s" % (len(got), got))
+
+
+# ---------------- E13 系统采样矩阵 ----------------
+POSES = [("机动(基线)", (101, "height", "机动")),
+         ("掩蔽", (2, "stat", "掩蔽")),
+         ("卧倒", (103, "height", "卧倒")),
+         ("潜伏", (104, "height", "潜伏"))]
+
+
+def exp_matrix(sess, base7, harvest, shots=5, minutes=25):
+    """E13 系统采样：目标（人员/各装甲车辆）× 目标姿态 × 射手状态（静止/机动中）。
+
+    为什么需要：已采的 28 条**全是**“复合装甲车辆 + 射手机动中 + 目标机动/空”，
+    表5 的其它装甲列、表7 的人员修正、以及卧倒/掩蔽等状态修正**一次都没被验过**。
+    样本落盘后由 `tools/hex_caijue_tabulate.py` / `analysis/_caijue_coverage.py` 汇总反查。
+    """
+    w("")
+    w("## E13 系统采样（目标类型 × 姿态 × 射手静止/机动）")
+    deadline = time.time() + minutes * 60
+    rec = CR.snapshot(sess, base7)
+    units = rec["units"]
+    blues = [k for k, a in units.items()
+             if a.get("color") == "BLUE" and str(a.get("blood")) not in ("0", "")
+             and str(a.get("typeid")) in ("1", "2")]
+    reds = [k for k, a in units.items()
+            if a.get("color") == "RED" and str(a.get("blood")) not in ("0", "")
+            and str(a.get("typeid")) in ("1", "2")]
+    w("- 蓝方射手 %d 个，红方目标 %d 个" % (len(blues), len(reds)))
+    done = []
+    for tgt in reds:
+        if time.time() > deadline:
+            break
+        units2 = CR.snapshot(sess, base7)["units"]
+        if tgt not in units2 or str(units2[tgt].get("blood")) == "0":
+            continue
+        # 按“贴到相邻格时对地攻级”选射手
+        best = None
+        for a in blues:
+            if str((units2.get(a) or {}).get("blood")) == "0":
+                continue
+            pick = CR.best_weapon(units2, a, tgt, 1)
+            if not pick or pick[3] is None:
+                continue
+            if best is None or -pick[3] < best[0]:
+                best = (-pick[3], a, pick)
+        if best is None:
+            w("- 目标 %s 没有可用蓝方射手，跳过" % tgt)
+            continue
+        _k, atk, pick = best
+        w("\n- 目标 %s(ico=%s typeid=%s blood=%s) ← 射手 %s(%s) 武器 %s(预估等级 %s)"
+          % (tgt, units2[tgt].get("ico"), units2[tgt].get("typeid"),
+             units2[tgt].get("blood"), atk, units2[atk].get("ico"),
+             pick[2][0], pick[3]))
+        steps, d0 = approach(sess, base7, atk, tgt, units2)
+        w("  逼近 %d 步后距离 %d 格" % (steps, d0))
+        for label, (code, kind, name) in POSES:
+            if time.time() > deadline:
+                break
+            st = set_pose(sess, base7, tgt, code, name)
+            w("  姿态 %s → keep=%s ste=%s（二次 keep=%s ste=%s）ComPost=%r"
+              % (label, st["keep"], st["ste"], st.get("keep2"), st.get("ste2"),
+                 st["com_post"]))
+            got = []
+            for _ in range(shots):
+                if time.time() > deadline:
+                    break
+                r = fire_once(sess, base7, atk, tgt, harvest, timeout_s=30)
+                if not r or r.get("dead"):
+                    break
+                if r.get("caijue"):
+                    got.append(r)
+            done.append({"target": tgt, "target_ico": units2[tgt].get("ico"),
+                         "target_type": units2[tgt].get("typeid"),
+                         "pose": label, "ste": st["ste"], "shots": len(got)})
+            if str(CR.snapshot(sess, base7)["units"].get(tgt, {}).get("blood")) == "0":
+                w("  （目标已歼灭，结束该目标）")
+                break
+    RES["matrix"] = done
+
+
 # ---------------- main ----------------
 def main():
     ap = argparse.ArgumentParser()
@@ -480,6 +670,17 @@ def main():
             exp_timing(sessA, base7, atk, tgt, harvest, 6)
     except Exception as e:                                        # noqa: BLE001
         w("!! timing 异常：%r" % (e,))
+    try:
+        if "pose" in modes:
+            exp_pose(sessA, base7, harvest, shots=3, minutes=max(10, args.minutes))
+    except Exception as e:                                        # noqa: BLE001
+        w("!! pose 异常：%r" % (e,))
+    try:
+        if "matrix" in modes:
+            exp_matrix(sessA, base7, harvest, shots=max(3, args.shots // 2),
+                       minutes=max(12, args.minutes))
+    except Exception as e:                                        # noqa: BLE001
+        w("!! matrix 异常：%r" % (e,))
     try:
         if "special" in modes:
             exp_special(sessA, base7)

@@ -261,102 +261,39 @@ else:
         if crt.armor_mod(r1 + sf + tf, armor) == obs_fix:
             hit_eng += 1
 
-    print("  （可建模样本 %d 条；未建模 %s）" % (used, unmodeled or "无"))
-    check("修正结果 == 表5[装甲][随机数2 + 状态修正]　%d/%d" % (hit_fix, used),
-          hit_fix == used and used > 0, ("不符：%s" % bad_fix[:4]) if bad_fix else "")
-    check("最终战果 == 战斗结果 + 修正结果　%d/%d" % (hit_sum, used),
-          hit_sum == used and used > 0, ("不符：%s" % bad_sum[:4]) if bad_sum else "")
-    print("  ＊ 同口径下若把「随机数2」换成「随机数1」（引擎现状）：%d/%d 命中"
-          % (hit_eng, used))
-    check("引擎「只用随机数1」的口径与官方不一致（已量化，待定夺）",
-          hit_eng < used,
-          "⇒ 官方是**两颗骰**：随机数1 定战斗结果、随机数2 定修正结果；"
-          "引擎 `direct_fire` 把状态修正与表5 都折进随机数1 的索引里")
-    print("  ＊ 补样本方向：① 静止射击（分离『射手机动中 −1』）；"
-          "② 目标状态=空 但 随机数2∈[4,7]（当前空组只有 4/8/9/10）；"
-          "③ 制造 卧倒/车内 状态做差分（手册无数值，只能实测）")
+    print("  ＊ 本段（按「装甲级别」分表的旧口径）已废弃：无人察打车 typeid=2 但装甲级别"
+          "就是「无装甲」，会被误当人员而用错表（表4 vs 表6）；结论以 D 段的委托为准。"
+          "（旧口径可建模样本 %d 条，未建模 %s）" % (used, unmodeled or "无"))
 
     # D. 表4 对账：证明「随机数1 不带状态修正」（否则 表4 命中率会崩）
-    print("\n== D. 表4 对账：战斗结果 = 表4[攻级][随机数1]（随机数1 不带状态修正）==")
-    best = (0, None, [])
-    for units in (1, 2, 3, 4):
-        hit, bad = 0, []
-        for d in rows:
-            lvl, r1, res = num(d["攻击等级"]), num(d["随机数"]), num(d["战斗结果"])
-            if None in (lvl, r1, res):
-                continue
-            got = crt.result_vehicle(lvl, units, r1)
-            if got == res:
-                hit += 1
-            else:
-                bad.append((d["id"], lvl, r1, res, got))
-        if hit > best[0]:
-            best = (hit, units, bad)
-    hit, units, bad = best
-    check("表4[攻级][随机数1] 最佳命中 ≥ 80%%（units=%d：%d/%d）" % (units, hit, len(rows)),
-          hit >= 0.8 * len(rows),
-          "⇒ 若把状态修正折进随机数1，命中率会显著下降（早前的错误假设）")
-    check("不符样本仅出现在已知「表4 网格歧义」格（攻级10 / 随机数1=7）",
-          all(lvl == 10 and r1 == 7 for _i, lvl, r1, _o, _g in bad),
-          ("不符：%s" % (bad[:4],)) if bad else "无（表4 已完全对上）")
-    # ★ 回归锁：当前 27 条样本与引擎表必须**零残差**。
-    #   将来新增样本若打破它，会在下方直接报出是哪一格（＝发现了新的数据缺口）。
-    check("表4 与全部实测样本零残差（%d/%d）" % (hit, len(rows)), not bad,
-          ("新增缺口：%s" % (bad[:4],)) if bad else "")
-
-    # E. 端到端复算：用引擎自带的表 + 两颗骰，复现 27 条样本的「最终战果」
-    print("\n== E. 端到端复算（引擎表 + 两颗骰 vs 真实裁决）==")
-
-    def find_weapon(level):
-        """找一对 (武器, 距离) 使表2 的攻击等级恰为 level。"""
-        for wn, arr in T["atk_vehicle"].items():
-            for d, v in enumerate(arr or []):
-                if v == level:
-                    return wn, d
-        return None
-
-    best_e = (0, None, [])
-    for units in (1, 2, 3, 4):
-        hit_e, bad_e = 0, []
-        for d in rows:
-            lvl, r1, r2 = num(d["攻击等级"]), num(d["随机数"]), num(d.get("x21"))
-            if None in (lvl, r1, r2):
-                continue
-            got = find_weapon(lvl)
-            if not got:
-                continue
-            wn, dist = got
-            armor = (d["装甲级别"] or "").strip() or "无装甲"
-            res = crt.direct_fire(
-                dict(typeid=2, units=units,
-                     moving=(d["射手状态"] or "").strip() == "机动中"),
-                dict(typeid=2, armor=armor,
-                     moving=(d["目标状态"] or "").strip() == "机动"),
-                wn, dist, roll=r1, fix_roll=r2)
-            if res["kills"] > 0:
-                mine = str(res["kills"])
-            elif res["suppressed"]:
-                mine = "压制"
-            else:
-                mine = "无效"
-            text = (d["最终战果"] or "").strip()
-            ok = text.startswith(mine) if mine.isdigit() else text == mine
-            if ok:
-                hit_e += 1
-            else:
-                bad_e.append((d["id"], lvl, r1, r2, text, mine))
-        if hit_e > best_e[0]:
-            best_e = (hit_e, units, bad_e)
-    hit_e, units_e, bad_e = best_e
-    check("端到端复算最终战果 ≥ 80%%（units=%d：%d/%d）" % (units_e, hit_e, len(rows)),
-          hit_e >= 0.8 * len(rows),
-          "⇒ 两颗骰 + 「修正加在战果上」可在引擎内复现线上裁决")
-    check("端到端残差只在随机数1=7 的格子（已知表4 网格歧义）",
-          all(r1 == 7 for _i, _l, r1, _r2, _t, _m in bad_e),
-          ("残差：%s" % (bad_e[:4],)) if bad_e else "无残差")
-    check("引擎能逐条复现全部实测裁决（%d/%d）" % (hit_e, len(rows)), not bad_e,
-          ("残差：%s" % (bad_e[:4],)) if bad_e else
-          "⇒ 两颗骰 + 修正加在战果上 + 表4，与线上完全一致")
+    print("\n== D. 表4 对账（★ 已委托给 `tools/verify_live_crttables.py`）==")
+    # 早前这里用「装甲级别」区分人员/车辆，但**无人察打车（UGV，typeid=2）的装甲级别
+    # 就是「无装甲」** ⇒ 会把 UGV 当人员、用错表（表4 vs 表6），产生假残差。
+    # 现在统一由那个工具做：它读实验报告里的真实 `typeid`，并对三链路（战斗结果 /
+    # 修正结果 / 最终战果）逐条对账，有残差则 exit 1。
+    import subprocess
+    _here = os.path.dirname(os.path.abspath(__file__))
+    _checker = os.path.join(_here, "verify_live_crttables.py")
+    _proc = subprocess.run([sys.executable, _checker], capture_output=True,
+                           cwd=os.path.dirname(_here))
+    _out = _proc.stdout.decode("utf-8", "replace") + _proc.stderr.decode("utf-8", "replace")
+    check("实测裁决 × 引擎 三条链路零残差（verify_live_crttables.py）",
+          _proc.returncode == 0,
+          "；".join(l.strip() for l in _out.splitlines() if l.strip())[:300])
+    # 实测 #129365（人员 攻级8/随机数1=5：页面写「战斗结果=无效、修正结果=+1、最终战果=1」）
+    # ⇒ 平台的加法是**按消灭数**做的：空白格 = 消灭 0，正修正直接抬成消灭 n。
+    check("无效（空白格）+ 正修正 = 消灭 n（实测 #129365）",
+          crt.combine_result("", 1) == 1 and crt.combine_result("", 0) == crt.INVALID_LEVEL,
+          "combine_result('', 1)=%s，combine_result('', 0)=%s"
+          % (crt.combine_result("", 1), crt.combine_result("", 0)))
+    check("表4 列映射的实测结论：攻级10 列号 ∈ {16,17}",
+          all(crt.T["table4_columns"][u]["10"] in (16, 17) for u in ("1", "2", "3", "4")),
+          "units=1..4 现在分别是 %s"
+          % [crt.T["table4_columns"][u]["10"] for u in ("1", "2", "3", "4")])
+    check("引擎采用两颗骰（随机数1 定战斗结果、随机数2 定修正结果）",
+          crt.direct_fire(dict(typeid=2, units=1), dict(typeid=2, armor="复合装甲"),
+                          "重型坦克炮", 1, roll=7, fix_roll=4)["roll"] == 7,
+          "⇒ 随机数1 查表4/表6，随机数2 + 状态修正 查表5/表7，两者相加")
 
 print("\n" + "=" * 60)
 print("不利修正验证：%d/%d 通过%s" % (len(PASS), len(PASS) + len(FAIL),
