@@ -27,7 +27,7 @@ def _summary(records):
                       for label, count in counts.items()}}
 
 
-def evaluate_checkpoint(checkpoint, snapshot, seeds):
+def evaluate_checkpoint(checkpoint, snapshot, seeds, *, allow_real=False):
     """Evaluate fresh independent policies; retain checkpoint rules and seat tables.
 
     The checkpoint's training interval is excluded. A policy playing RED uses
@@ -43,7 +43,7 @@ def evaluate_checkpoint(checkpoint, snapshot, seeds):
         raise ValueError("evaluation seeds must be unique")
     checkpoint = Path(checkpoint)
     checkpoint_bytes = checkpoint.read_bytes()
-    trainer = SelfPlayTrainer.load(checkpoint, snapshot)
+    trainer = SelfPlayTrainer.load(checkpoint, snapshot, allow_real=allow_real)
     before = canonical(trainer.checkpoint())
     config = trainer.episode_config
     if not config.get("public_score", True):
@@ -57,8 +57,8 @@ def evaluate_checkpoint(checkpoint, snapshot, seeds):
     records = []
     for seed in seeds:
         for policy_side in SIDES:
-            if snapshot_manifest(snapshot) != trainer.manifest:
-                raise ValueError("synthetic snapshot changed")
+            if snapshot_manifest(snapshot, allow_real=allow_real) != trainer.manifest:
+                raise ValueError("snapshot changed")
             opponent_side = next(s for s in SIDES if s != policy_side)
             policies = {
                 policy_side: MonteCarloPolicy(
@@ -93,8 +93,8 @@ def evaluate_checkpoint(checkpoint, snapshot, seeds):
                             "status": status})
     if canonical(trainer.checkpoint()) != before or checkpoint.read_bytes() != checkpoint_bytes:
         raise RuntimeError("checkpoint changed during evaluation")
-    if snapshot_manifest(snapshot) != trainer.manifest:
-        raise ValueError("synthetic snapshot changed")
+    if snapshot_manifest(snapshot, allow_real=allow_real) != trainer.manifest:
+        raise ValueError("snapshot changed")
     return {"schema_version": 1, "evaluation": "frozen_mc_vs_uniform_random",
             "checkpoint_sha256": hashlib.sha256(checkpoint_bytes).hexdigest(),
             "snapshot": trainer.manifest, "episode_config": config,
@@ -113,11 +113,14 @@ def main(argv=None):
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--seeds", type=int, nargs="+", required=True)
     parser.add_argument("--report", type=Path, required=True, help="new JSON output; never overwritten")
+    parser.add_argument("--allow-real-map", action="store_true",
+                        help="显式允许在本地真实想定（如 snapshot/parsed）上评估")
     args = parser.parse_args(argv)
     if args.report.exists():
         parser.error("report exists; choose a new filename")
     try:
-        report = evaluate_checkpoint(args.checkpoint, args.snapshot, args.seeds)
+        report = evaluate_checkpoint(args.checkpoint, args.snapshot, args.seeds,
+                                     allow_real=args.allow_real_map)
         with args.report.open("x", encoding="utf-8") as stream:
             json.dump(report, stream, indent=2, sort_keys=True, allow_nan=False)
             stream.write("\n")

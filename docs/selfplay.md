@@ -57,3 +57,19 @@ python -m env.policy_eval --snapshot samples/demo \
 首轮实验文件在 `docs/experiments/`。20局检查点位于 `artifacts/selfplay/checkpoint-20-20261014.json.gz`；解压为 JSON 后传给 `--resume` 或 `--checkpoint`。相邻 metadata 文件记录未压缩文件 SHA256 与运行配置摘要。
 
 100局完整检查点备份位于 `artifacts/selfplay/checkpoint-100-20261014.json.gz`，相邻 `checkpoint-100-20261014.metadata.json` 记录压缩前后 SHA256、文件大小、运行配置及合成场景哈希。备份采用无文件名、mtime 为零的确定性 gzip；解压为 JSON 后同样可传给 `--resume` 或 `--checkpoint`。这只是已完成训练的可恢复备份，不表示策略实力提升。
+
+## 在真实想定（7527）上训练
+
+上面的流程默认只接受**合成场景**（`snapshot_manifest` 要求快照带
+`evaluation_provenance.json` 且 `origin == "original_synthetic"`）。要在**本地真实想定**
+（`snapshot/parsed`，不入库）上训练，需**显式**加 `--allow-real-map`：
+
+```bash
+py -3.13 -m env.selfplay --snapshot snapshot/parsed --allow-real-map \
+  --move-radius 4 --episodes 60 --max-seconds 1200 --max-steps 600 \
+  --checkpoint analysis/realmap/mc60.json --report analysis/realmap/mc60_report.json
+```
+
+此时来源标记为 `origin="local_real_map"`（仍哈希三个被读取文件，运行可复现），
+产物一律写 `analysis/`。**性能与局限见 `docs/真实地图训练.md`**：真实地图的动作枚举
+原本要 1.8 s/次（每个候选一次整状态深拷贝），现已降到 0.042 s/次（×43）。

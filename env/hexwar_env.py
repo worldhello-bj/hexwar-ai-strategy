@@ -51,7 +51,8 @@ class HexwarEnv:
     """单方视角的兵推环境。"""
 
     def __init__(self, snapshot=None, side="BLUE", max_seconds=1800,
-                 fog=True, dt=WAIT_SEC, victory="score"):
+                 fog=True, dt=WAIT_SEC, victory="score", move_radius=6,
+                 deep_validate=False):
         if side not in ("BLUE", "RED"):
             raise ValueError("side must be BLUE or RED")
         if not isinstance(max_seconds, int) or isinstance(max_seconds, bool) or max_seconds < 0:
@@ -60,12 +61,19 @@ class HexwarEnv:
             raise ValueError("dt must be a positive integer")
         if victory not in ("score", "capture"):
             raise ValueError("victory must be score or capture")
+        if (not isinstance(move_radius, int) or isinstance(move_radius, bool)
+                or move_radius < 0):
+            raise ValueError("move_radius must be a non-negative integer")
+        if not isinstance(deep_validate, bool):
+            raise ValueError("deep_validate must be a boolean")
         self.snapshot = snapshot
         self.side = side
         self.max_seconds = max_seconds
         self.fog = fog
         self.dt = dt
         self.victory = victory
+        self.move_radius = move_radius
+        self.deep_validate = deep_validate
         self.game = None
         self.done = False
         self._history = []
@@ -191,11 +199,32 @@ class HexwarEnv:
         return {"own": me, "enemy": opp, "diff": me["total"] - opp["total"]}
 
     # ---------------- 动作空间 ----------------
-    def legal_actions(self, unit_id=None, move_radius=6):
-        """列出当前合法动作。move_radius 控制枚举范围（太大会爆炸）。"""
+    # 不需要引擎裁决、可以纯只读判定的动作类型（它们不会改变任何状态或掷骰）
+    READONLY_TYPES = ("move", "wait", "stop", "stop_attack")
+
+    def legal_actions(self, unit_id=None, move_radius=None, deep_validate=None):
+        """列出当前合法动作。
+
+        `move_radius=None` 时用 `self.move_radius`（默认 6）。半径直接决定机动候选
+        数量：半径 r 的六角盘有 1+3r(r+1) 格，真实地图（2721 格、6 个己方单位）
+        半径 6 会产出 1500+ 个候选。
+
+        `deep_validate`（None 时用构造参数，默认 False）：
+        - `True`：每个候选都过一遍 `_try_actions(commit=False)` 的事务校验（对候选做
+          一次**整状态深拷贝**）。语义最保险，但真实地图实测 **1.8 秒/次枚举**（半径 6）。
+        - `False`：`READONLY_TYPES` 走只读判定（`_cheap_ok`），其余需要引擎裁决的动作
+          （射击/集火/手雷/夺控/装卸/掩蔽）**仍走事务校验**。实测 **0.042 秒/次**（半径 6，×43）。
+          机动只需补一条手册规则：冲锋单位（`ste==4`）一个动作只能走 1 格 ——
+          手册 4.1.1(4) 每 200 米转疲劳，而 1 格正好是 200 米，故第二格必被拒绝。
+        两种口径的等价性由 `tests/test_enumeration_equivalence.py`
+        与 `tools/hex_env_diff.py`（可在真实地图上跑）守住。
+        """
         g = self.game
         if self.done:
             return []
+        if deep_validate is None:
+            deep_validate = self.deep_validate
+        radius = self.move_radius if move_radius is None else move_radius
         acts = []
         units = [u for u in g.units.values()
                  if u.alive() and u.color == self.side
@@ -207,7 +236,7 @@ class HexwarEnv:
             # 机动：邻格逐步扩展（BFS，受通行与堆叠约束）
             fronts = [(u.pos, [u.pos], 0)]
             seenpos = {u.pos}
-            for _ in range(move_radius):
+            for _ in range(radius):
                 nxt = []
                 for cur, path, elapsed in fronts:
                     for nb in G.neighbors(cur):
@@ -299,8 +328,46 @@ class HexwarEnv:
             if shooters:
                 acts.append({"type": "area_fire", "unit": shooters[0],
                              "units": shooters, "target_hex": hx})
-        # Validate candidates against the same transaction contract used by step.
-        return [a for a in acts if self._try_actions([a], commit=False)[0]]
+        if deep_validate:
+            # 参考口径：每个候选都过一遍事务校验（慢，仅供差分/回归用）
+            return [a for a in acts if self._try_actions([a], commit=False)[0]]
+        return self._fast_actions(acts)
+
+    def _cheap_ok(self, act):
+        """只读判定：只允许用于 `READONLY_TYPES`。
+
+        - `wait` / `stop` / `stop_attack`：事务校验不会拒。注意 `wait` **故意豁免**
+          剩余时间上限——`_try_actions` 的时间检查只在非 wait 分支里，超时的等待
+          会被截断到剩余秒（这样时钟才能正好走到 `max_seconds`）。
+        - `move`：BFS 已经按 `step_seconds > 0` 逐跳筛过（通行/坡度/压制/堆叠），
+          唯一漏掉的是**冲锋疲劳**（见 `legal_actions` 的说明）。
+        """
+        try:
+            self._validate(act)
+        except (ValueError, TypeError, KeyError, OverflowError):
+            return False
+        g = self.game
+        kind = act["type"]
+        if kind not in self.READONLY_TYPES:
+            raise ValueError("cheap check is only valid for readonly action types")
+        if kind in ("wait", "stop", "stop_attack"):
+            return True
+        u = g.units.get(act["unit"])
+        if (u is not None and u.ste == 4 and not u.fatigued(g.second)
+                and len(act.get("path") or []) > 2):
+            return False
+        return math.ceil(act.get("seconds", self.dt)) <= self.max_seconds - g.second
+
+    def _fast_actions(self, acts):
+        """快速枚举过滤：只读类型走 `_cheap_ok`，其余仍走事务校验。"""
+        out = []
+        for a in acts:
+            if a["type"] in self.READONLY_TYPES:
+                if self._cheap_ok(a):
+                    out.append(a)
+            elif self._try_actions([a], commit=False)[0]:
+                out.append(a)
+        return out
 
     # ---------------- 执行 ----------------
     def _validate(self, act):

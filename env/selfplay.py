@@ -71,11 +71,12 @@ class SelfPlayTrainer:
     """Separate seat tables and histories, reproducible across checkpoint resume."""
 
     def __init__(self, snapshot, *, seed=0, epsilon=0.1, train_seed_start=0,
-                 episode_config=None):
+                 episode_config=None, allow_real=False):
         _positive_int("seed", seed, True)
         _positive_int("train_seed_start", train_seed_start, True)
         self.snapshot = str(snapshot)
-        self.manifest = snapshot_manifest(snapshot)
+        self.allow_real = bool(allow_real)
+        self.manifest = snapshot_manifest(snapshot, allow_real=self.allow_real)
         self.seed = seed
         self.epsilon = _epsilon(epsilon)
         self.train_seed_start = train_seed_start
@@ -86,8 +87,8 @@ class SelfPlayTrainer:
         self.episodes_completed = 0
 
     def _run(self, episode_seed, *, training):
-        if snapshot_manifest(self.snapshot) != self.manifest:
-            raise ValueError("synthetic snapshot changed")
+        if snapshot_manifest(self.snapshot, allow_real=self.allow_real) != self.manifest:
+            raise ValueError("snapshot changed")
         episode = TwoPlayerEpisode(self.snapshot, **self.episode_config)
         status = episode.reset(seed=episode_seed)
         # Fresh RNG and detached tables for every seat and episode. Evaluation
@@ -155,12 +156,13 @@ class SelfPlayTrainer:
             stream.write("\n")
 
     @classmethod
-    def load(cls, path, snapshot):
+    def load(cls, path, snapshot, *, allow_real=False):
         data = json.loads(Path(path).read_text("utf-8"))
         if data.get("schema_version") != 1 or data.get("algorithm") != "first_visit_terminal_mc":
             raise ValueError("unsupported checkpoint")
         trainer = cls(snapshot, seed=data["seed"], epsilon=data["epsilon"],
-                      train_seed_start=data["train_seed_start"], episode_config=data["episode_config"])
+                      train_seed_start=data["train_seed_start"],
+                      episode_config=data["episode_config"], allow_real=allow_real)
         if trainer.manifest != data["snapshot"]:
             raise ValueError("checkpoint snapshot does not match")
         _positive_int("episodes_completed", data["episodes_completed"], True)
@@ -184,6 +186,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile-memory", action="store_true", help="opt-in Python allocation tracing (slower)")
     parser.add_argument("--snapshot", type=Path, help="original synthetic snapshot with provenance; default: tiny generated fixture")
+    parser.add_argument("--allow-real-map", action="store_true",
+                        help="显式允许使用本地真实想定（如 snapshot/parsed，不入库）训练")
+    parser.add_argument("--move-radius", type=int, default=None,
+                        help="覆盖机动枚举半径（默认 1；真实地图建议 3~6）")
+    parser.add_argument("--deep-validate", action="store_true",
+                        help="用参考口径逐候选事务校验枚举（慢，仅供差分复现）")
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--epsilon", type=float, default=0.2)
@@ -202,11 +210,18 @@ def main(argv=None):
     try:
         with tempfile.TemporaryDirectory(prefix="synthetic-selfplay-") as tmp:
             snapshot = args.snapshot or write_synthetic_snapshot(Path(tmp) / "fixture")
-            trainer = (SelfPlayTrainer.load(args.resume, snapshot) if args.resume else
+            episode_config = {"max_seconds": args.max_seconds,
+                              "max_steps": args.max_steps}
+            if args.move_radius is not None:
+                episode_config["move_radius"] = args.move_radius
+            if args.deep_validate:
+                episode_config["deep_validate"] = True
+            trainer = (SelfPlayTrainer.load(args.resume, snapshot, allow_real=args.allow_real_map)
+                       if args.resume else
                        SelfPlayTrainer(snapshot, seed=args.seed, epsilon=args.epsilon,
                                        train_seed_start=args.train_seed_start,
-                                       episode_config={"max_seconds": args.max_seconds,
-                                                       "max_steps": args.max_steps}))
+                                       episode_config=episode_config,
+                                       allow_real=args.allow_real_map))
             # Reject heldout overlap with the whole planned run before training.
             if any(trainer.train_seed_start <= s < trainer.train_seed_start + trainer.episodes_completed + args.episodes for s in args.eval_seeds):
                 raise ValueError("evaluation seeds overlap planned training")

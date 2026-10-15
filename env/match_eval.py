@@ -54,17 +54,30 @@ def write_synthetic_snapshot(path):
     return path
 
 
-def snapshot_manifest(path):
+def snapshot_manifest(path, *, allow_real=False):
     """Require explicit synthetic provenance; hash exact consumed fixture bytes.
 
     A provenance declaration is an attestation, not an automated authenticity test.
+
+    `allow_real=True` 是**显式 opt-in**，用于在**本地真实想定**（`snapshot/parsed`，
+    不入库）上训练：此时来源标记为 `origin="local_real_map"`，
+    仍然对三个被读取文件做哈希，所以同一次运行仍可复现。
+    默认 `False` 时行为与以前完全一致：只接受 `original_synthetic`。
     """
     path = Path(path)
-    provenance = json.loads((path / "evaluation_provenance.json").read_text("utf-8"))
-    if provenance.get("origin") != "original_synthetic":
+    prov_path = path / "evaluation_provenance.json"
+    if prov_path.exists():
+        provenance = json.loads(prov_path.read_text("utf-8"))
+        if provenance.get("origin") != "original_synthetic":
+            raise ValueError("unsupported snapshot provenance: %r"
+                             % provenance.get("origin"))
+    elif allow_real:
+        provenance = {"origin": "local_real_map", "purpose": "training_only"}
+    else:
         raise ValueError("evaluation requires an original synthetic snapshot")
+    names = FILES + (("evaluation_provenance.json",) if prov_path.exists() else ())
     hashes = {name: hashlib.sha256((path / name).read_bytes()).hexdigest()
-              for name in FILES + ("evaluation_provenance.json",)}
+              for name in names}
     return {"files": hashes, "sha256": _hash(hashes), "provenance": provenance}
 
 

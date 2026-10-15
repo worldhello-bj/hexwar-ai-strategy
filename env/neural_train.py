@@ -47,12 +47,13 @@ class NeuralTrainer:
     """
     def __init__(self, snapshot, *, seed=0, train_seed_start=0, batch_episodes=4,
                  episode_config=None, policy_config=None, heldout_seeds=(1000000, 1000001),
-                 observation_schema=1):
+                 observation_schema=1, allow_real=False):
         for name, value in (("seed", seed), ("train_seed_start", train_seed_start)):
             _positive_int(name, value, True)
         _positive_int("batch_episodes", batch_episodes)
         self.snapshot = str(snapshot)
-        self.manifest = snapshot_manifest(snapshot)
+        self.allow_real = bool(allow_real)
+        self.manifest = snapshot_manifest(snapshot, allow_real=self.allow_real)
         self.seed, self.train_seed_start, self.batch_episodes = seed, train_seed_start, batch_episodes
         self.episode_config = {"max_seconds": 1800, "max_steps": 1000, "public_score": True}
         self.episode_config.update(copy.deepcopy(episode_config or {}))
@@ -79,8 +80,8 @@ class NeuralTrainer:
         self.updates = 0
 
     def _rollout(self, policy, episode_seed, learner_side, *, training):
-        if snapshot_manifest(self.snapshot) != self.manifest:
-            raise ValueError("synthetic snapshot changed")
+        if snapshot_manifest(self.snapshot, allow_real=self.allow_real) != self.manifest:
+            raise ValueError("snapshot changed")
         start = time.perf_counter()
         episode = TwoPlayerEpisode(self.snapshot, **self.episode_config)
         public_episode = PublicObservationAdapter(episode) if self.observation_schema == 2 else episode
@@ -211,12 +212,13 @@ class NeuralTrainer:
             stream.write(canonical(self.checkpoint()) + "\n")
 
     @classmethod
-    def load(cls, path, snapshot):
+    def load(cls, path, snapshot, *, allow_real=False):
         data = json.loads(Path(path).read_text("utf-8"))
         if data.get("schema_version") != 1 or data.get("algorithm") not in ("neural_terminal_reinforce_vs_random", "neural_terminal_ppo_clip_vs_random"):
             raise ValueError("unsupported checkpoint")
-        trainer = cls(snapshot, observation_schema=data.get("observation_schema", 1), **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
-                      "episode_config", "policy_config", "heldout_seeds")})
+        trainer = cls(snapshot, observation_schema=data.get("observation_schema", 1), allow_real=allow_real,
+                      **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
+                                              "episode_config", "policy_config", "heldout_seeds")})
         if data["algorithm"] != trainer.algorithm:
             raise ValueError("checkpoint algorithm and update mode differ")
         if trainer.manifest != data["snapshot"]:
@@ -257,6 +259,12 @@ class NeuralTrainer:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", required=True, type=Path, help="explicit original synthetic snapshot, e.g. samples/demo")
+    parser.add_argument("--allow-real-map", action="store_true",
+                        help="显式允许使用本地真实想定（如 snapshot/parsed，不入库）训练")
+    parser.add_argument("--move-radius", type=int, default=None,
+                        help="机动枚举半径（默认 1；真实地图建议 3~6）")
+    parser.add_argument("--deep-validate", action="store_true",
+                        help="用参考口径逐候选事务校验枚举（慢，仅供差分复现）")
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--train-seed-start", type=int, default=0)
@@ -281,9 +289,16 @@ def main(argv=None):
     if args.checkpoint.exists() or args.report.exists() or args.checkpoint.resolve() == args.report.resolve():
         parser.error("choose separate new checkpoint and report paths")
     try:
-        trainer = NeuralTrainer.load(args.resume, args.snapshot) if args.resume else NeuralTrainer(
+        episode_config = {"max_seconds": args.max_seconds, "max_steps": args.max_steps}
+        if args.move_radius is not None:
+            episode_config["move_radius"] = args.move_radius
+        if args.deep_validate:
+            episode_config["deep_validate"] = True
+        trainer = NeuralTrainer.load(args.resume, args.snapshot,
+                                    allow_real=args.allow_real_map) if args.resume else NeuralTrainer(
             args.snapshot, observation_schema=args.observation_schema or 1, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
-            heldout_seeds=args.eval_seeds, episode_config={"max_seconds": args.max_seconds, "max_steps": args.max_steps},
+            heldout_seeds=args.eval_seeds, episode_config=episode_config,
+            allow_real=args.allow_real_map,
             policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate,
                            **({"baseline_offset": args.baseline_offset} if args.baseline_offset is not None else {}),
                            **{k: getattr(args, k) for k in ("update_mode", "ppo_clip", "update_epochs") if getattr(args, k) is not None}})

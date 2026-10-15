@@ -23,8 +23,11 @@ DEFAULT_SNAP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
                             "samples", "demo")
 
 
-def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose=False):
-    env = HexwarEnv(snapshot=snapshot, side=side, max_seconds=max_seconds, fog=fog)
+def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose=False,
+            move_radius=None, deep_validate=False):
+    env = HexwarEnv(snapshot=snapshot, side=side, max_seconds=max_seconds, fog=fog,
+                    **({} if move_radius is None else {"move_radius": move_radius}),
+                    deep_validate=deep_validate)
     obs = env.reset(seed=seed)
     steps = 0
     if render:
@@ -56,6 +59,10 @@ def main():
     ap.add_argument("--snapshot", default=DEFAULT_SNAP,
                     help="快照目录（默认用自带样例；真实数据用 snapshot/parsed）")
     ap.add_argument("--max-seconds", type=int, default=1800)
+    ap.add_argument("--move-radius", type=int, default=None,
+                    help="机动枚举半径（默认 6；缩小可显著降低动作空间）")
+    ap.add_argument("--deep-validate", action="store_true",
+                    help="用参考口径枚举（慢，仅供差分复现）")
     ap.add_argument("--no-fog", action="store_true", help="关闭战争迷雾（上帝视角）")
     ap.add_argument("--render", action="store_true", help="打印文本态势")
     ap.add_argument("--verbose", action="store_true")
@@ -73,7 +80,8 @@ def main():
             agent.rng.seed(args.seed + i)
         r = run_one(agent, args.side, args.seed + i, args.snapshot,
                     args.max_seconds, not args.no_fog,
-                    render=args.render and i == 0, verbose=args.verbose)
+                    render=args.render and i == 0, verbose=args.verbose,
+                    move_radius=args.move_radius, deep_validate=args.deep_validate)
         results.append(r)
         print("第 %2d 局  seed=%-4d  步数=%-5d  己方=%4d 敌方=%4d 净胜=%+4d" %
               (i + 1, r["seed"], r["steps"], r["score"]["own"]["total"],

@@ -38,7 +38,8 @@ class TwoPlayerEpisode:
     """
 
     def __init__(self, snapshot, *, max_seconds=120, max_steps=100,
-                 dt=10, move_radius=1, victory="score", public_score=True):
+                 dt=10, move_radius=1, victory="score", public_score=True,
+                 deep_validate=False):
         _positive_int("max_seconds", max_seconds, True)
         _positive_int("max_steps", max_steps, True)
         _positive_int("dt", dt)
@@ -47,7 +48,10 @@ class TwoPlayerEpisode:
             raise ValueError("victory must be score or capture")
         if not isinstance(public_score, bool):
             raise ValueError("public_score must be a boolean")
+        if not isinstance(deep_validate, bool):
+            raise ValueError("deep_validate must be a boolean")
         self._public_score = public_score
+        self._deep_validate = deep_validate
         self._snapshot = snapshot
         self._max_seconds = max_seconds
         self._max_steps = max_steps
@@ -127,7 +131,8 @@ class TwoPlayerEpisode:
                                   if public["suppressed"] else 0)
             units[unit.id] = unit
         projected.game.units = units
-        return _json_copy(projected.legal_actions(move_radius=self._move_radius))
+        return _json_copy(projected.legal_actions(move_radius=self._move_radius,
+                                                 deep_validate=self._deep_validate))
 
     def status(self):
         """Read metadata/final scores without paying a terminal reward again."""
