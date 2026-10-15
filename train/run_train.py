@@ -12,12 +12,6 @@
 
     py -3.13 run_train.py train --algo ppo --config configs/ppo_realmap.json
 
-★ 边界（别把它当正确性证明）：规则门只证明"**已被线上实测证过的点没有被改动破坏**"，
-  缺脚本/跑不动一律**硬失败**（绝不"跳过"后报成功）。没有实测样本覆盖的地方
-  （表4 攻级 1–6/8、间瞄、反应装甲、终局结算）它不过问 —— 那得靠继续采样对账。
-  CI 里同时跑 `run_train.py rules` 与 `run_train.py mc`：把"能训练"交给机器证，
-  而不是靠维护者（或 AI）声明。
-
 子命令
 ------
   rules       规则符合性门：selftest + verify_tables/rules/extra/unfavorable + 计分对账
@@ -31,11 +25,8 @@
   diff        枚举等价性差分（快口径 vs 深度校验）
   check       train/ 与核心仓库的漂移检查（MANIFEST.json）
 
-★ 两种布局都能跑（本入口自己判别）：
-  A. **自包含副本** —— `tools/build_train_env.py` 生成，`train/` 里有 engine/env/tools/scenario；
-  B. **直接用仓库根的核心** —— 公开克隆就是这种（`train/` 里只有本文件与 configs）。
-  判别方式：`train/engine` 与 `train/tools/verify_rules.py` 在不在。
-  找不到核心时**直接报错**，不会把规则门变成空转。
+★ 两种布局都能跑（本入口自己判别）：`train/engine` 在就用副本，否则用仓库根的
+  核心（公开克隆就是这种）；都找不到直接报错，不让规则门空转。
 
 约定
 ----
