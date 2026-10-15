@@ -36,7 +36,10 @@ class SafetyTests(unittest.TestCase):
             security.confined_path(self.root, "../site-backup/secret")
 
     def test_reject_symlink_escape(self):
-        (self.root / "link").symlink_to(Path(self.temp.name), target_is_directory=True)
+        try:
+            (self.root / "link").symlink_to(Path(self.temp.name), target_is_directory=True)
+        except (OSError, NotImplementedError) as exc:   # Windows 无权限/不支持创建符号链接
+            self.skipTest("本机无法创建符号链接：%s" % exc)
         with self.assertRaises(ValueError):
             security.confined_path(self.root, "link/secret")
 

@@ -262,8 +262,25 @@ for n in sorted(COL4):
 w()
 w("- 违反单调的 (N,随机数) 组合数: %d" % issues)
 
+# ---------------- 人工复核后的更正（★ 重跑本脚本必须保留） ----------------
+# 1) 表10（手册第 31 页）：PDF 提取到的是**左右镜像**。用「歼灭」的词坐标反推手册原表后
+#    逐行反转；`tools/verify_tables.py` 有全 11×11 格断言守住它。
+#    见 docs/手册逐页核对.md「表10 左右存反 —— 已确认并修复」。
+for _r in AIR_RESULT:
+    AIR_RESULT[_r] = list(reversed(AIR_RESULT[_r]))
+# 2) 表4（手册第 29 页）：该页网格是斜的，个别格无法从 PDF 唯一定位。
+#    `table4["7"][16]`（攻级10 / 随机数1=7）由 3 条独立实测样本
+#    （128246 / 128249 / 128264）校正为 3（原提取值 4）。
+#    `tools/verify_unfavorable.py` D/E 段有零残差断言守住它。
+TABLE4["7"][16] = 3
+
+NOTE = ("由 docs/WARGAMEAI.pdf 第 27-31 页重建；表4/表5 存在网格歧义，可人工校正；"
+        "表10(air_result) 已按手册从左到右(攻级1..11)重排（2026-10-15 逐页核对修正）；"
+        "表4 的 table4[\"7\"][16] 已由 3 条实测样本（128246/128249/128264，"
+        "攻级10/随机数1=7）校正为 3（原为 4）")
+
 data = {
-    "note": "由 docs/WARGAMEAI.pdf 第 27-31 页重建；表4/表5 存在网格歧义，可人工校正",
+    "note": NOTE,
     "atk_person": {k: {str(n): v for n, v in d.items()} for k, d in ATK_PERSON.items()},
     "atk_vehicle": ATK_VEHICLE,
     "atk_elev_fix": {str(k): {str(d): v for d, v in dd.items()} for k, dd in ATK_ELEV_FIX.items()},

@@ -131,12 +131,17 @@ if red and blue:
     w()
 w("## 7. 反无人机裁决（表9/表10）")
 w()
+w("（两颗骰均取 6；攻级取自表9，表10 的行 = 随机数）")
 for wname in ("高射机枪", "速射炮", "激光", "便携防空导弹"):
     row = []
     for d in (0, 1, 3, 5):
         r = crt.direct_fire({"typeid": 2, "units": 1}, {"typeid": 3, "armor": "无装甲"},
-                            wname, d, roll=6)
-        row.append("d%d:%s" % (d, "歼灭" if r["kills"] else "无效"))
+                            wname, d, roll=6, fix_roll=6)
+        if r["result"] == "NO_WEAPON":
+            row.append("d%d:不适用" % d)
+        else:
+            row.append("d%d:攻级%s→%s" % (d, r.get("level"),
+                                        "歼灭" if r["kills"] else "无效"))
     w("- %-8s %s" % (wname, " ".join(row)))
 w()
 

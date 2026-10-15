@@ -61,11 +61,14 @@ py -3.13 env/run_episode.py --agent greedy-multi --episodes 50 --json greedy.jso
 # 4) 自检裁决引擎
 py -3.13 tools/selftest_engine.py
 
-# 5) 按手册逐条验证规则实现（当前 29/29 通过）
+# 5) 按手册逐条验证规则实现（当前 30/30 通过）
 py -3.13 tools/verify_rules.py
 
-# 6) 校验裁决表数值与手册一致（当前 26/26 通过）
+# 6) 校验裁决表数值与手册一致（当前 30/30 通过）
 py -3.13 tools/verify_tables.py
+
+# 7) 不利修正 / 两颗骰 CRT（含 27 条真实裁决样本反查，当前 36/36 通过）
+py -3.13 tools/verify_unfavorable.py
 ```
 
 最小代码闭环：
@@ -169,7 +172,7 @@ $env:HEXWAR_SNAP="D:\你的快照目录"
 | `engine/` | 裁决引擎：几何、装备库、裁决表、对局状态机 |
 | `env/` | 策略搜索环境、参考智能体、跑分台 |
 | `offline/` | 官方前端离线运行所需的桩服务器（需自备前端资源） |
-| `tools/` | 采集、解析、构建、自检脚本（含站点探测 `probe_site.py`、端点勘察 `probe_endpoints.py`、双服比对 `compare_servers.py`、指令词汇 `extract_commands.py`、规则验证 `verify_rules.py`、裁决表校验 `verify_tables.py`） |
+| `tools/` | 采集、解析、构建、自检脚本（含站点探测 `probe_site.py`、端点勘察 `probe_endpoints.py`、双服比对 `compare_servers.py`、指令词汇 `extract_commands.py`、规则验证 `verify_rules.py`、裁决表校验 `verify_tables.py`、不利修正/两颗骰 CRT 验证 `verify_unfavorable.py`） |
 | `samples/demo/` | 自带合成想定（原创数据） |
 | `skill/` | AI 助手用的 skill 包 |
 | `docs/` | 接口对照表、裁决引擎说明、离线客户端说明、[站点探测记录](docs/站点探测.md)、[规则符合性对照](docs/规则符合性.md) |

@@ -32,7 +32,7 @@ class Unit:
                  "pos2", "rot", "blood", "space", "score", "armor", "units",
                  "wz", "ammo", "stunned_until", "fatigued_until", "missile_ids",
                  "uid", "ste", "keep", "pass_", "att", "ai", "c0", "c3", "detail",
-                 "radar", "see", "task")
+                 "radar", "see", "task", "alt")
 
     def __init__(self, d):
         self.id = d["id"]
@@ -70,7 +70,25 @@ class Unit:
         self.radar = d.get("radar") or ""
         self.see = int(d.get("see") or 0)
         self.task = int(d.get("task") or 0)
+        # 空中单位滞空高度码（手册 4.8(2)：500 高空 / 200 低空 / 20 超低空）
+        self.alt = int(d.get("e2") or 0)
         self.detail = {}
+
+    # --- 单位类别（手册 4.8 / 4.9 / 4.10）---
+    def is_air(self):
+        return self.typeid == 3
+
+    def is_loitering_missile(self):
+        """巡飞弹（手册 4.10）：typeid=3 中的「巡飞弹」。"""
+        return self.name == "巡飞弹"
+
+    def is_ugv(self):
+        """无人战车（手册 4.9）：地面无人平台。按名称前缀「无人」识别。"""
+        return self.typeid == 2 and (self.name or "").startswith("无人")
+
+    def out_of_control(self):
+        """手册 4.9(3)：无人战车失去有人战车依托 → 失控。"""
+        return bool(self.detail.get("out_of_control"))
 
     # --- 便于裁决的派生属性 ---
     def moving(self, now):
@@ -170,8 +188,108 @@ class Game:
             if u.stunned_until and u.stunned_until <= now:
                 u.stunned_until = 0.0
                 u.keep = 0
+                # 手册 4.1.1(6)：解压制后继续执行未完成的机动命令
+                if u.detail.get("path"):
+                    self.record("%s 压制解除，继续执行未完成的机动（手册 4.1.1(6)）"
+                                % (u.army or u.name))
             if u.fatigued_until and u.fatigued_until <= now:
                 u.fatigued_until = 0.0
+            if u.detail.get("path") and not u.stunned(now):
+                self._resume_path(u, now)
+        self._update_dependencies()
+        self._expire_missiles(now)
+
+    # -------- 手册 4.1.1(6) / 4.9 / 4.10 --------
+    def begin_move(self, unit_id, path):
+        """登记一条机动路径（相邻格序列）。
+
+        手册 4.1.1(6)：机动中遭压制 → 完成当前格后停止，压制解除后**继续执行**
+        未完成的机动。登记后由 `_resume_path` 在每次 tick 推进一格。
+        """
+        u = self.units.get(unit_id)
+        if not u:
+            return False, "棋子不存在"
+        u.detail["path"] = [int(x) for x in path]
+        u.detail["path_idx"] = 0
+        return True, ""
+
+    def pending_moves(self):
+        """仍有未完成机动路径的单位 id 列表。"""
+        return [u.id for u in self.units.values() if u.detail.get("path")]
+
+    def _resume_path(self, u, now):
+        path = u.detail.get("path") or []
+        i = u.detail.get("path_idx", 0)
+        if i >= len(path):
+            u.detail.pop("path", None)
+            u.detail.pop("path_idx", None)
+            return
+        to_id = path[i]
+        sec, why = self.step_seconds(u, u.pos, to_id)
+        if sec <= 0:
+            if "被压制" in why:
+                return                       # 仍在压制中，等下一 tick
+            self.record("%s 无法继续机动：%s" % (u.army or u.name, why))
+            u.detail.pop("path", None)
+            u.detail.pop("path_idx", None)
+            return
+        u.pos = to_id
+        u.detail["move_until"] = now + sec
+        u.detail["path_idx"] = i + 1
+        if i + 1 >= len(path):
+            u.detail.pop("path", None)
+            u.detail.pop("path_idx", None)
+        self.record("%s 机动至 %d（%.0f 秒）" % (u.army or u.name, to_id, sec))
+
+    def _update_dependencies(self):
+        """手册 4.9(3)：无人战车所属有人战车被摧毁 → 失控（不能射击/侦察/校射）。"""
+        for u in self.units.values():
+            if not u.is_ugv() or u.detail.get("out_of_control"):
+                continue
+            cid = u.detail.get("carrier")
+            if not cid:
+                continue
+            c = self.units.get(cid)
+            if c is None or not c.alive():
+                u.detail["out_of_control"] = True
+                self.record("%s 依托的有人战车 %s 被摧毁，失去控制（手册 4.9(3)）"
+                            % (u.army or u.name, cid))
+
+    def launch_missile(self, carrier_id, missile_id):
+        """手册 4.10(3)(4)：巡飞弹由所属车辆发射；一车一次只能发射一枚。"""
+        c = self.units.get(carrier_id)
+        m = self.units.get(missile_id)
+        if not c or not m or not c.alive() or not m.alive():
+            return False, "单位不存在或已损失"
+        if not m.is_loitering_missile():
+            return False, "该棋子不是巡飞弹"
+        if m.detail.get("carrier") != c.id:
+            return False, "巡飞弹未部署在该车上（手册 4.10(3)）"
+        if c.detail.get("launched_missile"):
+            return False, "该车本局已发射过巡飞弹（手册 4.10(4)）"
+        m.detail.pop("carrier", None)
+        m.pos = c.pos
+        m.pos2 = c.pos
+        m.detail["launcher"] = c.id
+        m.detail["loiter_until"] = self.second + self.LOITER_SEC
+        c.detail["launched_missile"] = m.id
+        self.record("%s 发射巡飞弹 %s（巡飞时长 %d 秒）"
+                    % (c.army or c.name, m.id, self.LOITER_SEC))
+        return True, ""
+
+    def _expire_missiles(self, now):
+        """手册 4.10(5)：巡飞超时自毁；发射车被摧毁则自毁。"""
+        for u in self.units.values():
+            if not u.is_loitering_missile() or not u.alive() or not u.detail.get("launcher"):
+                continue
+            if u.detail.get("loiter_until") and u.detail["loiter_until"] <= now:
+                u.blood = 0
+                self.record("巡飞弹 %s 巡飞超时自毁（手册 4.10(5)）" % u.id)
+                continue
+            lc = self.units.get(u.detail["launcher"])
+            if lc is None or not lc.alive():
+                u.blood = 0
+                self.record("发射车被摧毁，巡飞弹 %s 自毁（手册 4.10(5)）" % u.id)
 
     @property
     def time1(self):
@@ -184,6 +302,15 @@ class Game:
     def elevation(self, mapid):
         h = self.hex(mapid)
         return int(h["elevation"]) if h else 0
+
+    def unit_height(self, u):
+        """单位用于通视计算的等效高程（米）= 所在格高程 + 滞空高度。
+
+        手册 4.8(2)：无人机滞空按所在格高程 +500/200/20 米计算通视；
+        手册 4.10(1)：巡飞弹按所在格高程 +200 米。数据里即单位属性 `e2`。
+        """
+        h = self.elevation(u.pos)
+        return h + (u.alt or 0) if u.typeid == 3 else h
 
     def terrain_kind(self, mapid):
         """粗略地形类别（由 cond / note 推断）。"""
@@ -240,16 +367,22 @@ class Game:
                     return 0, "疲劳状态下不能继续冲锋（手册 4.1.1(4)）"
                 base /= 4.0
         elif unit.typeid == 2:
-            if terr == "丛林地":
-                base *= 2.0            # 手册 4.1.2(1)
-            elif terr == "居民地":
-                base *= 3.0
-            dh = abs(self.elevation(to_id) - self.elevation(from_id))
-            if dh > 100:
-                return 0, "高差>100 米，车辆无法进入并通过（手册 4.1.2(3)）"
-            lvl = dh // 20
-            if lvl >= 1:
-                base *= (lvl + 1)
+            note = (self.hex(to_id) or {}).get("note") or ""
+            if note in self.ROAD_NOTES:
+                # 手册 4.1.2(4)：沿道路行驶，速度不受地形和高差影响
+                #（同时豁免 4.1.2(3) 的高差减速与 >100 米禁行）
+                pass
+            else:
+                if terr == "丛林地":
+                    base *= 2.0            # 手册 4.1.2(1)
+                elif terr == "居民地":
+                    base *= 3.0
+                dh = abs(self.elevation(to_id) - self.elevation(from_id))
+                if dh > 100:
+                    return 0, "高差>100 米，车辆无法进入并通过（手册 4.1.2(3)）"
+                lvl = dh // 20
+                if lvl >= 1:
+                    base *= (lvl + 1)
         # 堆叠限制：同格本方地面单位不超过 4
         # 手册 4.2：同格本方地面单位不可超过 4 个（已上车的步兵不占格位）
         n = sum(1 for u in self.units.values()
@@ -277,6 +410,12 @@ class Game:
     # 手册 4.11(3)：同格交战的自动攻击间隔为正常攻击间隔的 1/3
     ATTACK_INTERVAL_SEC = 10
     ENGAGE_INTERVAL_SEC = max(1, ATTACK_INTERVAL_SEC // 3)
+    # 手册 4.1.2(4)：沿道路以机动状态行驶时，速度不受地形和高差影响。
+    # 想定 7527 的道路标记落在格的 `note` 字段（观测到取值「主要」「次要」）。
+    ROAD_NOTES = ("主要", "次要")
+    # 手册 4.10(5)：巡飞弹巡飞超时自毁。**手册未给具体时长**，此处为想定占位值，
+    # 待由想定/SetUp 提供真实值后替换（不臆造成事实）。
+    LOITER_SEC = 120
 
     def _charge_meters(self, unit, meters):
         """手册 4.1.1(4)：人员每冲锋 200 米转为疲劳状态。
@@ -394,10 +533,13 @@ class Game:
         t = self.units.get(tgt_id)
         if not o or not t or not o.alive() or not t.alive():
             return False
+        if o.out_of_control():
+            return False                  # 手册 4.9(3)：失控后不能侦察
         d = G.distance(o.pos, t.pos)
         if d > self.observe_range(o, t):
             return False
-        ok, _ = self.los(o.pos, t.pos)
+        ok, _ = self.los(o.pos, t.pos, h_obs=self.unit_height(o),
+                         h_tar=self.unit_height(t))   # 手册 4.8(2)/4.10(1) 滞空高度
         return ok
 
     # ---------------- 指令 ----------------
@@ -458,6 +600,12 @@ class Game:
         if a.stunned(self.second):
             a.keep = 1
             return None, "压制状态下不能射击"
+        if a.out_of_control():
+            # 手册 4.9(3)：无人战车失去依托后不能射击/侦察/校射
+            return None, "无人战车失去依托，不能射击（手册 4.9(3)）"
+        if a.is_loitering_missile() and not a.detail.get("launcher"):
+            # 手册 4.10(3)：未部署上车的巡飞弹不能发射
+            return None, "巡飞弹未部署上车，不能发射（手册 4.10(3)）"
         # 同格交战
         if a.color == t.color:
             return None, "不能攻击己方"

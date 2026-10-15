@@ -103,6 +103,19 @@ def situational_mod(shooter_stunned=False, shooter_moving=False,
     return v
 
 
+# ---- 手册只说「作不利修正」、但**未给数值**的目标状态 ----
+# 官方软件（`Caijue.asp` 的「目标状态」字段）认得它们，
+# 手册第 30 页表7 只列了 机动/掩蔽/堆叠 三项，其余只写"作不利修正"。
+# 这些状态**不能静默按 0 处理**，否则引擎会"看起来实现了"——
+# 必须显式报出，交由实测标定（见 `docs/未确证裁决表.md` T7-miss）。
+UNNUMBERED_STATES = ("卧倒", "行军", "水上", "车内")
+
+
+def unnumbered_states(states):
+    """从目标状态集合里挑出「手册未给修正数值」的那些（返回列表，保序）。"""
+    return [s for s in (states or ()) if s in UNNUMBERED_STATES]
+
+
 def fix_person_result(corrected_roll):
     """表7：人员伤亡结果修正。"""
     for lo, hi, v in T["person_result_fix"]:
@@ -173,14 +186,44 @@ def result_air(attack_level, roll):
     return row[a - 1] if a - 1 < len(row) else 0
 
 
+# ---------------- 战果阶梯（手册 4.6.1 / 4.6.2(4)(5)(6)） ----------------
+# 手册把"无效 / 压制 / 消灭 n"写成一条数轴，4.6.2(5)(6) 就是一条加法：
+#     最终战果 = 战斗结果 + 修正结果
+#     > 0 → 消灭 n（车辆同时压制，人员互斥） ; = 0 → 压制 ; < 0 → 无效
+# 表4 的空白格与表6 的空串都表示"无效"，它在数轴上是 -1（比"压制 0"低一档）。
+INVALID_LEVEL = -1
+
+
+def ladder_of(value):
+    """把表4/表6 的原始格值转成战果阶梯值（无效 = -1 / 压制 = 0 / 消灭 n = n）。"""
+    if value == PUSH:
+        return 0
+    if value in ("", None):
+        return INVALID_LEVEL
+    v = int(value)
+    return v if v > 0 else INVALID_LEVEL
+
+
 # ---------------- 高层裁决入口 ----------------
 
 def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
-                terrain=None, log=None, rng=None):
+                terrain=None, log=None, rng=None, target_states=None,
+                fix_roll=None):
     """一次直瞄射击裁决。
 
-    返回 dict(result=..., kills=..., suppressed=..., roll=..., level=..., detail=...)
+    **两颗骰（官方口径）**：
+      - `roll`（随机数1）→ 查表4/表6 得**战斗结果**（**不受状态修正**）；
+      - `fix_roll`（随机数2）→ `修正后随机数 = fix_roll + 状态修正`，
+        再查表5（车辆防护力）或表7（人员）得**修正结果**；
+      - `最终战果 = 战斗结果 + 修正结果`（>0 消灭 / =0 压制 / <0 无效）。
+
+    该口径由 27 条真实裁决明细反查确认（`tools/verify_unfavorable.py` C/D 段），
+    也与手册表5 表头「随机数（修正后）」+ 4.6.2(5)(6) 的措辞一致。
+
+    返回 dict(result=..., kills=..., suppressed=..., roll=..., fix_roll=..., level=..., detail=...)
     shooter/target 需要有 typeid / armor / units / moving / stunned / hidden / stacked
+    target_states：目标的**文字状态**（如「卧倒」「车内」）。手册对其中若干只说
+        「作不利修正」而未给数值，此类状态会被显式写进 detail 告警，不静默当 0。
     """
     if isinstance(dist, bool) or not isinstance(dist, int) or dist < 0:
         raise ValueError("dist must be a nonnegative integer")
@@ -228,9 +271,11 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
             lvl = max(0, lvl + fix)
             detail.append("高度差修正 %+d → %d" % (fix, lvl))
 
-    # 3) 掷骰 + 状态修正
+    # 3) 掷两颗骰（随机数1 查战斗结果；随机数2 供表5/表7 的「修正后随机数」）
     if roll is None:
         roll = roll2d6(rng)
+    if fix_roll is None:
+        fix_roll = roll2d6(rng)
     smod = situational_mod(
         shooter_stunned=shooter.get("stunned", False),
         shooter_moving=shooter.get("moving", False),
@@ -239,58 +284,76 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
         target_moving=target.get("moving", False),
         target_stacked=target.get("stacked", False),
     )
-    corrected = roll + smod
-    detail.append("随机数 %d，状态修正 %+d → %d" % (roll, smod, corrected))
+    fixed = fix_roll + smod          # 手册表5 表头：「随机数（修正后）」
+    detail.append("随机数1 %d（查战斗结果）；随机数2 %d + 状态修正 %+d → 修正后随机数 %d"
+                  % (roll, fix_roll, smod, fixed))
+    gaps = unnumbered_states(target_states)
+    if gaps:
+        detail.append("⚠ 目标状态「%s」手册只说『作不利修正』、未给数值，未作修正"
+                      "（待实测标定，见 docs/未确证裁决表.md T7-miss）" % "／".join(gaps))
 
-    # 4) 装甲修正（表5，仅对车辆战损）
-    corrected_raw = corrected        # 手册 4.6.2(5) 需保留"修正前"的战果
-    if target.get("typeid") == 2 and not is_air_target:
-        if not armor_known(target.get("armor", "无装甲")):
-            detail.append("⚠ 装甲级别「%s」不在手册表5 中，未作修正（需人工确认）"
-                          % target.get("armor"))
-        am = armor_mod(corrected, target.get("armor", "无装甲"))
-        if am:
-            corrected += am
-            detail.append("防护力(%s)修正 %+d → %d" % (target.get("armor"), am, corrected))
-
-    # 5) 查结果
+    # 4) 结果查询
     if is_air_target:
+        # 空中目标：手册没有对空的"修正表"（表5/表7 只覆盖车辆/人员），
+        # 故此处的状态修正只能折进表10 的行号 —— **未确证，待实测**。
         if lvl is None or lvl <= 0:
             return dict(result=INVALID, kills=0, suppressed=False, roll=roll,
-                        level=lvl, detail=detail + ["攻击等级为 0，无法造成战果"],
+                        fix_roll=fix_roll, level=lvl,
+                        detail=detail + ["攻击等级为 0，无法造成战果"],
                         table=table_used)
-        r = result_air(lvl, corrected)
+        r = result_air(lvl, roll + smod)
         return dict(result=("歼灭" if r else INVALID), kills=1 if r else 0,
-                    suppressed=False, roll=roll, level=lvl,
+                    suppressed=False, roll=roll, fix_roll=fix_roll, level=lvl,
                     detail=detail, table=table_used)
 
-    if target.get("typeid") == 2 or weapon_name == "步兵轻武器":
-        kills_raw = max(0, result_vehicle(lvl, shooter.get("units", 1), corrected_raw))
-        kills = max(0, result_vehicle(lvl, shooter.get("units", 1), corrected))
-        # 手册 4.6.2(4)(5)：对车辆只要产生过有效战果（含被防护力修正为 0），
-        # 就同时造成压制；这是车辆与人员不同的地方。
-        suppressed = kills_raw > 0 or kills > 0
-        if kills_raw > 0 and kills == 0:
+    if target.get("typeid") == 2:
+        # 步兵轻武器打车辆：表2 没有它，攻级已在上面退到表1（见第 1 步）。
+        # 但**打人员**必须走表6（表4 是"对车辆单位战斗结果"），故这里只按目标类型分流。
+        raw = result_vehicle(lvl, shooter.get("units", 1), roll)
+        base = ladder_of(raw)
+        detail.append("表4[攻击等级 %d][随机数1 %d] → 战斗结果 %d" % (lvl, roll, base))
+        # 表5：修正后随机数 → 防护力修正
+        armor = target.get("armor", "无装甲")
+        if not armor_known(armor):
+            detail.append("⚠ 装甲级别「%s」不在手册表5 中，未作修正（需人工确认）" % armor)
+        am = armor_mod(fixed, armor)
+        detail.append("表5[%s][修正后随机数 %d] → 修正结果 %+d" % (armor, fixed, am))
+        total = base + am                                  # 手册 4.6.2(5)(6)
+        detail.append("最终战果 %d = 战斗结果 %d + 修正结果 %+d" % (total, base, am))
+        if base > 0 and total == 0:
             detail.append("战果被防护力修正为 0 → 仅压制（手册 4.6.2(5)）")
-        detail.append("表4 → 消灭 %d 车" % kills)
+        elif total < 0:
+            detail.append("最终战果为负 → 无效（手册 4.6.2(6)）")
+        kills = max(0, total)
+        # 手册 4.6.2(4)：对车辆只要产生有效战果（含被防护力修正为 0）就**同时**压制。
+        suppressed = total >= 0 and (base > 0 or total > 0)
         return dict(result=(kills or INVALID), kills=kills, suppressed=suppressed,
-                    kills_raw=kills_raw, roll=roll, level=lvl, detail=detail,
-                    table=table_used)
+                    kills_raw=max(0, base), final=total, roll=roll,
+                    fix_roll=fix_roll, level=lvl, detail=detail, table=table_used)
 
-    # 人员：表6 + 表7
-    rf = fix_person_result(corrected)
-    if rf:
-        corrected += rf
-        detail.append("表7 结果修正 %+d → %d" % (rf, corrected))
-    v = result_person(lvl, corrected)
-    if v == PUSH:
-        detail.append("表6 → 压制")
-        return dict(result=PUSH, kills=0, suppressed=True, roll=roll, level=lvl,
-                    detail=detail, table=table_used)
-    kills = int(v) if v else 0
-    detail.append("表6 → 消灭 %d 班" % kills)
+    # 人员：表6（战斗结果）+ 表7（伤亡结果修正）
+    rv = result_person(lvl, roll)
+    base = ladder_of(rv)
+    rf = fix_person_result(fixed)
+    total = base + rf
+    detail.append("表6[攻击等级 %d][随机数1 %d] → 战斗结果 %s"
+                  % (lvl, roll, "无效" if rv == INVALID else
+                     ("压制" if rv == PUSH else rv)))
+    detail.append("表7[修正后随机数 %d] → 结果修正 %+d" % (fixed, rf))
+    detail.append("最终战果 %d = 战斗结果 %d + 结果修正 %+d" % (total, base, rf))
     # 手册 4.6.1：人员战果为"消灭 n 个班 / 无效 / 压制"三者之一，消灭与压制**互斥**。
     # （车辆才规定"产生有效战果同时造成压制"，见 4.6.2(4)。）
-    return dict(result=(kills or INVALID), kills=kills,
-                suppressed=False, roll=roll, level=lvl,
+    if total > 0:
+        detail.append("表6 → 消灭 %d 班" % total)
+        return dict(result=total, kills=total, suppressed=False, kills_raw=max(0, base),
+                    final=total, roll=roll, fix_roll=fix_roll, level=lvl,
+                    detail=detail, table=table_used)
+    if total == 0:
+        detail.append("表6 → 压制")
+        return dict(result=PUSH, kills=0, suppressed=True, kills_raw=max(0, base),
+                    final=total, roll=roll, fix_roll=fix_roll, level=lvl,
+                    detail=detail, table=table_used)
+    detail.append("最终战果为负 → 无效（手册 4.6.2(6)）")
+    return dict(result=INVALID, kills=0, suppressed=False, kills_raw=max(0, base),
+                final=total, roll=roll, fix_roll=fix_roll, level=lvl,
                 detail=detail, table=table_used)

@@ -68,7 +68,7 @@ put(t, 80019)
 r = crt.direct_fire(shooter=dict(typeid=2, units=1, moving=False, stunned=False),
                     target=dict(typeid=2, armor="复合装甲", hidden=False,
                                 moving=False, stacked=False),
-                    weapon_name="重型坦克炮", dist=1, roll=2)
+                    weapon_name="重型坦克炮", dist=1, roll=2, fix_roll=8)
 check("车辆 kills>0 时 suppressed=True",
       r["kills"] > 0 and r["suppressed"], "kills=%s suppressed=%s" % (r["kills"], r["suppressed"]))
 
@@ -82,8 +82,8 @@ for armor in ("无装甲", "中型装甲", "复合装甲", "重型装甲"):
                     shooter=dict(typeid=2, units=1, moving=False, stunned=False),
                     target=dict(typeid=2, armor=armor, hidden=True,
                                 moving=True, stacked=False),
-                    weapon_name=wn, dist=dist, roll=roll)
-                if rr.get("kills_raw", 0) > 0 and rr["kills"] == 0:
+                    weapon_name=wn, dist=dist, roll=roll, fix_roll=roll)
+                if rr.get("kills_raw", 0) > 0 and rr.get("final") == 0:
                     found = (armor, wn, dist, roll, rr)
                     break
             if found:
@@ -93,17 +93,49 @@ for armor in ("无装甲", "中型装甲", "复合装甲", "重型装甲"):
     if found:
         break
 if found:
-    check("原始战果>0 但修正后为 0 时仍压制", found[4]["suppressed"],
-          "%s/%s/dist=%d/roll=%d  kills_raw=%d"
-          % (found[0], found[1], found[2], found[3], found[4]["kills_raw"]))
+    check("修正前战果>0、修正后恰为 0 时 → 压制（4.6.2(5)）",
+          found[4]["suppressed"] and found[4]["kills"] == 0,
+          "%s/%s/dist=%d/roll=%d  kills_raw=%d final=%d"
+          % (found[0], found[1], found[2], found[3], found[4]["kills_raw"],
+             found[4]["final"]))
 else:
-    check("原始战果>0 但修正后为 0 时仍压制", False, "未能构造出该组合")
+    check("修正前战果>0、修正后恰为 0 时 → 压制（4.6.2(5)）", False, "未能构造出该组合")
+
+print("\n== 4.6.2(6) 修正后战果为负 → 无效（不压制）==")
+found6 = None
+for armor in ("无装甲", "中型装甲", "复合装甲", "重型装甲"):
+    for wn in ("车载机枪", "速射炮", "中型坦克炮", "重型坦克炮"):
+        for dist in (1, 4, 8, 10):
+            for roll in range(2, 13):
+                rr = crt.direct_fire(
+                    shooter=dict(typeid=2, units=1, moving=False, stunned=False),
+                    target=dict(typeid=2, armor=armor, hidden=True,
+                                moving=True, stacked=False),
+                    weapon_name=wn, dist=dist, roll=roll, fix_roll=roll)
+                if rr.get("kills_raw", 0) > 0 and rr.get("final", 0) < 0:
+                    found6 = (armor, wn, dist, roll, rr)
+                    break
+            if found6:
+                break
+        if found6:
+            break
+    if found6:
+        break
+if found6:
+    check("修正后战果为负 → 无效且不压制（4.6.2(6)）",
+          found6[4]["result"] == crt.INVALID and found6[4]["kills"] == 0
+          and not found6[4]["suppressed"],
+          "%s/%s/dist=%d/roll=%d  kills_raw=%d final=%d → %r"
+          % (found6[0], found6[1], found6[2], found6[3], found6[4]["kills_raw"],
+             found6[4]["final"], found6[4]["result"]))
+else:
+    check("修正后战果为负 → 无效且不压制（4.6.2(6)）", False, "未能构造出该组合")
 
 print("\n== 4.6.1 人员战果：消灭与压制互斥 ==")
 r = crt.direct_fire(shooter=dict(typeid=1, units=3, moving=False, stunned=False),
                     target=dict(typeid=1, armor="无装甲", hidden=False,
                                 moving=False, stacked=True),
-                    weapon_name="步兵轻武器", dist=1, roll=2)
+                    weapon_name="步兵轻武器", dist=1, roll=2, fix_roll=8)
 check("人员被消灭时不附带压制", (r["kills"] == 0 or not r["suppressed"]),
       "kills=%s suppressed=%s" % (r["kills"], r["suppressed"]))
 
