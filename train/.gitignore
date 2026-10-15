@@ -10,6 +10,8 @@ tools/
 docs/
 scenario/
 
+# （不生成 samples/：训练环境不携带任何合成 demo 夹具）
+
 # 生成物与运行产物
 MANIFEST.json
 requirements.txt

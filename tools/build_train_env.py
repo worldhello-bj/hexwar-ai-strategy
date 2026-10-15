@@ -38,7 +38,8 @@ COPY_SPEC = [
     ("offline", "offline", ("server.py", "engine_bridge.py")),
     ("tests", "tests", None),
     ("tools", "tools", None),
-    ("samples", "samples", None),
+    # ★ 不拷 `samples/`：那里是早期的**合成**测试夹具，只给主仓库单测用。
+    #   训练环境的想定就是比赛初设 `scenario/7527/`（用户要求：不要其他 demo）。
     ("docs", "docs", "*.md"),
     # ★ 比赛初设（想定 7527 的地图与编成）已随仓库公开，直接拷进去 —— 
     #   训练环境的想定就是它，不依赖主仓库的 snapshot/。
