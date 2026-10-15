@@ -36,7 +36,8 @@ CONTENT_PATTERNS = [
     ("Cookie 头", r"(?i)\b(Set-Cookie|Cookie)\s*:"),
     ("会话 ID", r"(?i)ASPSESSIONID[A-Z]*="),
     ("账号密码字段", r"(?i)(UserPassword|PassWord|Pwd)\s*="),
-    ("本机账号名", r"(奶龙|奶蛙)"),
+    # 账号名用通用模式（不在公开文件里写真实账号名）：中文用户名 + 账号字段
+    ("账号名", r"UserName=[^\s&\"']*[\u4e00-\u9fa5]"),
     ("签名", r"(?i)\b(sign|appId)\s*[=:]\s*[\w\-]{6,}"),
 ]
 TEXT_EXT = {".py", ".md", ".json", ".jsonl", ".txt", ".html", ".htm", ".js", ".css",
