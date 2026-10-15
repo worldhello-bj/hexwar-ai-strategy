@@ -177,11 +177,20 @@ class EnvContractTests(unittest.TestCase):
                                             "path": [self.start, self.neighbor]})
         self.assertFalse(info.get("invalid_action"), info)
         self.assertEqual(reward, obs["score"]["diff"] - before)
-        # 夺占 1 个夺控点：己方 +1 点、敌方 -1 点。
-        # ⚠ 这里绑的是**未确证的占位值**（手册/实测都没有给出每点分值，
-        #   见 docs/计分规则待确认.md）——所以断言写常量而不是写 20，
-        #   口径一旦确认，改常量就能看出哪些用例受影响。
-        self.assertEqual(reward, 2 * HexwarEnv.CAPTURE_POINT_SCORE_PLACEHOLDER)
+        # 夺占 1 个夺控点：占位实现会给己方 +1 点、敌方 -1 点，但**默认奖励口径是
+        # `verified`（只用已确证分项）**，所以夺控点**不**应该影响 reward：
+        # 手册与实测都没给出每点分值，未确证值不得进入学习信号。
+        # 见 `docs/计分规则待确认.md`。
+        self.assertEqual(reward, 0)
+        self.assertIn("captured_per_point", self.env.score()["pending_rules"])
+        # 显式选 `platform` 口径时才把它算进 diff（仅用于对账/展示）。
+        platform = HexwarEnv(snapshot=str(self.root), scoring_mode="platform")
+        platform.reset(seed=17)
+        _, platform_reward, _, _ = platform.step(
+            {"type": "move", "unit": "a", "path": [self.start, self.neighbor]})
+        self.assertEqual(platform_reward,
+                         2 * HexwarEnv.CAPTURE_POINT_SCORE_PLACEHOLDER)
+        self.assertEqual(platform.score()["mode"], "platform")
 
     def test_enumeration_is_readonly_and_every_action_is_accepted(self):
         before = self.state()

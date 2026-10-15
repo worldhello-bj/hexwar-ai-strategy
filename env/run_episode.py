@@ -24,10 +24,11 @@ DEFAULT_SNAP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 
 
 def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose=False,
-            move_radius=None, deep_validate=False):
+            move_radius=None, deep_validate=False, scoring_mode="verified"):
     env = HexwarEnv(snapshot=snapshot, side=side, max_seconds=max_seconds, fog=fog,
                     **({} if move_radius is None else {"move_radius": move_radius}),
-                    deep_validate=deep_validate)
+                    deep_validate=deep_validate, scoring_mode=scoring_mode)
+    scoring_key = "verified" if scoring_mode == "verified" else "total"
     obs = env.reset(seed=seed)
     steps = 0
     if render:
@@ -39,9 +40,16 @@ def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose
             print("首步信息:", info)
         steps += 1
         if verbose and steps % 20 == 0:
-            print("t=%4d  己方总分=%4d  敌方总分=%4d" %
-                  (obs["time"], obs["score"]["own"]["total"],
-                   obs["score"]["enemy"]["total"]))
+            s = env.score()
+            print("t=%4d  己方=%4d  敌方=%4d" %
+                  (obs["time"], s["own"][scoring_key], s["enemy"][scoring_key]))
+        if verbose and steps == 20:
+            s = env.score()
+            print("  口径=%s  已确证(剩余兵力)=%d/%d  平台式三项和=%d/%d  未确证=%s"
+                  % (s["mode"], s["own"]["verified"], s["enemy"]["verified"],
+                     s["own"]["total"], s["enemy"]["total"], s["unverified"]))
+            print("  [占位/假设不入奖励] 己方夺控=%d 歼烍=%d（仅展示）"
+                  % (s["own"]["captured"], s["own"]["killed"]))
         if steps > 5000:      # 安全阀
             break
     if render:
@@ -64,6 +72,9 @@ def main():
     ap.add_argument("--deep-validate", action="store_true",
                     help="用参考口径枚举（慢，仅供差分复现）")
     ap.add_argument("--no-fog", action="store_true", help="关闭战争迷雾（上帝视角）")
+    ap.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
+                    default="verified",
+                    help="奖励口径：verified（默认，只用已确证分项）/ platform（含假设与占位项）")
     ap.add_argument("--render", action="store_true", help="打印文本态势")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--json", help="把结果写入 JSON")
@@ -81,11 +92,12 @@ def main():
         r = run_one(agent, args.side, args.seed + i, args.snapshot,
                     args.max_seconds, not args.no_fog,
                     render=args.render and i == 0, verbose=args.verbose,
-                    move_radius=args.move_radius, deep_validate=args.deep_validate)
+                    move_radius=args.move_radius, deep_validate=args.deep_validate,
+                    scoring_mode=args.scoring_mode)
         results.append(r)
         print("第 %2d 局  seed=%-4d  步数=%-5d  己方=%4d 敌方=%4d 净胜=%+4d" %
-              (i + 1, r["seed"], r["steps"], r["score"]["own"]["total"],
-               r["score"]["enemy"]["total"], r["score"]["diff"]))
+              (i + 1, r["seed"], r["steps"], r["score"]["own"]["verified"],
+               r["score"]["enemy"]["verified"], r["score"]["diff"]))
 
     diffs = [r["score"]["diff"] for r in results]
     wins = sum(1 for d in diffs if d > 0)

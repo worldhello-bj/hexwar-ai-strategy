@@ -53,9 +53,11 @@ class HexwarEnv:
 
     def __init__(self, snapshot=None, side="BLUE", max_seconds=1800,
                  fog=True, dt=WAIT_SEC, victory="score", move_radius=6,
-                 deep_validate=False):
+                 deep_validate=False, scoring_mode="verified"):
         if side not in ("BLUE", "RED"):
             raise ValueError("side must be BLUE or RED")
+        if scoring_mode not in ("verified", "platform"):
+            raise ValueError("scoring_mode must be 'verified' or 'platform'")
         if not isinstance(max_seconds, int) or isinstance(max_seconds, bool) or max_seconds < 0:
             raise ValueError("max_seconds must be a non-negative integer")
         if not isinstance(dt, int) or isinstance(dt, bool) or dt <= 0:
@@ -75,6 +77,9 @@ class HexwarEnv:
         self.victory = victory
         self.move_radius = move_radius
         self.deep_validate = deep_validate
+        # 奖励口径：`verified`（默认）只用已确证分项（剩余兵力分）；
+        # `platform` 把假设的歼灭分与无依据的夺控占位也算进去（仅用于对账/展示）。
+        self.scoring_mode = scoring_mode
         self.game = None
         self.done = False
         self._history = []
@@ -195,15 +200,27 @@ class HexwarEnv:
     def score(self):
         """己方 / 敌方的分项分（口径见 `engine/scoring.py`）。
 
-        ⚠️ `remaining` 已按反推口径（含**车内载员×编制**）；
-        `killed` 是**假设**、`captured` 是**占位**（均待官方确认）。
-        返回值里的 `pending_rules` 就是未确证清单。
+        每个阵营同时给出：
+
+        - `total`：三个分项**全算**（平台式，含未确证项）—— 只适合对账/展示
+        - `verified`：**只算已确证分项**（当前 = `remaining`）—— 默认奖励口径
+        - `unverified`：本次实际涉及的未确证项清单
+
+        `self.scoring_mode` 决定 `diff` 用哪一个（`"verified"` 默认 / `"platform"`）。
+        这样做是因为：歼灭分是**假设**、夺控分是**无依据占位**，即使在返回值里
+        标注了 `pending_rules`，只要它们进了 `total` 又拿 `total` 当奖励，
+        占位值就还是在参与学习。所以要分开两个数，让奖励默认只看已确证部分。
         """
-        both = scoring.both_scores(self.game)
+        both, issues = scoring.both_scores(self.game)
         own, opp = both[self.side], both["RED" if self.side == "BLUE" else "BLUE"]
         return {"own": own, "enemy": opp,
-                "diff": own["total"] - opp["total"],
-                "pending_rules": list(scoring.PENDING_RULES)}
+                "diff": (scoring.reward_value(own, self.scoring_mode)
+                         - scoring.reward_value(opp, self.scoring_mode)),
+                "mode": self.scoring_mode,
+                "scoring_version": scoring.SCORING_VERSION,
+                "pending_rules": list(scoring.PENDING_RULES),
+                "unverified": sorted(set(own["unverified"]) | set(opp["unverified"])),
+                "issues": dict(issues)}
 
     # ---------------- 动作空间 ----------------
     # 不需要引擎裁决、可以纯只读判定的动作类型（它们不会改变任何状态或掷骰）
@@ -618,8 +635,24 @@ class HexwarEnv:
             out = []
             for pid in list(u.detail.get("carried") or []):
                 p = g.units.get(pid)
-                if not p or not p.alive():
+                if p is None:
                     continue
+                # 注意：**不能**用 `alive()` 过滤 —— 快照里的载员 blood=0 表示
+                # "在车内读不到兵力"，不是"已阵亡"。
+                # 下车后**恢复独立身份**：平台下车会新建实体并带上阵营色与编制兵力
+                # （见 `docs/运输机制实测.md`）；不恢复的话，这个单位会一直“像载员”
+                # ——没有阵营就不进剩余兵力分，分值直接凭空消失。
+                p.color = u.color
+                establishment = p.establishment or scoring.carried_establishment(p.data)
+                if p.blood <= 0:
+                    # 血量为 0 = “在车内期间不可读”，只能用编制表补；补不了就不臆造，
+                    # 显式标记并让 `scoring` 报出（不静默算分）。
+                    if establishment is None:
+                        p.detail["establishment_unverified"] = True
+                        establishment = 0
+                    p.blood = establishment
+                p.establishment = p.blood
+                p.units = max(1, p.blood) if p.typeid in (1, 2) else 1
                 p.pos = u.pos
                 p.pos2 = u.pos
                 p.detail.pop("carrier", None)

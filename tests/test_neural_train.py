@@ -22,6 +22,50 @@ class NeuralTrainingTests(unittest.TestCase):
         return NeuralTrainer(self.snapshot, policy_config={"buckets": 32, "hidden_dim": 4},
                              episode_config={"max_seconds": 20, "max_steps": 100}, **kwargs)
 
+    def checkpoint_file(self, **kwargs):
+        """写一个训练器检查点，返回 (path, trainer)。"""
+        trainer = self.trainer(**kwargs)
+        trainer.train(2)
+        path = self.root / ("ckpt-%d.json" % len(list(self.root.glob("ckpt-*.json"))))
+        trainer.save(path)
+        return path, trainer
+
+    def test_checkpoint_binds_scoring_version_and_mode(self):
+        """计分口径变了就不能续跑：否则同一快照下两套奖励会混在一起。"""
+        from engine import scoring
+        path, trainer = self.checkpoint_file()
+        data = json.loads(path.read_text())
+        self.assertEqual(data["scoring_version"], scoring.SCORING_VERSION)
+        self.assertEqual(data["scoring_mode"], "verified")
+        self.assertEqual(data["episode_config"]["scoring_mode"], "verified")
+        # ① 口径版本不同 → 拒绝
+        bumped = copy.deepcopy(data)
+        bumped["scoring_version"] = scoring.SCORING_VERSION + 1
+        bad = self.root / "bumped.json"
+        bad.write_text(json.dumps(bumped))
+        with self.assertRaises(ValueError):
+            NeuralTrainer.load(bad, self.snapshot)
+        # ② 老检查点（没有该字段）→ 拒绝，而不是默认当成新口径
+        legacy = copy.deepcopy(data)
+        legacy.pop("scoring_version")
+        legacy.pop("scoring_mode")
+        old = self.root / "legacy.json"
+        old.write_text(json.dumps(legacy))
+        with self.assertRaises(ValueError):
+            NeuralTrainer.load(old, self.snapshot)
+        # ③ 口径一致时正常载入
+        self.assertEqual(NeuralTrainer.load(path, self.snapshot).checkpoint(),
+                         trainer.checkpoint())
+
+    def test_platform_scoring_mode_is_recorded_and_trains(self):
+        trainer = self.trainer(scoring_mode="platform", batch_episodes=2)
+        self.assertEqual(trainer.scoring_mode, "platform")
+        self.assertEqual(trainer.checkpoint()["scoring_mode"], "platform")
+        self.assertEqual(trainer.episode_config["scoring_mode"], "platform")
+        self.assertTrue(all(r["status"]["terminated"] for r in trainer.train(2)))
+        with self.assertRaises(ValueError):
+            self.trainer(scoring_mode="whatever")
+
     def test_actual_synthetic_fixture_updates_parameters(self):
         trainer = self.trainer(seed=3, batch_episodes=2)
         before = copy.deepcopy(trainer.policy.checkpoint()["params"])

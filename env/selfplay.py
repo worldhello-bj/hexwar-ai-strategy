@@ -16,6 +16,7 @@ import tempfile
 import time
 import tracemalloc
 
+from engine import scoring
 from .episode_api import TwoPlayerEpisode
 from .match_eval import SIDES, _positive_int, snapshot_manifest, write_synthetic_snapshot
 
@@ -71,16 +72,21 @@ class SelfPlayTrainer:
     """Separate seat tables and histories, reproducible across checkpoint resume."""
 
     def __init__(self, snapshot, *, seed=0, epsilon=0.1, train_seed_start=0,
-                 episode_config=None, allow_real=False):
+                 episode_config=None, allow_real=False, scoring_mode="verified"):
         _positive_int("seed", seed, True)
         _positive_int("train_seed_start", train_seed_start, True)
+        if scoring_mode not in ("verified", "platform"):
+            raise ValueError("scoring_mode must be 'verified' or 'platform'")
         self.snapshot = str(snapshot)
         self.allow_real = bool(allow_real)
         self.manifest = snapshot_manifest(snapshot, allow_real=self.allow_real)
         self.seed = seed
+        self.scoring_mode = scoring_mode
         self.epsilon = _epsilon(epsilon)
         self.train_seed_start = train_seed_start
         self.episode_config = copy.deepcopy(episode_config or {})
+        # 奖励口径随 episode_config 一起检查点化（决定哪些分项能进终局奖励）。
+        self.episode_config["scoring_mode"] = scoring_mode
         # Validate configuration even for an empty run.
         TwoPlayerEpisode(self.snapshot, **self.episode_config)
         self.policies = {s: MonteCarloPolicy(epsilon=self.epsilon) for s in SIDES}
@@ -146,6 +152,9 @@ class SelfPlayTrainer:
                               "seed": self.seed, "epsilon": self.epsilon,
                               "train_seed_start": self.train_seed_start,
                               "episodes_completed": self.episodes_completed,
+                              # 计分口径绑定：口径变了，表里的 return 就不可比。
+                              "scoring_version": scoring.SCORING_VERSION,
+                              "scoring_mode": self.scoring_mode,
                               "snapshot": self.manifest, "episode_config": self.episode_config,
                               "tables": {s: self.policies[s].table for s in SIDES}})
 
@@ -160,9 +169,15 @@ class SelfPlayTrainer:
         data = json.loads(Path(path).read_text("utf-8"))
         if data.get("schema_version") != 1 or data.get("algorithm") != "first_visit_terminal_mc":
             raise ValueError("unsupported checkpoint")
+        # 旧检查点（没有 scoring_version）是在旧计分口径下学的：直接拒绝，不混用。
+        if data.get("scoring_version") != scoring.SCORING_VERSION:
+            raise ValueError(
+                "checkpoint scoring version %r does not match %r; retrain or convert"
+                % (data.get("scoring_version"), scoring.SCORING_VERSION))
         trainer = cls(snapshot, seed=data["seed"], epsilon=data["epsilon"],
                       train_seed_start=data["train_seed_start"],
-                      episode_config=data["episode_config"], allow_real=allow_real)
+                      episode_config=data["episode_config"], allow_real=allow_real,
+                      scoring_mode=data.get("scoring_mode", "verified"))
         if trainer.manifest != data["snapshot"]:
             raise ValueError("checkpoint snapshot does not match")
         _positive_int("episodes_completed", data["episodes_completed"], True)
@@ -193,6 +208,9 @@ def main(argv=None):
     parser.add_argument("--deep-validate", action="store_true",
                         help="用参考口径逐候选事务校验枚举（慢，仅供差分复现）")
     parser.add_argument("--episodes", type=int, default=20)
+    parser.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
+                        default="verified",
+                        help="奖励口径：verified（默认，只用已确证分项）/ platform（含假设与占位项）")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--epsilon", type=float, default=0.2)
     parser.add_argument("--train-seed-start", type=int, default=0)
@@ -221,7 +239,10 @@ def main(argv=None):
                        SelfPlayTrainer(snapshot, seed=args.seed, epsilon=args.epsilon,
                                        train_seed_start=args.train_seed_start,
                                        episode_config=episode_config,
-                                       allow_real=args.allow_real_map))
+                                       allow_real=args.allow_real_map,
+                                       scoring_mode=args.scoring_mode))
+            if args.scoring_mode != trainer.scoring_mode:
+                raise ValueError("requested scoring mode differs from resumed checkpoint")
             # Reject heldout overlap with the whole planned run before training.
             if any(trainer.train_seed_start <= s < trainer.train_seed_start + trainer.episodes_completed + args.episodes for s in args.eval_seeds):
                 raise ValueError("evaluation seeds overlap planned training")
@@ -248,6 +269,8 @@ def main(argv=None):
             trainer.save(args.checkpoint)
             report = {"algorithm": "first_visit_terminal_mc", "training": records,
                       "evaluation": evaluation, "episodes_completed": trainer.episodes_completed,
+                      "scoring_mode": trainer.scoring_mode,
+                      "scoring_version": scoring.SCORING_VERSION,
                       "resources": resources,
                       "caveat": "Exact-observation baseline; evaluation is trained-vs-trained self-play, not a comparison against a random or strong opponent and establishes no playing-strength claim."}
             if args.report:

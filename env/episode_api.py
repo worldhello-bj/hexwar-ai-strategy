@@ -9,10 +9,14 @@ import copy
 import json
 
 from engine.game import Unit
+from engine import scoring as _scoring
 from .hexwar_env import (ATTACK_SEC, CAPTURE_SEC, HIDE_SEC, LOAD_SEC,
                          GRENADE_SEC, AREA_FIRE_SEC)
 
 from .match_eval import SIDES, _SerialSession, _json_copy, _positive_int
+
+
+reward_value = _scoring.reward_value
 
 
 class TwoPlayerEpisode:
@@ -39,7 +43,7 @@ class TwoPlayerEpisode:
 
     def __init__(self, snapshot, *, max_seconds=120, max_steps=100,
                  dt=10, move_radius=1, victory="score", public_score=True,
-                 deep_validate=False):
+                 deep_validate=False, scoring_mode="verified"):
         _positive_int("max_seconds", max_seconds, True)
         _positive_int("max_steps", max_steps, True)
         _positive_int("dt", dt)
@@ -50,6 +54,9 @@ class TwoPlayerEpisode:
             raise ValueError("public_score must be a boolean")
         if not isinstance(deep_validate, bool):
             raise ValueError("deep_validate must be a boolean")
+        if scoring_mode not in ("verified", "platform"):
+            raise ValueError("scoring_mode must be 'verified' or 'platform'")
+        self._scoring_mode = scoring_mode
         self._public_score = public_score
         self._deep_validate = deep_validate
         self._snapshot = snapshot
@@ -80,7 +87,7 @@ class TwoPlayerEpisode:
     def reset(self, *, seed=0):
         _positive_int("seed", seed, True)
         session = _SerialSession(self._snapshot, seed, self._max_seconds,
-                                 True, self._dt, self._victory)
+                                 True, self._dt, self._victory, self._scoring_mode)
         self._session = session
         self._steps = 0
         self._outcome = None
@@ -97,9 +104,13 @@ class TwoPlayerEpisode:
         # about a particular online UI. Detailed private score components stay out.
         score = observation.pop("score")
         if self._public_score:
-            observation["score"] = {"own": score["own"]["total"],
-                                    "enemy": score["enemy"]["total"],
-                                    "diff": score["diff"]}
+            # 公开比分与奖励用**同一个口径**：默认 `verified`（只用已确证分项），
+            # 以免占位/假设值既进观察又进奖励。口径本身是元数据，只在 `status()`
+            # 里给出（`scoring_mode`），不塞进公开比分，保持观察结构不变。
+            observation["score"] = {
+                "own": reward_value(score["own"], self._scoring_mode),
+                "enemy": reward_value(score["enemy"], self._scoring_mode),
+                "diff": score["diff"]}
         public_enemy_fields = {"id", "name", "typeid", "color", "pos",
                                "hexid", "blood", "suppressed"}
         observation["enemy_visible"] = [
@@ -120,7 +131,12 @@ class TwoPlayerEpisode:
             return []
         authoritative = self._session.select(side)
         view = self.observe(side)
-        projected = copy.deepcopy(authoritative)
+        # Share the immutable static map instead of deep-copying it. On the real
+        # scenario that is 2721 cells per call, and this projection is built on
+        # every enumeration; the same rule is already load-bearing in
+        # `HexwarEnv._try_actions`, which never copies the map either.
+        projected = copy.deepcopy(authoritative,
+                                  {id(authoritative.game.hexes): authoritative.game.hexes})
         # Build opposing tokens from the public whitelist, not copied private
         # ammunition, carrier state, equipment, targets, or hidden occupancy.
         units = {uid: unit for uid, unit in projected.game.units.items()
@@ -146,8 +162,9 @@ class TwoPlayerEpisode:
                        "reason": "game_clock", "winner": None}
         if outcome and outcome["terminated"]:
             score = self._session.select("BLUE").score()
-            self._final_scores = {"BLUE": score["own"]["total"],
-                                  "RED": score["enemy"]["total"]}
+            self._final_scores = {
+                "BLUE": reward_value(score["own"], self._scoring_mode),
+                "RED": reward_value(score["enemy"], self._scoring_mode)}
             if outcome["reason"] == "game_clock":
                 blue, red = (self._final_scores[s] for s in SIDES)
                 outcome["winner"] = None if blue == red else ("BLUE" if blue > red else "RED")
@@ -162,6 +179,8 @@ class TwoPlayerEpisode:
         return _json_copy({"current_actor": self.current_actor,
                            "steps": self._steps,
                            "seconds": self._session.env.game.second,
+                           "scoring_mode": self._scoring_mode,
+                           "scoring_version": _scoring.SCORING_VERSION,
                            **outcome,
                            "final_scores": self._final_scores,
                            "rewards": self._final_scores if payout and self._final_scores is not None

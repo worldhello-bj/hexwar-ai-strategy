@@ -14,7 +14,8 @@ import random
 
 from . import geometry as G
 from . import crt
-from .equip import EQUIPMENT, WEAPONS, AMMO_FIELD, ANTI_AIR_CLASS, CRT_AIR_NAME
+from .equip import (EQUIPMENT, WEAPONS, AMMO_FIELD, ANTI_AIR_CLASS, CRT_AIR_NAME,
+                    carried_establishment)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SNAP = os.environ.get("HEXWAR_SNAP", os.path.join(os.path.dirname(HERE), "snapshot", "parsed"))
@@ -77,6 +78,14 @@ class Unit:
         # 空中单位滞空高度码（手册 4.8(2)：500 高空 / 200 低空 / 20 超低空）
         self.alt = int(d.get("e2") or 0)
         self.detail = {}
+        # 载员-载具配对证据（仅用于 `Game.link_carried`，不参与裁决）：
+        # 载员的 `ico` 与载具 `son` 图标串里的同名字段对应（实测：COD-M4 ↔ M113TW、
+        # PLA2-191 / UGVS / YY4 / WS43 ↔ ZBD100）。
+        if d.get("ico"):
+            self.detail["ico"] = str(d["ico"])
+        icons = [x for x in str(d.get("son") or "").split(",") if x]
+        if icons:
+            self.detail["son_icons"] = icons
 
     # --- 单位类别（手册 4.8 / 4.9 / 4.10）---
     def is_air(self):
@@ -145,6 +154,10 @@ class Game:
         for u in raw_units:
             uu = Unit(u)
             self.units[uu.id] = uu
+        # 快照里的「人在车内」记录只有 `pos2`（载具所在格），必须在载入时把关系
+        # 固定到**载具 ID** 上；否则载具一机动，`pos2` 变旧格，载员的分值就会
+        # 从计分里凭空消失（等于惩罚机动）。见 `docs/计分规则待确认.md`。
+        self.link_carried()
 
         self.started = False
         self.t0 = 0.0          # 推演开始时刻
@@ -157,6 +170,58 @@ class Game:
         self.dirty = True
         self.obj_fire_seq = {}
         self.start_str = ""    # 开始时刻的日期串（客户端时钟用）
+
+    # ---------------- 载员-载具关联 ----------------
+    def link_carried(self):
+        """把快照里「人在车内」的记录与载具建立**稳定**关联。
+
+        写 `carried.detail["carrier"] = 载具ID` 与 `carrier.detail["carried"]`，
+        与装卸动作（`env.hexwar_env` 的 load/unload）用的是同一套字段。
+
+        为什么必须在载入时固化：快照只给 `pos2`（当时的载具格），而 `pos2` 是
+        「目标格/旧格」，载具一机动就不再指向它 —— 若靠 `pos2` 现场匹配，载具
+        离开原格后载员就会从计分里**凭空消失**，等价于对机动施加惩罚。
+        另外 `pos2` 也可能同时落在多辆载具上（堆叠），所以要按证据强弱定序：
+
+        ① 载具 `son` 图标串含该载员的 `ico`（图标一位一用，避免同型载员重复占位）；
+        ② 该格唯一的车辆/飞行器（`typeid` 2/3）；
+        ③ 该格唯一的单位。
+
+        ①②③ 都定不下去时按 `id` 排序取第一辆，并**显式记入 `self.carried_ambiguous`**；
+        完全找不到归属的记入 `self.carried_unlinked` —— 两者都由 `engine.scoring`
+        报出（不静默算分）。重复调用是安全的（已关联的不再处理）。
+        """
+        self.carried_linked = []
+        self.carried_unlinked = []
+        self.carried_ambiguous = []
+        pending = [u for u in self.units.values()
+                   if not u.color and u.pos == 0 and u.blood == 0 and u.pos2
+                   and not u.detail.get("carrier")]
+        hosts = [u for u in self.units.values() if u.color]
+        for u in sorted(pending, key=lambda x: str(x.id)):
+            group = [h for h in hosts if h.pos == u.pos2]
+            icons_left = {h.id: list(h.detail.get("son_icons") or []) for h in group}
+            ico = u.detail.get("ico")
+            candidates = [h for h in group if ico and ico in icons_left[h.id]]
+            if len(candidates) > 1:
+                self.carried_ambiguous.append((u.id, [h.id for h in candidates]))
+            if not candidates:
+                vehicles = [h for h in group if h.typeid in (2, 3)]
+                candidates = vehicles or group
+                if len(candidates) > 1:
+                    self.carried_ambiguous.append((u.id, [h.id for h in candidates]))
+            if not candidates:
+                self.carried_unlinked.append(u.id)
+                continue
+            host = sorted(candidates, key=lambda h: str(h.id))[0]
+            if ico in icons_left[host.id]:
+                icons_left[host.id].remove(ico)
+            u.detail["carrier"] = host.id
+            host.detail.setdefault("carried", []).append(u.id)
+            self.carried_linked.append(u.id)
+        return {"linked": list(self.carried_linked),
+                "unlinked": list(self.carried_unlinked),
+                "ambiguous": list(self.carried_ambiguous)}
 
     # ---------------- 时钟 ----------------
     def start(self):
@@ -272,6 +337,19 @@ class Game:
         if c.detail.get("launched_missile"):
             return False, "该车本局已发射过巡飞弹（手册 4.10(4)）"
         m.detail.pop("carrier", None)
+        # 想定里巡飞弹是「在车内」记录（blood=0、无阵营）：发射后变成图上单位，
+        # 与下车同理需要恢复阵营与编制兵力，否则它一直不算活/不算分，
+        # 且 `alive()` 检查会让发射永远失败（blood=0 ⇒ 已损失）。
+        m.color = c.color
+        if m.blood <= 0:
+            establishment = m.establishment or carried_establishment(m.data)
+            if establishment is None:
+                # 编制未知：不臆造，标出来让计分显式报出。
+                m.detail["establishment_unverified"] = True
+                establishment = 0
+            m.blood = establishment
+            m.establishment = m.blood
+        m.units = max(1, m.blood) if m.typeid in (1, 2) else 1
         m.pos = c.pos
         m.pos2 = c.pos
         m.detail["launcher"] = c.id

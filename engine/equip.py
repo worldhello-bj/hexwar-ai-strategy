@@ -68,3 +68,23 @@ def weapon(data_id):
 
 def equipment(data_id):
     return EQUIPMENT.get(int(data_id))
+
+
+# ---------------- 载员编制兵力 ----------------
+# 想定里 15 条载员条目 `blood=0`（人在车内），编制兵力在快照里不可读。
+# 下面的值来自证据：**下车会在服务端新建实体，其 `blood` 就是编制兵力**
+# （见 `docs/运输机制实测.md`）。**未知型号返回 None，不得当成 0 静默计分。**
+# 放在装备层（而不是 `engine/scoring.py`）是因为引擎自己也要用：
+# 下车的单位、发射出去的巡飞弹都需要知道"在车内时读不到的编制兵力"。
+CARRIED_ESTABLISHMENT = {
+    382: 3,   # 步兵班（蓝方装甲车载）      —— 观测：blue_armored_unload_01
+    392: 4,   # 步兵班（红方火力支援车载）  —— 观测：red_support_unload_01
+    397: 4,   # 无人察打车                  —— 观测：red_support_unload_02_off2
+    394: 1,   # 旋翼无人机                  —— **反解**：由平台分项 354 反推，未直接观测
+    389: 0,   # 巡飞弹（score=0，恒不影响分值）
+}
+
+
+def carried_establishment(data):
+    """该装备的载员编制兵力；未知返回 None。"""
+    return CARRIED_ESTABLISHMENT.get(int(data or 0))

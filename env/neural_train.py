@@ -15,6 +15,7 @@ import time
 
 import numpy as np
 
+from engine import scoring
 from .episode_api import TwoPlayerEpisode
 from .match_eval import SIDES, _positive_int, snapshot_manifest
 from .neural_policy import NeuralPolicy, Decision
@@ -47,16 +48,21 @@ class NeuralTrainer:
     """
     def __init__(self, snapshot, *, seed=0, train_seed_start=0, batch_episodes=4,
                  episode_config=None, policy_config=None, heldout_seeds=(1000000, 1000001),
-                 observation_schema=1, allow_real=False):
+                 observation_schema=1, allow_real=False, scoring_mode="verified"):
         for name, value in (("seed", seed), ("train_seed_start", train_seed_start)):
             _positive_int(name, value, True)
         _positive_int("batch_episodes", batch_episodes)
+        if scoring_mode not in ("verified", "platform"):
+            raise ValueError("scoring_mode must be 'verified' or 'platform'")
         self.snapshot = str(snapshot)
         self.allow_real = bool(allow_real)
         self.manifest = snapshot_manifest(snapshot, allow_real=self.allow_real)
         self.seed, self.train_seed_start, self.batch_episodes = seed, train_seed_start, batch_episodes
         self.episode_config = {"max_seconds": 1800, "max_steps": 1000, "public_score": True}
         self.episode_config.update(copy.deepcopy(episode_config or {}))
+        # 奖励口径随 episode_config 一起检查点化：它决定了哪些分项能进"终局原始分"。
+        self.episode_config["scoring_mode"] = scoring_mode
+        self.scoring_mode = scoring_mode
         TwoPlayerEpisode(snapshot, **self.episode_config)
         self.heldout_seeds = list(heldout_seeds)
         if not self.heldout_seeds or len(self.heldout_seeds) > 256 or len(set(self.heldout_seeds)) != len(self.heldout_seeds):
@@ -199,6 +205,10 @@ class NeuralTrainer:
     def checkpoint(self):
         return copy.deepcopy({"schema_version": 1, "algorithm": self.algorithm,
             **({"observation_schema": 2} if self.observation_schema == 2 else {}),
+            # 计分口径绑定：口径一变，旧检查点的"原始终局分"就不可比，
+            # 混用两套奖励会污染训练，所以载入时必须逐步校验。
+            "scoring_version": scoring.SCORING_VERSION,
+            "scoring_mode": self.scoring_mode,
             "snapshot": self.manifest, "seed": self.seed, "train_seed_start": self.train_seed_start,
             "batch_episodes": self.batch_episodes, "episode_config": self.episode_config,
             "policy_config": self.policy_config, "heldout_seeds": self.heldout_seeds,
@@ -216,9 +226,18 @@ class NeuralTrainer:
         data = json.loads(Path(path).read_text("utf-8"))
         if data.get("schema_version") != 1 or data.get("algorithm") not in ("neural_terminal_reinforce_vs_random", "neural_terminal_ppo_clip_vs_random"):
             raise ValueError("unsupported checkpoint")
+        # 旧检查点（没有 scoring_version）是在旧计分口径下训练的，奖励不可比：
+        # 直接拒绝，而不是静默拿它继续跑。
+        if data.get("scoring_version") != scoring.SCORING_VERSION:
+            raise ValueError(
+                "checkpoint scoring version %r does not match %r; retrain or convert"
+                % (data.get("scoring_version"), scoring.SCORING_VERSION))
         trainer = cls(snapshot, observation_schema=data.get("observation_schema", 1), allow_real=allow_real,
+                      scoring_mode=data.get("scoring_mode", "verified"),
                       **{k: data[k] for k in ("seed", "train_seed_start", "batch_episodes",
                                               "episode_config", "policy_config", "heldout_seeds")})
+        if trainer.scoring_mode != data.get("scoring_mode", "verified"):
+            raise ValueError("checkpoint scoring mode differs")
         if data["algorithm"] != trainer.algorithm:
             raise ValueError("checkpoint algorithm and update mode differ")
         if trainer.manifest != data["snapshot"]:
@@ -280,6 +299,10 @@ def main(argv=None):
     parser.add_argument("--baseline-offset", choices=("none", "prior_batch_mean"), default=None,
                         help="opt-in prior completed-batch score mean; resume inherits saved mode")
     parser.add_argument("--update-mode", choices=("reinforce", "ppo_clip"), default=None)
+    parser.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
+                        default="verified",
+                        help="reward scope: verified = only confirmed components (default); "
+                             "platform = also include assumed/placeholder components")
     parser.add_argument("--ppo-clip", type=float, default=None)
     parser.add_argument("--update-epochs", type=int, default=None)
     parser.add_argument("--resume", type=Path)
@@ -298,12 +321,14 @@ def main(argv=None):
                                     allow_real=args.allow_real_map) if args.resume else NeuralTrainer(
             args.snapshot, observation_schema=args.observation_schema or 1, seed=args.seed, train_seed_start=args.train_seed_start, batch_episodes=args.batch_episodes,
             heldout_seeds=args.eval_seeds, episode_config=episode_config,
-            allow_real=args.allow_real_map,
+            allow_real=args.allow_real_map, scoring_mode=args.scoring_mode,
             policy_config={"buckets": args.buckets, "hidden_dim": args.hidden_dim, "learning_rate": args.learning_rate,
                            **({"baseline_offset": args.baseline_offset} if args.baseline_offset is not None else {}),
                            **{k: getattr(args, k) for k in ("update_mode", "ppo_clip", "update_epochs") if getattr(args, k) is not None}})
         if args.observation_schema is not None and args.observation_schema != trainer.observation_schema:
             raise ValueError("requested observation schema differs from resumed checkpoint")
+        if args.scoring_mode != trainer.scoring_mode:
+            raise ValueError("requested scoring mode differs from resumed checkpoint")
         if (args.baseline_offset is not None and
                 args.baseline_offset != trainer.policy.config.get("baseline_offset", "none")):
             raise ValueError("requested baseline offset differs from resumed checkpoint")
@@ -324,6 +349,8 @@ def main(argv=None):
             resources["process_peak_rss_bytes"] = None
         report = {"algorithm": trainer.algorithm, "snapshot": trainer.manifest,
                   "observation_schema": trainer.observation_schema,
+                  "scoring_mode": trainer.scoring_mode,
+                  "scoring_version": scoring.SCORING_VERSION,
                   "episode_config": trainer.episode_config, "policy_config": trainer.policy_config,
                   "training": records, "training_summary": summary(records), "evaluation": evaluation,
                   "episodes_attempted": trainer.episodes_attempted, "episodes_completed": trainer.episodes_completed,

@@ -98,9 +98,11 @@ def _positive_int(name, value, allow_zero=False):
 
 class _SerialSession:
     """Own one authoritative state and keep separate per-seat observation history."""
-    def __init__(self, snapshot, seed, max_seconds, fog, dt, victory):
+    def __init__(self, snapshot, seed, max_seconds, fog, dt, victory,
+                 scoring_mode="verified"):
         self.env = HexwarEnv(snapshot=snapshot, side="BLUE", max_seconds=max_seconds,
-                             fog=fog, dt=dt, victory=victory)
+                             fog=fog, dt=dt, victory=victory,
+                             scoring_mode=scoring_mode)
         self.env.reset(seed=seed)
         self.histories = {"BLUE": self.env._history, "RED": []}
         self.refresh()

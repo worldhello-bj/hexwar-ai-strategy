@@ -111,7 +111,7 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 
 | `legal_actions(unit_id=None, move_radius=6)` | 枚举合法动作 |
 | `step(action)` | 执行动作（单个或数组=同时下令），推进时钟，返回 `(obs, reward, done, info)` |
 | `render(width, height)` | 文本态势图，调试用 |
-| `score()` | `own/enemy/diff` + `pending_rules`（未确证口径清单）。分项 = `remaining`(剩余兵力) + `captured`(夺控) + `killed`(歼敌)。**只有 `remaining` 是已反推并精确验证的**（`Σ上阵(score×blood) + Σ车内载员(score×编制)`，命中平台 红 354 / 蓝 234）；`killed` 是**假设**、`captured` 是**占位 10 分/点（无依据）**。见 `docs/计分规则待确认.md` |
+| `score()` | `own/enemy/diff` + `mode` / `scoring_version` / `pending_rules` / `unverified` / `issues`。每个阵营同时给 `total`（平台式三项和，含**假设**的歼煍分与**无依据**的夺控占位）与 `verified`（只用已确证分项，当前即剩余兵力分）；**奖励默认用 `verified`**，需平台式分数时显式 `scoring_mode="platform"` / `--scoring platform`。剩余兵力分已反推并对账（`Σ上阵(score×blood) + Σ车内载员(score×编制)`，命中平台 红 354 / 蓝 234），侧员归属用载具 ID（载入时按 `son`↔`ico` 固化）。见 `docs/计分规则待确认.md` |
 
 **动作类型**：`move` / `attack`(可 `track` 持续打击) / `area_fire`(集火) / `stop_attack` / `grenade` / `capture` / `load` / `unload` / `hide` / `stop` / `wait`
 **奖励**：`diff` 的增量，可直接当 RL 的稠密奖励。
