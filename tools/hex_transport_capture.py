@@ -160,6 +160,26 @@ def quit_room(userid):
     return r
 
 
+def reset_room(scenario, room, userid):
+    """初始化推演室（官方大厅里 str==2 的房间会提示"是否初始化该推演室？"，
+    确认后跳到这里）。用于把陈旧/超时的房间恢复成可重新开局的状态。"""
+    s_uid = requests.cookies.create_cookie(name="UserID", value=userid or "",
+                                           domain=urlsplit(HOST).hostname, path="/")
+    S.cookies.set_cookie(s_uid)
+    try:
+        r = S.get(BASE + "SetUp/Reset/Post.asp",
+                  params={"scenarioId": str(scenario), "roomId": str(room)}, timeout=40)
+    finally:
+        S.cookies.clear(urlsplit(HOST).hostname, "/", "UserID")
+    w()
+    w("## 初始化推演室 %d（scenarioId=%s）" % (room, scenario))
+    w()
+    w("- GET SetUp/Reset/Post.asp -> status=%s len=%d body=%r"
+      % (r.status_code, len(r.content), decode(r.content)[:300]))
+    save_raw("reset_room_%d.html" % room, r)
+    return r
+
+
 # ---------------------------------------------------------------- 进房
 def enter(room, color, userid=""):
     room_db_id = 222 + (room - 1)
@@ -340,13 +360,15 @@ def do_unload(car_id, crew_flag, color, obj_pos_hex, task_name, time1=""):
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["lobby", "quit", "enter", "unload"])
+    ap.add_argument("stage", choices=["lobby", "quit", "reset", "enter", "unload"])
     ap.add_argument("--room", type=int, default=int(os.environ.get("HEXWAR_ROOM", "7")))
     ap.add_argument("--color", default="NONE", help="NONE=导演, RED, BLUE")
     ap.add_argument("--sample", default="unload_01")
     ap.add_argument("--car", default="", help="指定载具 ObjID；留空则自动挑一辆有乘员的车")
     ap.add_argument("--crew", type=int, default=1, help="卸载的乘员类型码 off（1=下车 2=无人车下车 3=卸载）")
     ap.add_argument("--skip-start", action="store_true", help="不下 RoomStart，直接卸")
+    ap.add_argument("--require-start", action="store_true",
+                    help="要求推演真的开局（StartTime 非空），否则终止，不做卸载")
     ap.add_argument("--wait", type=float, default=5.0, help="下达后等待多少秒再抓 after 快照")
     args = ap.parse_args()
 
@@ -370,6 +392,11 @@ def main():
         dump_log("quit_log.md")
         print("quit done ->", os.path.join(CAPDIR, "quit_log.md"))
         return
+    if args.stage == "reset":
+        reset_room(7527, args.room, login_userid)
+        dump_log("reset_log.md")
+        print("reset done ->", os.path.join(CAPDIR, "reset_log.md"))
+        return
 
     lobby(login_userid)
     enter(args.room, args.color, login_userid)
@@ -387,6 +414,13 @@ def main():
         time.sleep(2)
 
     session, static_units, dyn = session_and_units()
+
+    started = bool((session.get("StartTime") or "").strip())
+    w()
+    w("- 推演是否已开始（StartTime 非空）：%s" % ("是" if started else "否"))
+    if args.require_start and not started:
+        dump_log("unload_log.md")
+        sys.exit("推演未开局（StartTime 为空），按 --require-start 终止，不执行卸载")
 
     sample_dir = os.path.join(CAPDIR, args.sample)
     os.makedirs(sample_dir, exist_ok=True)
