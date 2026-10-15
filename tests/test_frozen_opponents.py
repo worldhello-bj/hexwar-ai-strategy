@@ -101,9 +101,12 @@ class FrozenOpponentTests(unittest.TestCase):
                 before = policy.probabilities(observation, candidates)
                 enemy = episode._session.env.game.units[enemy_id]
                 enemy.pos = 20008
-                enemy.blood = 9
+                # 不扰动 `blood`：它已通过公开的「剩余兵力分」合计反出（平台行为），
+                # 见 tests/test_public_observation.py::
+                #     test_public_score_reveals_only_aggregate_enemy_strength
                 enemy.ammo['a5'] = 999
                 enemy.detail['target'] = 'secret'
+                enemy.stunned_until = 12345
                 self.assertEqual(adapter.observe(side), observation)
                 self.assertEqual(adapter.candidate_views(side), candidates)
                 np.testing.assert_array_equal(before, policy.probabilities(adapter.observe(side), adapter.candidate_views(side)))

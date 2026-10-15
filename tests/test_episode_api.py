@@ -43,7 +43,8 @@ class EpisodeApiTests(unittest.TestCase):
         self.assertTrue(state['terminated'])
         self.assertFalse(state['truncated'])
         self.assertEqual(state['reason'], 'game_clock')
-        self.assertEqual(state['final_scores'], {'BLUE': 1, 'RED': 1})
+        # 口径：剩余兵力分 = Σ上阵(score×blood)；合成快照的 token 是 score=1 / blood=4
+        self.assertEqual(state['final_scores'], {'BLUE': 4, 'RED': 4})
         self.assertEqual(state['rewards'], state['final_scores'])
         self.assertIsNone(state['winner'])
         self.assertIsNone(episode.current_actor)
@@ -77,7 +78,7 @@ class EpisodeApiTests(unittest.TestCase):
         state = self.make(max_steps=0, max_seconds=0).status()
         self.assertEqual(state['reason'], 'one_side_empty')
         self.assertEqual(state['winner'], 'BLUE')
-        self.assertEqual(state['final_scores'], {'BLUE': 1, 'RED': 0})
+        self.assertEqual(state['final_scores'], {'BLUE': 4, 'RED': 0})
         units_file.write_text('[]')
         self.assertEqual(self.make().status()['reason'], 'both_sides_empty')
 
@@ -86,7 +87,7 @@ class EpisodeApiTests(unittest.TestCase):
         for side in ('BLUE', 'RED'):
             observation = episode.observe(side)
             self.assertEqual([u['id'] for u in observation['own']], [side.lower()])
-            self.assertEqual(observation['score'], {'own': 1, 'enemy': 1, 'diff': 0})
+            self.assertEqual(observation['score'], {'own': 4, 'enemy': 4, 'diff': 0})
             observation['own'][0]['blood'] = -9
             self.assertEqual(episode.observe(side)['own'][0]['blood'], 4)
             json.dumps(observation, allow_nan=False)
@@ -100,7 +101,7 @@ class EpisodeApiTests(unittest.TestCase):
         episode = self.make(max_seconds=0)
         state = episode.status()
         state['final_scores']['BLUE'] = 777
-        self.assertEqual(episode.status()['final_scores']['BLUE'], 1)
+        self.assertEqual(episode.status()['final_scores']['BLUE'], 4)
 
     def test_invalid_actions_are_atomic_including_rng_and_histories(self):
         episode = self.make()
@@ -184,11 +185,12 @@ class EpisodeApiTests(unittest.TestCase):
         units[0]['score'], units[1]['score'] = 2, 5
         path.write_text(json.dumps(units))
         episode = self.make(max_seconds=10)
-        self.assertEqual(episode.observe('BLUE')['score'], {'own': 2, 'enemy': 5, 'diff': -3})
-        self.assertEqual(episode.observe('RED')['score'], {'own': 5, 'enemy': 2, 'diff': 3})
+        # score 改成 2 / 5，blood 仍为 4 ⇒ 8 / 20
+        self.assertEqual(episode.observe('BLUE')['score'], {'own': 8, 'enemy': 20, 'diff': -12})
+        self.assertEqual(episode.observe('RED')['score'], {'own': 20, 'enemy': 8, 'diff': 12})
         self.assertEqual(episode.status()['rewards'], {'BLUE': 0, 'RED': 0})
         state = episode.step(self.wait(episode))
-        self.assertEqual(state['rewards'], {'BLUE': 2, 'RED': 5})
+        self.assertEqual(state['rewards'], {'BLUE': 8, 'RED': 20})
         self.assertEqual(state['winner'], 'RED')
         self.assertNotIn('score', self.make(public_score=False).observe('BLUE'))
 
@@ -218,7 +220,7 @@ class EpisodeApiTests(unittest.TestCase):
 
     def test_reset_terminal_payout_and_opponent_capture_endpoint(self):
         episode = TwoPlayerEpisode(self.snapshot, max_seconds=0)
-        self.assertEqual(episode.reset(seed=1)['rewards'], {'BLUE': 1, 'RED': 1})
+        self.assertEqual(episode.reset(seed=1)['rewards'], {'BLUE': 4, 'RED': 4})
         self.assertEqual(episode.status()['rewards'], {'BLUE': 0, 'RED': 0})
         (self.snapshot / 'cities.json').write_text(json.dumps([
             {'id': 'objective', 'pos': 20004, 'flag': 'RED'}]))

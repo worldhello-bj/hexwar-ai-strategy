@@ -278,9 +278,12 @@ class PublicNeuralTrainingTests(NeuralTrainingTests):
             before = trainer.policy._decision(adapter.observe("BLUE"), adapter.candidate_views("BLUE"))
             hidden = episode._session.env.game.units["red"]
             hidden.pos = 20008
-            hidden.blood = 9
+            # 不扰动 `blood`：它已通过公开的「剩余兵力分」合计反出（平台行为），
+            # 见 tests/test_public_observation.py::
+            #     test_public_score_reveals_only_aggregate_enemy_strength
             hidden.ammo["a5"] = 999
             hidden.detail["target"] = "secret"
+            hidden.stunned_until = 12345
             after = trainer.policy._decision(adapter.observe("BLUE"), adapter.candidate_views("BLUE"))
         self.assertEqual(before.to_dict(), after.to_dict())
 

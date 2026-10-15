@@ -71,7 +71,8 @@ class PublicObservationTests(unittest.TestCase):
             before, choices = adapter.observe('BLUE'), adapter.candidate_views('BLUE')
             enemy = episode._session.env.game.units['red']
             enemy.pos = 20008
-            enemy.blood = 9  # remains alive, so public score stays fixed
+            # 注：这里**不能**再扰动 `blood` —— 它已通过公开的「剩余兵力分」合计反出（平台行为），
+            #     见 test_public_score_reveals_only_aggregate_enemy_strength。
             enemy.ammo['a5'] = 999
             enemy.detail.update(target='secret', carrier='secret')
             enemy.stunned_until = 12345
@@ -79,7 +80,26 @@ class PublicObservationTests(unittest.TestCase):
             self.assertEqual(adapter.observe('BLUE'), before)
             self.assertEqual(adapter.candidate_views('BLUE'), choices)
             self.assertEqual(before['enemy_visible'], {})
-            self.assertEqual(before['score'], {'own': 1, 'enemy': 1, 'diff': 0})
+            self.assertEqual(before['score'], {'own': 4, 'enemy': 4, 'diff': 0})
+
+    def test_public_score_reveals_only_aggregate_enemy_strength(self):
+        """血量只会以「剩余兵力分合计」形式公开，不会连带泄霏逐单位字段。
+
+        平台计分页本身就公开「剩余兵力分」，所以敌人血量变化**合法地**反在总量里；
+        这是刻意的信息隔离边界，见 `docs/计分规则待确认.md`。
+        """
+        with patch.object(Game, 'can_observe', return_value=False):
+            episode, adapter = self.make()
+            before = adapter.observe('BLUE')
+            self.assertEqual(before['score'], {'own': 4, 'enemy': 4, 'diff': 0})
+            episode._session.env.game.units['red'].blood = 9
+            after = adapter.observe('BLUE')
+            # 敌血 4→9，且 score=1 ⇒ 敌方合计 4→9
+            self.assertEqual(after['score'], {'own': 4, 'enemy': 9, 'diff': -5})
+            self.assertEqual(after['enemy_visible'], {})
+            left, right = dict(before), dict(after)
+            left.pop('score'), right.pop('score')
+            self.assertEqual(right, left)          # 除 score 外逐字段不变
 
     def test_visible_private_fields_and_own_expiry_are_absent(self):
         with patch.object(Game, 'can_observe', return_value=True):
@@ -159,16 +179,16 @@ class PublicObservationTests(unittest.TestCase):
     def test_score_option_zero_intermediate_and_exact_terminal_totals(self):
         path = self.snapshot / 'units.json'
         units = json.loads(path.read_text())
-        units[0]['score'], units[1]['score'] = 2, 5
+        units[0]['score'], units[1]['score'] = 2, 5   # blood 仍为 4 ⇒ 8 / 20
         path.write_text(json.dumps(units))
         _, adapter = self.make(max_seconds=20)
-        self.assertEqual(adapter.observe('BLUE')['score'], {'own': 2, 'enemy': 5, 'diff': -3})
+        self.assertEqual(adapter.observe('BLUE')['score'], {'own': 8, 'enemy': 20, 'diff': -12})
         for terminal in (False, True):
             wait = next(v['action'] for v in adapter.candidate_views()
                         if v['action']['type'] == 'wait')
             state = adapter.step(wait)
             self.assertEqual(state['terminated'], terminal)
-            self.assertEqual(state['rewards'], {'BLUE': 2, 'RED': 5} if terminal
+            self.assertEqual(state['rewards'], {'BLUE': 8, 'RED': 20} if terminal
                              else {'BLUE': 0, 'RED': 0})
         self.assertEqual(adapter.status()['rewards'], {'BLUE': 0, 'RED': 0})
         self.assertEqual(adapter.candidate_views(), [])

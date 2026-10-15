@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engine import Game, geometry as G
 from engine.equip import WEAPONS, EQUIPMENT, AMMO_FIELD
 from engine import crt
+from engine import scoring
 
 # ---------------- 时间与代价常量（秒） ----------------
 ATTACK_SEC = 10        # 一次直瞄射击占用时间
@@ -184,49 +185,25 @@ class HexwarEnv:
         }
 
     # ---------------- 计分 ----------------
-    # 官方计分页（`Report_All.asp`）只给出**分项名**，不给分值或公式：
-    #   夺控点得分 / 剩余兵力得分 / 歼灭对手兵力得分（+ 一行被注释掉的「摧毁重要目标得分」）
-    # 三项里除"剩余兵力分"外都**无法从实测反推**（夺控分与歼灭分在全部采集里恒为 0）。
-    # 待确认清单见 `docs/计分规则待确认.md`；证据见 `docs/计分对账.md`
-    # （复现：`py -3.13 tools/hex_score_audit.py`）。
-    #
-    # ⚠️ 下面这个"每点 10 分"**纯属占位**：手册没写、实测从未出现非零夺控分，
-    #    因此**不得当作规则**，也不能据此比较胜率/净胜分。
-    CAPTURE_POINT_SCORE_PLACEHOLDER = 10
-    # 尚未确证的计分口径（随 `score()` 一起下发，避免下游把占位值当权威）
-    SCORE_RULES_PENDING = ("captured_per_point", "killed_formula",
-                           "remaining_includes_carried")
+    # 口径全部在 `engine/scoring.py`：只有**剩余兵力分**是已反推并精确验证的
+    # （`Σ上阵(score×blood) + Σ车内载员(score×编制)`，命中平台计分页 红 354 / 蓝 234）；
+    # **歼灭分是假设**（按歼灭的兵力计）、**夺控分是占位**（无依据）。
+    # 待确认清单：`docs/计分规则待确认.md`；证据：`docs/计分对账.md`。
+    CAPTURE_POINT_SCORE_PLACEHOLDER = scoring.CAPTURE_POINT_SCORE_PLACEHOLDER
+    SCORE_RULES_PENDING = scoring.PENDING_RULES
 
     def score(self):
-        """己方 / 敌方的分项分。
+        """己方 / 敌方的分项分（口径见 `engine/scoring.py`）。
 
-        ⚠️ **三项的公式都未确证**（详见 `docs/计分规则待确认.md`）：
-
-        - `remaining`：现为 Σ`score`（仅上阵单位）。平台实测口径已反推为
-          `Σ上阵(score×blood) + Σ车内载员(score×编制)` —— 对 7527 开局能同时精确命中
-          平台计分页的 红 354 / 蓝 234，但**尚未按此改写**（缺官方确认 + 载员编制表）。
-        - `captured`：占位 `CAPTURE_POINT_SCORE_PLACEHOLDER`，**无依据**。
-        - `killed`：现为"整单位被歼则计其分值"，**是否按损失兵力计、载员是否重复计
-          均未确证**。
-
-        返回值里的 `pending_rules` 就是这份未确证清单，供下游显式识别。
+        ⚠️ `remaining` 已按反推口径（含**车内载员×编制**）；
+        `killed` 是**假设**、`captured` 是**占位**（均待官方确认）。
+        返回值里的 `pending_rules` 就是未确证清单。
         """
-        g = self.game
-
-        def side_score(color):
-            survive = sum(u.score for u in g.units.values()
-                          if u.color == color and u.alive())
-            cap = sum(self.CAPTURE_POINT_SCORE_PLACEHOLDER
-                      for c in g.cities if c.get("flag") == color)
-            killed = sum(u.score for u in g.units.values()
-                         if u.color and u.color != color and not u.alive())
-            return {"remaining": survive, "captured": cap,
-                    "killed": killed, "total": survive + cap + killed}
-
-        me = side_score(self.side)
-        opp = side_score("RED" if self.side == "BLUE" else "BLUE")
-        return {"own": me, "enemy": opp, "diff": me["total"] - opp["total"],
-                "pending_rules": list(self.SCORE_RULES_PENDING)}
+        both = scoring.both_scores(self.game)
+        own, opp = both[self.side], both["RED" if self.side == "BLUE" else "BLUE"]
+        return {"own": own, "enemy": opp,
+                "diff": own["total"] - opp["total"],
+                "pending_rules": list(scoring.PENDING_RULES)}
 
     # ---------------- 动作空间 ----------------
     # 不需要引擎裁决、可以纯只读判定的动作类型（它们不会改变任何状态或掷骰）

@@ -124,6 +124,18 @@ def engine_scores(establishment):
     return out
 
 
+def engine_actual():
+    """引擎**真实跑的代码**（`engine/scoring.py`）在同一想定开局下的分值。
+
+    上面的 `engine_scores()` 只是把候选公式摆出来对比；这里调的是实际实现，
+    以免「文档里的公式」与「代码里的实现」脉开。
+    """
+    from engine import scoring
+
+    game = Game(seed=0, snapshot=os.path.join(ROOT, "snapshot", "parsed"))
+    return {side: scoring.side_score(game, side) for side in ("BLUE", "RED")}
+
+
 def main():
     files, seen = platform_scores()
     est_raw = carried_establishment()
@@ -150,6 +162,7 @@ def main():
     establishment.setdefault(389, 0)
 
     eng = engine_scores(establishment)
+    actual = engine_actual()
     lines = []
     add = lines.append
 
@@ -206,6 +219,12 @@ def main():
             mark = "✅ **精确命中**" if (dr == 0 and db == 0) else "%+d / %+d" % (dr, db)
             add("| %s | %d | %d | %s |" % (name, eng["RED"][idx],
                                            eng["BLUE"][idx], mark))
+        # 引擎**实际实现**（不是上面的候选公式，而是 `engine/scoring.py` 真跑的代码）
+        ar, ab = actual["RED"]["total"], actual["BLUE"]["total"]
+        dr, db = ar - pr, ab - pb
+        agree = (dr == 0 and db == 0)
+        add("| **引擎实际实现**（`engine/scoring.py`） | %d | %d | %s |"
+            % (ar, ab, "✅ **精确命中**" if agree else "%+d / %+d ❌" % (dr, db)))
         add("")
         add("⇒ 只有 **上阵 Σ(score×blood) + 车内载员 Σ(score×编制)** 同时精确命中两个数；")
         add("  也就是说平台的「剩余兵力得分」**把车内载员也算进去了**，")
@@ -217,8 +236,9 @@ def main():
     add("## 五、结论")
     add("")
     add("- 平台计分页只暴露**分项名**，不暴露分值/公式；")
-    add("- **剩余兵力分**：口径已可反推并被两个数同时验证（见上），但仍需官方确认"
-        "（尤其「载员计入」与旋翼无人机编制=1 是**反解**出来的）；")
+    add("- **剩余兵力分**：口径已反推并被两个数同时验证（见上），**引擎已按此实现**"
+        "（`engine/scoring.py`，本节上表最后一行就是它的真实输出）；"
+        "但仍需官方确认（尤其「载员计入」与旋翼无人机编制=1 是**反解**出来的）；")
     add("- **夺控分**：全部采集里恒为 0 ⇒ 每点分值无法反推；")
     add("- **歼灭分**：全部采集里恒为 0 ⇒ 公式无法反推；")
     add("- **终局/结算**：计分页没有胜负、时间或任务奖励字段。")
@@ -230,6 +250,9 @@ def main():
         fh.write("\n".join(lines) + "\n")
     print("\n".join(lines))
     print("\n报告：%s" % report)
+    if plat_key and not agree:
+        print("\nFAIL：引擎实现与平台计分页不一致（上表最后一行）")
+        return 1
     return 0
 
 

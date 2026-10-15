@@ -104,20 +104,23 @@
 | `can_observe_range` | 对人员/车辆/空中的侦察距离（格） | **看得见才打得着**；这个值常大于武器射程 |
 | `enemy_known[].stale` | 位置已过期 | 不可据此射击 |
 
-### 计分口径（⚠️ 三项中只有一项已反推，其余**未确证**）
+### 计分口径（⚠️ 三项中只有一项已确证，其余分别是**假设**与**占位**）
 
-`total = remaining + captured + killed`
+`total = remaining + captured + killed`；`env.score()` 还会下发 `pending_rules`（未确证项清单）。
 
-- `remaining`：剩余兵力分。平台实测口径已反推为
-  **`Σ上阵(score×blood) + Σ车内载员(score×编制)`**，两个数同时精确命中
-  （详见 `docs/计分规则待确认.md`）；本仓库 `score()` **尚未改成这个口径**。
+- `remaining`：剩余兵力分。✅ **已反推、已实现、已对账**——
+  **`Σ上阵(score×blood) + Σ车内载员(score×编制)`**，对 7527 开局精确命中平台计分页的
+  **红 354 / 蓝 234**（`tools/hex_score_audit.py` 会断言这一点，不一致即失败）。
+  载员编制表在 `engine/scoring.py::CARRIED_ESTABLISHMENT`（3 项有下车实测，旋翼无人机=1 是反解）。
 - `captured`：夺控分。**每点分值无任何依据**（手册未给、实测里恒为 0 ⇒ 无法反推）；
   代码里 `CAPTURE_POINT_SCORE_PLACEHOLDER = 10` 只是**占位**，
   **不得当作规则、不得据此比较胜率或净胜分**。
-- `killed`：歼灭分。**公式未确证**（应整单位被歼计分还是按损失兵力计分、载员是否重复计算均未知）。
+- `killed`：歼灭分。⚠️ **代码里是假设**：按歼灭的**兵力**计（`score × (编制 − 现存)`，
+  载具被歼时其载员一并计入）；官方究竟是"整单位被歼计其分值"还是"按损失兵力"计、载员是否重复计算，均未确证。
 
 `diff = own.total - enemy.total`。`step()` 的 `reward` 是 `diff` 的**增量**。
-⚠️ 由于上面三项未确证，`reward` 的**绝对值不可信**（可当方向性信号用，
+⚠️ 由于 `captured` / `killed` 未确证，`reward` 的**绝对值仍不可信**（可当方向性信号用，
 但不要拿它当官方分）。
 
-> ⇒ 待向主办方确认的清单：`docs/计分规则待确认.md`（可直接转发）。
+> ⇒ 待向主办方确认的清单：`docs/计分规则待确认.md`（可直接转发）；
+> 证据与逐项对账：`docs/计分对账.md`（复现 `py -3.13 tools/hex_score_audit.py`）。

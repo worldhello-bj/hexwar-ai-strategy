@@ -111,7 +111,7 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 
 | `legal_actions(unit_id=None, move_radius=6)` | 枚举合法动作 |
 | `step(action)` | 执行动作（单个或数组=同时下令），推进时钟，返回 `(obs, reward, done, info)` |
 | `render(width, height)` | 文本态势图，调试用 |
-| `score()` | `own/enemy/diff`，口径为 `剩余兵力 + 夺控点×10 + 歼敌分值` |
+| `score()` | `own/enemy/diff` + `pending_rules`（未确证口径清单）。分项 = `remaining`(剩余兵力) + `captured`(夺控) + `killed`(歼敌)。**只有 `remaining` 是已反推并精确验证的**（`Σ上阵(score×blood) + Σ车内载员(score×编制)`，命中平台 红 354 / 蓝 234）；`killed` 是**假设**、`captured` 是**占位 10 分/点（无依据）**。见 `docs/计分规则待确认.md` |
 
 **动作类型**：`move` / `attack`(可 `track` 持续打击) / `area_fire`(集火) / `stop_attack` / `grenade` / `capture` / `load` / `unload` / `hide` / `stop` / `wait`
 **奖励**：`diff` 的增量，可直接当 RL 的稠密奖励。
@@ -175,7 +175,7 @@ $env:HEXWAR_SNAP="D:\你的快照目录"
 | `tools/` | 采集、解析、构建、自检脚本（含站点探测 `probe_site.py`、端点勘察 `probe_endpoints.py`、双服比对 `compare_servers.py`、指令词汇 `extract_commands.py`、规则验证 `verify_rules.py`、裁决表校验 `verify_tables.py`、不利修正/两颗骰 CRT 验证 `verify_unfavorable.py`、枚举差分 `hex_env_diff.py`、计分对账 `hex_score_audit.py`） |
 | `samples/demo/` | 自带合成想定（原创数据） |
 | `skill/` | AI 助手用的 skill 包 |
-| `docs/` | 接口对照表、裁决引擎说明、离线客户端说明、[站点探测记录](docs/站点探测.md)、[规则符合性对照](docs/规则符合性.md) |
+| `docs/` | 接口对照表、裁决引擎说明、离线客户端说明、[站点探测记录](docs/站点探测.md)、[规则符合性对照](docs/规则符合性.md)、[计分规则待确认](docs/计分规则待确认.md)、[计分对账](docs/计分对账.md) |
 
 ## 已验证 / 未验证
 

@@ -29,6 +29,12 @@ legal candidates. Model training RNG is never sampled. Both policies receive onl
 their own fog-filtered detached observations; schema 2 uses the same public-board
 and candidate adapter as training. Original terminal scores are unchanged.
 
+> The evaluator never alters payoffs, but the payoffs themselves changed on
+> 2026-10-15: `remaining` now follows the back-derived platform formula
+> (`Σ score × blood` for deployed units plus carried units at establishment
+> strength), so reports produced before that commit are not comparable.
+> See `docs/计分规则待确认.md`.
+
 Reports include source hashes, frozen model-state hashes, snapshot hashes,
 configuration, raw scores by physical seat, own score for A and B, score difference,
 win/draw/loss, terminal status and public input/action trace hash. State hashes

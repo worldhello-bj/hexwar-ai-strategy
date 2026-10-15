@@ -45,7 +45,7 @@ py -3.13 env/run_episode.py --agent random --episodes 50 --side RED --json out.j
 | 字段 | 含义 | 用法 |
 |---|---|---|
 | `time` / `time_left` | 已推演秒数 / 剩余秒数 | **时间是资源**，别把时间花在无意义机动上 |
-| `score` | `own/enemy` 各有 `remaining`(剩余兵力) `captured`(夺控) `killed`(歼敌) `total` | 决策的最终目标函数 |
+| `score` | `own/enemy` 各有 `remaining`(剩余兵力) `captured`(夺控) `killed`(歼敌) `total`，另有 `pending_rules` 列出未确证口径 | 决策的最终目标函数（`remaining` 已实测对账；`captured`/`killed` 未确证，见 references/action-schema.md） |
 | `objectives` | 夺控点：`pos` `hexid` `held_by` | `held_by != side` 的才是要抢的 |
 | `own` | 己方全部算子（**完整信息**） | 含 `weapons` 弹药与射程 |
 | `enemy_visible` | **当前可观察到的**敌方 | 只有这些能打 |
@@ -180,7 +180,8 @@ py -3.13 env/run_episode.py --agent random --episodes 50 --side RED --json out.j
 1. **抢点**：优先级最高。`capture` 的收益是直接进总分的，且可能触发胜利条件。
    走之前先确认"目标格 + 相邻 6 格"有没有敌人，否则白跑。
 2. **火力集中**：优先打**同一目标**直到消灭，而不是分散打多个。
-   因为战果按"消灭数"计分，打残不算分。
+   因为分值乘在**兵力**上（`Σ score×blood`，已实测），**打残就已在得分**——
+   但歼灭分具体怎么算尚未确证，所以“整单位消灭才算分”不能当结论。
 3. **先敌发现**：侦察距离决定交火主动权。无人机/巡飞弹侦察距离短但能前出；
    己方主力的 `can_observe_range` 通常远大于武器射程，**看得见就能打**。
 4. **压制换时间**：即使打不出战果，"压制"也能让对手一整个回合无法行动。

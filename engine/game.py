@@ -32,7 +32,7 @@ class Unit:
                  "pos2", "rot", "blood", "space", "score", "armor", "units",
                  "wz", "ammo", "stunned_until", "fatigued_until", "missile_ids",
                  "uid", "ste", "keep", "pass_", "att", "ai", "c0", "c3", "detail",
-                 "radar", "see", "task", "alt")
+                 "radar", "see", "task", "alt", "establishment")
 
     def __init__(self, d):
         self.id = d["id"]
@@ -47,6 +47,10 @@ class Unit:
         self.pos2 = int(d.get("pos2") or 0)
         self.rot = int(d.get("rot") or 0)
         self.blood = int(d.get("blood") or 0)
+        # 编制兵力（战前的应有兵力/车数）。用于计分的"损失"计算：
+        # 上阵单位 = 载入时记录的 blood；载员（在车内时 blood=0）在 `engine.scoring`
+        # 里按装备表补上（见 docs/计分规则待确认.md）。
+        self.establishment = self.blood
         self.space = int(d.get("space") or 0)
         self.score = int(eq[3] if d.get("score") in (None, "") else d["score"])
         self.armor = eq[2]
