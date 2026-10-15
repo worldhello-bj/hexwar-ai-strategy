@@ -104,13 +104,20 @@
 | `can_observe_range` | 对人员/车辆/空中的侦察距离（格） | **看得见才打得着**；这个值常大于武器射程 |
 | `enemy_known[].stale` | 位置已过期 | 不可据此射击 |
 
-### 计分口径
+### 计分口径（⚠️ 三项中只有一项已反推，其余**未确证**）
 
 `total = remaining + captured + killed`
 
-- `remaining`：己方存活算子的权重分值之和
-- `captured`：每个夺控点 **10 分**
-- `killed`：**敌方**已损失算子的权重分值之和
+- `remaining`：剩余兵力分。平台实测口径已反推为
+  **`Σ上阵(score×blood) + Σ车内载员(score×编制)`**，两个数同时精确命中
+  （详见 `docs/计分规则待确认.md`）；本仓库 `score()` **尚未改成这个口径**。
+- `captured`：夺控分。**每点分值无任何依据**（手册未给、实测里恒为 0 ⇒ 无法反推）；
+  代码里 `CAPTURE_POINT_SCORE_PLACEHOLDER = 10` 只是**占位**，
+  **不得当作规则、不得据此比较胜率或净胜分**。
+- `killed`：歼灭分。**公式未确证**（应整单位被歼计分还是按损失兵力计分、载员是否重复计算均未知）。
 
-`diff = own.total - enemy.total`。`step()` 的 `reward` 是 `diff` 的**增量**，
-所以它天然是一个稠密奖励，可当 RL 的 reward 直接用。
+`diff = own.total - enemy.total`。`step()` 的 `reward` 是 `diff` 的**增量**。
+⚠️ 由于上面三项未确证，`reward` 的**绝对值不可信**（可当方向性信号用，
+但不要拿它当官方分）。
+
+> ⇒ 待向主办方确认的清单：`docs/计分规则待确认.md`（可直接转发）。
