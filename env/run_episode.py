@@ -48,7 +48,7 @@ def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose
             print("  口径=%s  已确证(剩余兵力)=%d/%d  平台式三项和=%d/%d  未确证=%s"
                   % (s["mode"], s["own"]["verified"], s["enemy"]["verified"],
                      s["own"]["total"], s["enemy"]["total"], s["unverified"]))
-            print("  [占位/假设不入奖励] 己方夺控=%d 歼烍=%d（仅展示）"
+            print("  [占位/假设不入奖励] 己方夺控=%d 歼\u654c=%d（仅展示）"
                   % (s["own"]["captured"], s["own"]["killed"]))
         if steps > 5000:      # 安全阀
             break

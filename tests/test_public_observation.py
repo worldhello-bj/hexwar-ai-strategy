@@ -83,7 +83,7 @@ class PublicObservationTests(unittest.TestCase):
             self.assertEqual(before['score'], {'own': 4, 'enemy': 4, 'diff': 0})
 
     def test_public_score_reveals_only_aggregate_enemy_strength(self):
-        """血量只会以「剩余兵力分合计」形式公开，不会连带泄霏逐单位字段。
+        """血量只会以「剩余兵力分合计」形式公开，不会连带泄\u6f0f逐单位字段。
 
         平台计分页本身就公开「剩余兵力分」，所以敌人血量变化**合法地**反在总量里；
         这是刻意的信息隔离边界，见 `docs/计分规则待确认.md`。
