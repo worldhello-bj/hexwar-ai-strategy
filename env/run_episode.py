@@ -19,8 +19,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hexwar_env import HexwarEnv
 from agents import AGENTS
 
-DEFAULT_SNAP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                            "samples", "demo")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from engine import paths as _paths                       # noqa: E402
+
+# 默认就用**比赛初设**（想定 7527 的真实地图与编成，随仓库分发在 scenario/7527/）；
+# 没有本地完整采集时也不会退化成别的样例（见 engine/paths.py）。
+DEFAULT_SNAP = _paths.snapshot_dir()
 
 
 def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose=False,
@@ -65,7 +69,8 @@ def main():
     ap.add_argument("--side", default="BLUE", choices=["BLUE", "RED"])
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--snapshot", default=DEFAULT_SNAP,
-                    help="快照目录（默认用自带样例；真实数据用 snapshot/parsed）")
+                    help="快照目录（默认用自带合成样例；真实想定用 scenario/7527 或"
+                         "本地完整采集 snapshot/parsed）")
     ap.add_argument("--max-seconds", type=int, default=1800)
     ap.add_argument("--move-radius", type=int, default=None,
                     help="机动枚举半径（默认 6；缩小可显著降低动作空间）")

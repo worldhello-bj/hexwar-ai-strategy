@@ -1,0 +1,10 @@
+tools/verify_live_caijue.py                                ok
+tools/verify_live_crttables.py                             ok
+tools/derive_table4_columns.py                             ok
+tools/hex_score_audit.py                                   ok
+tools/verify_unfavorable.py                                ok
+tools/hex_combat_round.py                                  ok
+tools/hex_crt_maintain.py                                  ok
+tools/hex_transport_capture.py                             ok
+tools/verify_live_crttables.py（日志扫描加封存区）                   ok
+tools/derive_table4_columns.py（日志扫描加封存区）                   ok

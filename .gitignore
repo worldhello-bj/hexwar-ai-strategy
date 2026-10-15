@@ -17,6 +17,33 @@ offline/server_access.log
 # 抓取到的服务端数据与本地会话（含 Set-Cookie）
 snapshot/
 
+# ============================================================
+# 封存区（archive/exploration/）：脚本与过程文档入库，数据一律不入库
+#   —— capture/ 与 analysis/ 和 har/ 里有会话 Cookie、账号名、Set-Cookie 响应头
+# ============================================================
+archive/exploration/capture/
+archive/exploration/analysis/
+archive/exploration/har/
+archive/exploration/artifacts/
+
+# ============================================================
+# 已公开发布的比赛地图（scenario/7527/）**要入库** —— 见其 README 与
+# tools/publish_scenario.py（白名单发布 + 敏感扫描 + sha1 清单）
+# ============================================================
+
+# 训练环境 train/ 里由 tools/build_train_env.py 同步生成的副本（手工文件照常入库）
+train/engine/
+train/env/
+train/offline/
+train/tests/
+train/tools/
+train/docs/
+train/samples/
+train/analysis/
+train/snapshot
+train/MANIFEST.json
+train/requirements.txt
+
 # 实测采集产物：服务端下发的单位/地图快照，属服务端数据（结论见 docs/运输机制实测.md）
 7527_transport_capture/
 

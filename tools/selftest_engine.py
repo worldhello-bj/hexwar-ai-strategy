@@ -4,10 +4,11 @@ import os
 import sys
 import json
 
-sys.path.insert(0, r"d:\兵推")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engine import Game, geometry as G, crt
 
-OUT = r"d:\兵推\analysis\engine_selftest.md"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "analysis", "engine_selftest.md")
 L = []
 def w(x=""):
     L.append(str(x))

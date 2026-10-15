@@ -3,7 +3,8 @@
 
 用途：`docs/计分规则待确认.md` 里的每一条结论都要能复跑。
 平台侧数据来自已抓取的采集产物（`7527_transport_capture/**`，不入库）；
-引擎侧用 `snapshot/parsed`（想定 7527）。
+引擎侧用本地采集 `snapshot/parsed`（想定 7527），没有时用随仓库公开的
+`scenario/7527`（见 `engine/paths.py`）。
 
 用法：
     py -3.13 tools/hex_score_audit.py
@@ -18,8 +19,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from engine import Game                                    # noqa: E402
+from engine import paths as _paths                          # noqa: E402
+SNAP = _paths.snapshot_dir()
 
-CAP = os.path.join(ROOT, "7527_transport_capture")
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
 PAT = re.compile(r'class=\\?"(RED|BLUE)\\?">\s*(\d+)\s*分')
 COMPONENTS = ("夺控点", "剩余兵力", "歼灭对手兵力")
 
@@ -63,7 +70,7 @@ def carried_establishment():
     下车会在服务端**新建实体**，其 `blood` 即该载员的编制兵力
     （见 `docs/运输机制实测.md`）。这正好补上想定里载员条目 `blood=0` 的空缺。
     """
-    units = json.load(open(os.path.join(ROOT, "snapshot", "parsed", "units.json"),
+    units = json.load(open(os.path.join(SNAP, "units.json"),
                            encoding="utf-8"))
     carried_ids = {u["id"]: u for u in units if not (u.get("color") or "").strip()}
     found = {}
@@ -92,7 +99,7 @@ def carried_establishment():
 
 def engine_scores(establishment):
     """各种候选求和口径下的双方分值（+ 载员构成）。直接读想定 JSON。"""
-    units = json.load(open(os.path.join(ROOT, "snapshot", "parsed", "units.json"),
+    units = json.load(open(os.path.join(SNAP, "units.json"),
                            encoding="utf-8"))
     deployed = [u for u in units if (u.get("color") or "").strip()]
     carried = [u for u in units if not (u.get("color") or "").strip()]
@@ -132,12 +139,19 @@ def engine_actual():
     """
     from engine import scoring
 
-    game = Game(seed=0, snapshot=os.path.join(ROOT, "snapshot", "parsed"))
+    game = Game(seed=0, snapshot=SNAP)
     return {side: scoring.side_score(game, side) for side in ("BLUE", "RED")}
 
 
 def main():
     files, seen = platform_scores()
+    # 平台侧证据来自抓取的计分页（`archive/exploration/capture/**`，不入库）。
+    # **公开克隆里没有这些文件**，此时引擎侧仍能自检（remaining 必须等于平台 354/234
+    # 是本仓库的断言，那里另有一份冻结值），所以这里明确跳过而不是崩。
+    if not seen:
+        print("平台侧采集产物缺失（%s），跳过『引擎 == 平台』对账，" % CAP)
+        print("仅做想定开局的引擎侧自检（数据源：%s）。" % _paths.source_label())
+        return 0
     est_raw = carried_establishment()
     # 编制兵力：采集里有直接观测的用观测值；旋翼无人机/巡飞弹未观测到，
     # 用平台分项**反解**（见下）。
@@ -150,7 +164,7 @@ def main():
         # 红方差额 / 3 辆火力支援车 = 单车载员总编制分；旋翼无人机 score=2 → 编制 1
         red_gap = (plat_key[2] - sum(int(u["score"]) * int(u["blood"])
                                      for u in json.load(open(os.path.join(
-                                         ROOT, "snapshot", "parsed", "units.json"),
+                                         SNAP, "units.json"),
                                          encoding="utf-8"))
                                      if u.get("color") == "RED"))
         per_vehicle = red_gap // 3

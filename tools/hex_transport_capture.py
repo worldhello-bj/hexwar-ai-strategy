@@ -35,7 +35,14 @@ BASE = HOST + "/WARGAMEAI/"
 # ★ 每个推演室有独立的客户端目录：推演室N -> /WARGAMEAI<N>/
 #   （SetUpSave.asp 的 302 Location 就是指向它）。进房后由 enter() 改写。
 BASE7 = HOST + "/WARGAMEAI7/"
-CAPDIR = os.environ.get("HEXWAR_CAPDIR", r"d:\兵推\7527_transport_capture")
+CAPDIR = os.environ.get("HEXWAR_CAPDIR")
+if not CAPDIR:
+    CAPDIR = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))),
+        "archive", "exploration", "capture", "7527_transport_capture")
+    if not os.path.isdir(CAPDIR):                      # 未封存的检出
+        CAPDIR = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "7527_transport_capture")
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 

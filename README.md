@@ -45,11 +45,24 @@
                               └─────────────────┘
 ```
 
+## 仓库结构
+
+| 目录 | 作用 | 说明 |
+|---|---|---|
+| `engine/` `env/` `tests/` `offline/` | **核心**：裁决引擎 + 策略环境 + 测试 + 离线客户端 | 规则只有一个真源（`engine/`） |
+| `scenario/7527/` | **比赛初设**：想定 7527「城市攻防作战（2V2）」的真实地图、编成与夺控点（2721 格 / 36 单位 / 3 点） | 随仓库公开；来历与权利说明见其 README |
+| `train/` | **规则强化训练环境**（自包含副本 + 配置 + skill） | 见 [`train/README.md`](train/README.md)；副本由 `tools/build_train_env.py` 同步 |
+| `tools/` | 规则重建/验证、评测、发布与诊断脚本 | 探测/逆向类已封存 |
+| `docs/` | 规则符合性、裁决引擎、计分、训练与评测文档 | 逆向过程文档已封存 |
+| `skill/` | 操控算子的 skill（`hexwar-operator`） | 训练 skill 在 `train/skill/` |
+| `archive/exploration/` | **已封存的探索记录**（探测脚本 + 过程文档） | 采集数据/抓包不入库；见其 README |
+| `snapshot/` | 本地完整采集（含原始响应与会话产物） | **不入库**；缺它时自动用 `scenario/7527` |
+
 ## 快速开始
 
 ```bash
-# 1) 生成自带示例想定（原创合成数据，非任何真实站点的数据）
-py -3.13 tools/make_sample.py
+# 1) 引擎自检（默认用比赛初设 scenario/7527）
+py -3.13 tools/selftest_engine.py
 
 # 2) 跑一局看效果
 py -3.13 env/run_episode.py --agent greedy-multi --episodes 3 --render
@@ -58,18 +71,20 @@ py -3.13 env/run_episode.py --agent greedy-multi --episodes 3 --render
 py -3.13 env/run_episode.py --agent random       --episodes 50 --json random.json
 py -3.13 env/run_episode.py --agent greedy-multi --episodes 50 --json greedy.json
 
-# 4) 自检裁决引擎
-py -3.13 tools/selftest_engine.py
+# 4) 规则与表格校验（= 规则强化训练的前置门）
+py -3.13 tools/verify_rules.py          # 30/30
+py -3.13 tools/verify_tables.py         # 30/30
+py -3.13 tools/verify_unfavorable.py    # 31/31（含线上实测样本反查）
+py -3.13 tools/hex_score_audit.py       # 引擎计分 == 平台 354/234
 
-# 5) 按手册逐条验证规则实现（当前 30/30 通过）
-py -3.13 tools/verify_rules.py
-
-# 6) 校验裁决表数值与手册一致（当前 30/30 通过）
-py -3.13 tools/verify_tables.py
-
-# 7) 不利修正 / 两颗骰 CRT（含 27 条真实裁决样本反查，当前 36/36 通过）
-py -3.13 tools/verify_unfavorable.py
+# 5) 规则强化训练环境（自包含；先过规则门，过了才开训）
+cd train
+py -3.13 run_train.py rules
+py -3.13 run_train.py train --algo ppo --config configs/ppo_realmap.json
 ```
+
+> 想定数据只有**一个来源**：随仓库的 `scenario/7527/`（本地完整采集 `snapshot/parsed/`
+> 在就用本地）。**本仓库不提供合成 demo 想定。**
 
 最小代码闭环：
 
@@ -89,8 +104,11 @@ print(env.score())
 新增 `TwoPlayerEpisode` 与 `env.selfplay`，提供双方独立迷雾视角、公开总分观察、合法意图菜单、终局原始分数奖励及检查点续跑。训练算法为表格蒙特卡洛基线，不使用下面的手写 greedy 策略，也不添加动作奖励。
 
 ```bash
-python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 --max-steps 1000 --checkpoint /tmp/hexwar-20.json --report /tmp/hexwar-20-report.json
+python -m env.selfplay --snapshot scenario/7527 --episodes 20 --max-seconds 1200 --max-steps 600 --allow-real-map --checkpoint /tmp/hexwar-20.json --report /tmp/hexwar-20-report.json
 ```
+
+> `--snapshot` 也可指向本地完整采集 `snapshot/parsed`（不入库）；
+> `samples/demo` 是早期的**合成**测试夹具，只给单元测试用，不是本仓库的想定。
 
 详细规则、复现与续跑方法见 [双边训练说明](docs/selfplay.md)。下方旧 `HexwarEnv` 接口仍返回分差增量；只需要终局奖励的调用方应使用新接口。
 

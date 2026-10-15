@@ -114,7 +114,7 @@ def main(argv=None):
     parser.add_argument("--seeds", type=int, nargs="+", required=True)
     parser.add_argument("--report", type=Path, required=True, help="new JSON output; never overwritten")
     parser.add_argument("--allow-real-map", action="store_true",
-                        help="显式允许在本地真实想定（如 snapshot/parsed）上评估")
+                        help="显式允许使用真实想定（scenario/7527 随仓库公开；本地完整采集 snapshot/parsed 不入库）")
     args = parser.parse_args(argv)
     if args.report.exists():
         parser.error("report exists; choose a new filename")

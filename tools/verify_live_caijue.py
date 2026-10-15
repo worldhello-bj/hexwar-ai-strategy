@@ -17,13 +17,17 @@ import os
 import sys
 from collections import Counter, defaultdict
 
-ROOT = r"d:\兵推"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import hex_combat_round as CR          # noqa: E402
 from engine import crt                 # noqa: E402
 
-CAP = os.path.join(ROOT, "7527_transport_capture")
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
 OUT = os.path.join(ROOT, "analysis", "_live_caijue_check.txt")
 
 # 裁决页「射击方状态」→ engine 参数

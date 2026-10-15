@@ -14,9 +14,10 @@ import re
 import json
 import pdfplumber
 
-PDF = r"d:\兵推\docs\WARGAMEAI.pdf"
-OUT = r"d:\兵推\engine\tables.json"
-REP = r"d:\兵推\analysis\crt_build.md"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PDF = os.path.join(ROOT, "docs", "WARGAMEAI.pdf")
+OUT = os.path.join(ROOT, "engine", "tables.json")
+REP = os.path.join(ROOT, "analysis", "crt_build.md")
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 rep = []
@@ -321,5 +322,7 @@ data = {
 }
 
 json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+with open(OUT, "a", encoding="utf-8") as _fh:     # 保留文件尾换行（重建幂等）
+    _fh.write("\n")
 open(REP, "w", encoding="utf-8").write("\n".join(rep))
 print("tables written:", OUT, "cols:", ncols, "monotonic issues:", issues)

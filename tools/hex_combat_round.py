@@ -22,9 +22,12 @@ import time
 import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, r"d:\兵推")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import hex_transport_capture as H                       # noqa: E402
 from engine import geometry as GEO, equip as EQ         # noqa: E402
+from engine import paths as _paths                     # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from engine import crt as CRT                          # noqa: E402
 from engine import Game as _Game                        # noqa: E402
 
@@ -51,7 +54,11 @@ def los_ok(a, b):
     except Exception:                                               # noqa: BLE001
         return True
 
-CAP = r"d:\兵推\7527_transport_capture"
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
 
 
 def new_session():
@@ -113,7 +120,7 @@ def cmd(sess, base7, objid, color, command, task, pos_hex, map_hex=""):
             "com_id": m.group(1) if m else ""}
 
 
-MAP_FILE = r"d:\兵推\snapshot\parsed\map_hexes.json"
+MAP_FILE = os.path.join(_paths.snapshot_dir(), "map_hexes.json")
 try:
     MAPINFO = json.load(io.open(MAP_FILE, encoding="utf-8"))
 except Exception:                                                   # noqa: BLE001

@@ -24,7 +24,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from engine import crt                 # noqa: E402
 
-CAP = os.path.join(ROOT, "7527_transport_capture")
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
 OUT = os.path.join(ROOT, "analysis", "_derive_table4.txt")
 TABLES = os.path.join(ROOT, "engine", "tables.json")
 
@@ -81,8 +85,10 @@ def read_text(path):
 def sources():
     """所有记录实测裁决的文本源：各实验目录的 report.md + 扫描脚本的 stdout 日志。"""
     out = sorted(glob.glob(os.path.join(CAP, "**", "report.md"), recursive=True))
-    out += sorted(glob.glob(os.path.join(ROOT, "analysis", "_t4sweep*.log")))
-    out += sorted(glob.glob(os.path.join(ROOT, "analysis", "_pose*.log")))
+    for base in (os.path.join(ROOT, "analysis"),
+                 os.path.join(ROOT, "archive", "exploration", "analysis")):
+        out += sorted(glob.glob(os.path.join(base, "_t4sweep*.log")))
+        out += sorted(glob.glob(os.path.join(base, "_pose*.log")))
     return out
 
 

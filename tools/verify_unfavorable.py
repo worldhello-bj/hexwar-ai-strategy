@@ -35,7 +35,11 @@ sys.path.insert(0, ROOT)
 from engine import crt                                    # noqa: E402
 
 T = crt.T
-CAP = os.path.join(ROOT, "7527_transport_capture")
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
 
 PASS: list = []
 FAIL: list = []
@@ -167,11 +171,22 @@ print("\n== C. 真实裁决明细反查官方查表模型 ==")
 
 
 def load_samples():
-    """读 `7527_transport_capture/**/caijue*.html`（服务端数据，已 gitignore）。"""
-    spec = importlib.util.spec_from_file_location(
-        "_caijue_tab", os.path.join(ROOT, "tools", "hex_caijue_tabulate.py"))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    """读封存区里的实测裁决明细（`archive/exploration/capture/7527_transport_capture/**`）。
+
+    ⚠ 解析器 `hex_caijue_tabulate.py` 属**探索工具**，已随封存搬到
+    `archive/exploration/tools/`；这里两处都找，都找不到就返回 None（C 段自动跳过）。
+    """
+    mod = None
+    for cand in (os.path.join(ROOT, "tools", "hex_caijue_tabulate.py"),
+                 os.path.join(ROOT, "archive", "exploration", "tools",
+                              "hex_caijue_tabulate.py")):
+        if os.path.exists(cand):
+            spec = importlib.util.spec_from_file_location("_caijue_tab", cand)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            break
+    if mod is None:
+        return None
     rows = []
     files = sorted(set(glob.glob(os.path.join(CAP, "**", "caijue*.html"), recursive=True)))
     for f in files:
@@ -207,8 +222,8 @@ def final_ok(text, total):
 
 rows = load_samples()
 if not rows:
-    skip("实测样本（`7527_transport_capture/` 属服务端数据、已 gitignore）",
-         "无样本时无法反查；已采 27 条（128241–128267）")
+    skip("实测样本（封存于 `archive/exploration/capture/`，属服务端数据、不入库）",
+         "无样本时无法反查；对账结论见 D 段的委托")
 else:
     check("实测样本数不少于历史基线 17 条（当前 %d）" % len(rows), len(rows) >= 17)
 

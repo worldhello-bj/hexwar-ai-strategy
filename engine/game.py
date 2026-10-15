@@ -14,11 +14,13 @@ import random
 
 from . import geometry as G
 from . import crt
+from . import paths as _paths
 from .equip import (EQUIPMENT, WEAPONS, AMMO_FIELD, ANTI_AIR_CLASS, CRT_AIR_NAME,
                     carried_establishment)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SNAP = os.environ.get("HEXWAR_SNAP", os.path.join(os.path.dirname(HERE), "snapshot", "parsed"))
+SNAP = (os.environ.get("HEXWAR_SNAP")
+        or _paths.snapshot_dir())
 
 # 压制持续（手册 4.6.3：150 秒）
 SUPPRESS_SEC = 150

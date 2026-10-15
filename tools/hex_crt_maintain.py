@@ -22,12 +22,17 @@ import sys
 from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, r"d:\兵推")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import hex_combat_round as CR                    # noqa: E402  (复用 parse_caijue)
 
-CAP = r"d:\兵推\7527_transport_capture"
-OUT_JSON = r"d:\兵推\engine\empirical_tables.json"
-OUT_MD = r"d:\兵推\docs\实测裁决表.md"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 采集数据已封存到 archive/exploration/（见该目录 README）；
+# 未封存的检出或 train/ 自包含副本里，老路径仍然存在 —— 两者都支持。
+CAP = os.path.join(ROOT, "archive", "exploration", "capture", "7527_transport_capture")
+if not os.path.isdir(CAP):
+    CAP = os.path.join(ROOT, "7527_transport_capture")
+OUT_JSON = os.path.join(ROOT, "engine", "empirical_tables.json")
+OUT_MD = os.path.join(ROOT, "docs", "实测裁决表.md")
 
 ARMORS = ("复合装甲", "重型装甲", "中型装甲", "轻型装甲", "无装甲")
 ROLLS = list(range(2, 13))
