@@ -1,0 +1,4827 @@
+{
+  "by_a_seat": {
+    "BLUE": {
+      "a_score": 50.625,
+      "a_score_diff": 41.09375,
+      "b_score": 9.53125,
+      "completed": 64,
+      "draw": 6,
+      "games": 64,
+      "loss": 4,
+      "truncated": 0,
+      "win": 54
+    },
+    "RED": {
+      "a_score": 37.1875,
+      "a_score_diff": 14.0625,
+      "b_score": 23.125,
+      "completed": 64,
+      "draw": 6,
+      "games": 64,
+      "loss": 10,
+      "truncated": 0,
+      "win": 48
+    }
+  },
+  "caveat": "Synthetic game only. W/D/L compares raw terminal scores, not tactical rewards. Seat swaps share scenario seeds; policy RNG streams are independent by seat and label. Self-play is symmetric in expectation, not necessarily exact finite-sample wins. Truncations are excluded. Standard error is descriptive over complete seed pairs, not proof of improvement.",
+  "episode_config": {
+    "max_seconds": 1800,
+    "max_steps": 1000,
+    "public_score": true
+  },
+  "evaluation_type": "frozen_neural_head_to_head",
+  "frozen_state_and_source_verified": true,
+  "games": [
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "45f6f1952c92fe8922de182e3d50d7851db0fd42814bcb6d05437b9aac774315",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900000,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 392,
+        "steps": 21,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "RED",
+      "b_score": 40,
+      "public_trace_sha256": "86ade774e64c12388a2a42b7c8ad18dcb195dbf260720482b15841fb1781f08a",
+      "raw_terminal_scores": {
+        "BLUE": 40,
+        "RED": 20
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900000,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1156,
+        "steps": 68,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "4910124cffda12e64b5dbc9e2c54f2737795fc9ba40c94bb2c09cf5f800c7edd",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900001,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 198,
+        "steps": 17,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "0c978007900b7e200b0ed46eb509e7731e3550c1eb1a1ed15936813ea5289ae5",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900001,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 91,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "836fa6e23d2770a5f841c014eacd6f492653fcfb0404a5d0d7b783275777c9f0",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900002,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 276,
+        "steps": 25,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "bfbfcb208a92d3f6773b9aedd1bd6bddeb4f33b05703f5aca0ef43068124f164",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900002,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 105,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "2ce610cbdd60473e4c62ab4604f0324855a3d325327cdb68a0383b2344f099ba",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900003,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 126,
+        "steps": 10,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "ac39e0744b0c5175375455e8fd5ed89e3d35e9dfc11c09f8854f689f2039a0da",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900003,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 87,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "b77afde37351ef653694ada46f4f7e27dfde55be868aa677a0b3e7d5a5d30831",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900004,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 418,
+        "steps": 29,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "be7d17da2b2adff0103003ce53105eb914c64238a878383b5d2ecf58079ea661",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900004,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "BLUE",
+      "b_score": 40,
+      "public_trace_sha256": "dcb01a517245f3041dcf498902c3cff0e3db31cded0eb9c7a805bd634ab02008",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900005,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "3e1482faf9b563072181c4dac0af5f38605db885678d0a0c2d6dbf338d42c531",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900005,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 135,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "a6e202727826b58e667ebcbf622011e43c294ab90922777ade8afe81f7d950dc",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900006,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 148,
+        "steps": 14,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "8570cde28594675c722510409a6c7cd3d44a12d96d9ec8b4067e50db70e14492",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900006,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1206,
+        "steps": 64,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 10,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "86e7aa3ed2de24b87be4cdc7bc4d283bf879658d0f5f69f899e1452ddaeb4dce",
+      "raw_terminal_scores": {
+        "BLUE": 40,
+        "RED": 30
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900007,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "6ee2ea2d5eff9d76ca4ead49a84e6710f1f6a5feec4b791c67ded89d31b649f1",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900007,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1262,
+        "steps": 64,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "1d5d9638ea0cb6770d41bbf6051ad221a0fc5fbb3a447999de259d7a805e8bbe",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900008,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 236,
+        "steps": 21,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "2726852d3f295ffc51f163b133d86bf366dd2209cd4cb269ca68374e0247526e",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900008,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "03cd803cec96c35ce7fe846f76bd58ddbcbf48f265e834f4db2736000dec91ca",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900009,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 296,
+        "steps": 23,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "78d0541169149d75b632016ed9694416f0728ed4c1b190901b691a89f9c0bc04",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900009,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "450dc061aceb13b37e4b63f96052d183b7c5d585501a4a237fad56a83df9a52f",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900010,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 80,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "97df5a5dc909d323dd5ea3f854ddbebf0d593cc7f9b688d8ebb673eefaa81122",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900010,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 86,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "f75095e21298cf2392bd0374ac416311a63f7b61ae1787748b825a67c38e5cf2",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900011,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 466,
+        "steps": 28,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "e75dc3f8cb926ec4ebb9ebe3c9c259a2865aae799ccad8c3761361eaf9d8f467",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900011,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "627b43660e0f9bb7f9b966511f09cf0bf982e7bb84cac30f23b546fd1d828e8e",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900012,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 296,
+        "steps": 21,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "81ad8d4beab14abe4993603fc17ff97d9f851ded89bb4ce6a6c796d6f4fb6bed",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900012,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 138,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "ccbc68d6efbf7b3b67b4c7fd14dc8c2e2e0eb2d8aca1570134b68846c3fbbe48",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900013,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 892,
+        "steps": 49,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "c78f85077161229d296209b719932e2e2a49785dd1fd03bda3eb3bc3cce02edc",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900013,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 123,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "ebbb47215df9b8e400f603652a6aae13b30f3e85d4545fbd255b67df2ecdbd59",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900014,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 934,
+        "steps": 41,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 50,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "7aa883cd278075f19047571471fd121d9d3765141e0f8a73f110365e6acd1935",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 60
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900014,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 60
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 60
+        },
+        "seconds": 1800,
+        "steps": 110,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "4954fba08b272488a93cdf552407e67069bd6a1c214e3a004f07f915e9ef4e77",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900015,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 266,
+        "steps": 19,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "db3bc8db5be52125372f1d269cf867aadcd442a3c04cab8266785187f7b87cf8",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900015,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 82,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "8502b29e023e5ab0388582120d77fb8a58e2c51b9458de7d498becda8a05f666",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900016,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 254,
+        "steps": 13,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "b82bd9d100ab853f592b89f7ac8ba11f1d117e48c864e40fda907251fb4c4305",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900016,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 130,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "fff323f46d27394f1a3e394fa6d9c6fdda48aca1d9c2512090980d4c9dc06b4e",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900017,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 414,
+        "steps": 32,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "e62493c1ae7bc32050a4fdad07ae7ade4510d4fc9c57129ad5f2a93895b29ce7",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900017,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 80,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "dad7cf1516c2dd03480ef7ee51714a2659661f51adc1deec59abcf1d5e9d6abd",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900018,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 862,
+        "steps": 43,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "85f7fb6c92f397ee5ff3bae2f0f58f162f964116ae568e570a7291328a9b79a4",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900018,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 74,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "5fd45077afc19c7abc1897c3e035305e3fd386ce2fdc17914e852aa531b3bbfc",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900019,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 266,
+        "steps": 22,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "77df91c61df395410c3a07294503d61a5d61a49e46bfb7220edaba103248d45b",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900019,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 81,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "a23fa875de058e84ff562176bb0d32e3b6b7ee703f89490c572a919e9279c6ef",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900020,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 102,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "41f1093e6c16f96bcc7f99dee9ba532e791dd4517fc64520b0d859c606405b96",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900020,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "7f034ad3351ca084a3141aea587149a440f5471357398604f3081e8e0b896adf",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900021,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 304,
+        "steps": 17,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "9ec0d331648cbbe34c3538de099fe1cbbc02f4d22f0553302dac8da0cdd9e2ba",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900021,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 111,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "b543a9369dccb4b924e77dafc029a3cf52edd1bdc07eed6ec0ddaaa6ba39c0f0",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900022,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 786,
+        "steps": 41,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "9c28ddb00d71fac4b62a73c7c1520fd45ae160cb788c8242780222c399abdd13",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900022,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 93,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "9f1d1a46243d9985dc01cc5aa7e70e5595f4a3bd3583841569f84fd524866a55",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900023,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 902,
+        "steps": 65,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "169dc59ea461692320ce7929496102448767fcee796500d8cf74461293694fea",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900023,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 104,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "7c886712faeabf5f082e2ccad22536efaadc660fd5a5487b6087b66a4527d915",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900024,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 196,
+        "steps": 17,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "f48e265937ec37757d6d1045bda71a3531568a89477cf91e3e90a9860f092ece",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900024,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 95,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "5e33a85c4e3f518eca2466aa854614e215da72d9c9db15a7a3be184ec314297a",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900025,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1608,
+        "steps": 73,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "5ffd7920cada36d82e5fb7620bba4dae02125ca451a7f6c9f477c3cd0752a5f5",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900025,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "4d87ec86fbd3ab92afa26f2a9657578b971471cc63a9f3317fa4c8655ffc94bf",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900026,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1128,
+        "steps": 64,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "a874c978b613f166faad1136c031402ad52044b5159fc37d380c8294a404530f",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900026,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 438,
+        "steps": 26,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "cab18f94e690a0a7ea543fa97e72f827609a950871f06da6ad13d23f1367a622",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900027,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "d90b5dfe238fee89e284f99b1cb192b3bd43ade587b9891c40bddc02e044410a",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900027,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 125,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "9cd9cecf2bf36e641738e539ce1d4a1e3ae5dbbb839d1e3dfec960245bf569a4",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900028,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 91,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "d1d179cebd61762558e91ee7b6ba0fbf48a17100a9b3ca134751b3c6d1094c30",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900028,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "BLUE",
+      "b_score": 20,
+      "public_trace_sha256": "df42b2782801ceb3bd69e295df8352a651cba5860cc24bad4c76e4413fc1af36",
+      "raw_terminal_scores": {
+        "BLUE": 40,
+        "RED": 20
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900029,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "b9fc527104e200b0d93bed70ea65e4388a80b240acefd99323780ee565b10692",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900029,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 75,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "0a1d88979d622424c201f6ce4117a40c0aad544ed300fc146a5117e9f1e8eb02",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900030,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 138,
+        "steps": 11,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "95cc861ca478617c9b789c98dfa203be01db4ccf7522df024dc653f1234de980",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900030,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 79,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "201557f9fd1082eafa15daaf950cc7a77e6675e3051c3341d6517366116efae8",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900031,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 224,
+        "steps": 20,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "693060f342491f12eecf4d0f2df1ca015b71febb55d535f88db2963019854dd7",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900031,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 95,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "3a09fe56c02a51f6603be790b8670a53e63acd6c6e4a969cacdb46538e34b13e",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900032,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 86,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "0e3c7e44c63bea48406f70f161234391a3d024b6133dcac2dc60be21cfd92d4a",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900032,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "BLUE",
+      "b_score": 30,
+      "public_trace_sha256": "4c69e1481028236f7d2b9d6d4d20d919a95827ecf97be56a59823e198ffc67d4",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900033,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 100,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "6a7e9409b80a1e206ee936dc5432a22cd66d720202752d2a9e4b1243215a023b",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900033,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "fc2f213a70281eafbfaeb5e3b6ae0fe96ed93567f668de5e0023fb96149f4ab4",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900034,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 338,
+        "steps": 21,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "f2071b2603c95f1a0e75d1be52accf6c702e2dee3709104f6878ceeaa56b1bc8",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900034,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "477e56414a63deb8aa9dcb71b15589e5079accaa9b5a3621c753e5524228316c",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900035,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 126,
+        "steps": 10,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "adb5901d00b0bda62b5b46e272965d2024bab85e0a83b63b9b77c2fa516e5bf3",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900035,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "041c33c0ec3c678e53763fab32d53446169edfc03cbda70047670f7944a56560",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900036,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 694,
+        "steps": 32,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "f450a98a07d5a496df8a3ff182f6f32bf18b6dc14cc80a5f920e4a85a22bc07b",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900036,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "BLUE",
+      "b_score": 40,
+      "public_trace_sha256": "0a046c02b2f44dae48d759fbe09be0b52c2d5d466d58e2e0dced2744c489ba29",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900037,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "c224bd68096d4e3c5414471ffe1b624b9a9f644440fc40700c6a604c137ccec5",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900037,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 151,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "287d3208262c4e1ae2c0e4c7e6da4d64476cc2aa35cc98853ee240426ce76592",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900038,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 188,
+        "steps": 17,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "9ef10ef046f7b1382daaa25afb43fb6c944d2e2f12e69ff74811beceaed6080d",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900038,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "BLUE",
+      "b_score": 40,
+      "public_trace_sha256": "aa873206e991104b01a0c7aa573ce8dae995036c25d26ae8715758afee069bf7",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900039,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 72,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "RED",
+      "b_score": 40,
+      "public_trace_sha256": "d3b1bd232d7abe8a9d0c7c54aeb16c509a0c8e24a89c696a78ac2811d7fb8ef0",
+      "raw_terminal_scores": {
+        "BLUE": 40,
+        "RED": 20
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900039,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 100,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "e4ee304c1e721274bfa3eb292bcac52c7d7f138f3b1b92ec3e6cd303d838642e",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900040,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 790,
+        "steps": 46,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "e55ad3d7a728750e90a5e54bee56fc8c6fc9c3b240afcf1a37e3c66e1ae31d2d",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900040,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "01ff3e2c26c8f5999834ad29e44cbc948a4dfcbb7ba690db25d0eecadc4271a1",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900041,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 248,
+        "steps": 17,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "b7fd841506763fd918fdfb09971e94f269f5f9fb6b202c9038f9fc6abc29c8bc",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900041,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 124,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "4794273e8fbe344e29a6fa2bc663c015774c2a168936200f04b659d71ed46c37",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900042,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 530,
+        "steps": 31,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "f9da3fe80cf5f71a97f58628813f261b8f4bd8e0724217c0017c1b66f01a2f63",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900042,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 81,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "48cefdca27807fbbe54c562a08a5920de63f0d62a0457374396dc1ce25d8e41e",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900043,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 536,
+        "steps": 31,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "ad7584ceac7d0771fe5f24269d44dd901feea2ea7fe02a3ee1fc8234859ee8f6",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900043,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 768,
+        "steps": 49,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "b6c2ca058a82ef3b8d2c317a5925c0fd8d12e4205d62ceaa03cb25f1cb0082da",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900044,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 336,
+        "steps": 19,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "d5de9c44e0c89c19af5d55f1e1640e485b831fee97361cd78454acb95a925912",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900044,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 105,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "c0c9046af80a57c00fb79ab0c85f549f331c91e06224f4f4f0b855a9cd829b90",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900045,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 216,
+        "steps": 9,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "b87ef86ba4f8c1bfdd4cc43c03a4fa0d8d4a2bfab3a6af2f18c023a2b0a625bd",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900045,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 740,
+        "steps": 41,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "96e10da9094d35bed0567a03b6542dc9fee14bf991709f8bd89dfc4d8bb23d69",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900046,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 262,
+        "steps": 19,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "6530d0d2b6cd465ae58a433aaef44484a233205b858411a4dec080ee3538f7e8",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900046,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "bad7c0ee162abe3a1c81a0f732fae296a5b808fbd61509e4cfeb4c8eef2a8cf5",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900047,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 940,
+        "steps": 56,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": -10,
+      "a_side": "RED",
+      "b_score": 40,
+      "public_trace_sha256": "c5eaa847e4ac77a8ee165de0045a5a138b1d14376a119d1f0698cba3137e9593",
+      "raw_terminal_scores": {
+        "BLUE": 40,
+        "RED": 30
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900047,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "ebcf26d51737132aa66fa3a51f1211596a9cd53ebae68f4f16cb3d31481774cf",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900048,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 470,
+        "steps": 33,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "1444ee697db47e0491ee36e75295a79268ce9254696326d30139ae15df301a11",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900048,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 102,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "49ba7ef6f128ce053cc85dea1ae812221b22304ccdd178dd9fd288114efa8d54",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900049,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 820,
+        "steps": 45,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "3dc78f26846b19ec08a478ee80aa158ec7b11a4c4b3813a15321ef93539722e4",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900049,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 131,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "46cc79fd90a64c37bc2a73763846352c70f718db41c3434882059f4f85f46be9",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900050,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 178,
+        "steps": 15,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "4c3390703046976ebd2b9fd949379960906177a5d871449d1e9c55eebeffd5e9",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900050,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "6b0cdddd9cdb55ca9e413ae7a4346ae69d1813ec45e54b108a7ac780d2ca493c",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900051,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 540,
+        "steps": 28,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "88093dc3bbe1e9a7b4c9f5365d8f8c8fd4977fd787db2b78a1fe635ac855d18c",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900051,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 77,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "9bbbbff14b076830b4b3cf638f75e50c8792706e20fcf6352452263692d2c050",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900052,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 222,
+        "steps": 12,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "d9263b662a539952d53bab511ea10dcd91ac11dcd773463cf8368ac8b47748e1",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900052,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 20,
+      "a_score_diff": -20,
+      "a_side": "BLUE",
+      "b_score": 40,
+      "public_trace_sha256": "084dee8f54f9d1fd9695fc55c8e1d1b9c5f8e9d3d42847d404b4905360b4acbf",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900053,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "277c456560c3fc7b9312ae38204a1169c490bc79c6db069862777bbb57b2a8aa",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900053,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 78,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "1e6707ef6d717e2906ce0e2bcf07d842aac0b42cf642c6af51deb8706811a10a",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900054,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 238,
+        "steps": 11,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "4f4d6935cc8d5f82e827bffa484c5c6e731ec54b7a07b2f0e923a855b06fe1a8",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900054,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 70,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "acbbaf84cd10ce8145a29e7cafe69d7d97b23c218b3983898596250be297ce3f",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900055,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 116,
+        "steps": 9,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "821fd5f3eedca3f6062e7082b6748b7db1616a1d03bc9483784c324aa150b853",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900055,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "c10c34935aaef4b1811109b6a101de8c27761a6f394b11f6fb595c0c535eacca",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900056,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 718,
+        "steps": 38,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "029bfb0db9f0a1f845f2326704e5f10723b2e330e2d1abc313cee8b0da12b8d2",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900056,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 102,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "96e1f2b60d306b26bbaa0e016fde7cb954a8fa84d0e5439cc9768a185d86b208",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900057,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 378,
+        "steps": 25,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "c055e95a1d3105207261ccef5d4e5124035548924cf1cd30b40c062697e49e31",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900057,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "ed174741f23eac1b0fc62e3c8ae62ccd2382db9253255bd772558c98809e6a25",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900058,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 838,
+        "steps": 37,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "7cc2a6cffa95c4a4a63c4b0fdfa3c30f3060bf2dbf0009bce8c6c2f51375707b",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900058,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 82,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "7e76949f37e435b229bd5881f7c61d202eda41659f7f9b31896263ce3edd9644",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900059,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 126,
+        "steps": 11,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 10,
+      "a_score_diff": -40,
+      "a_side": "RED",
+      "b_score": 50,
+      "public_trace_sha256": "0a23ef97f384da7cda9b0390c46df4327f908de5499d5fb7457dd1094d07ed91",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "loss",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900059,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1136,
+        "steps": 53,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "f74f80fde058591e4f9e16ee90b80748b42110642a9e889404d0296599f02846",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900060,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 728,
+        "steps": 35,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 30,
+      "a_score_diff": 0,
+      "a_side": "RED",
+      "b_score": 30,
+      "public_trace_sha256": "d1ff9f2a20bf258a62926961190184cfc0203b055cced27b275843fa0f1ef224",
+      "raw_terminal_scores": {
+        "BLUE": 30,
+        "RED": 30
+      },
+      "result": "draw",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900060,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "c9d251fc16fdfe8d70e367c3952c338ae22595ac46e1a8c44c5b2e28ac1ed27c",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900061,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 316,
+        "steps": 19,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "1f69cf557e0491b8000c94aa44acfcbe04780c9497e09539baf319fefc2a4c34",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900061,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 108,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 60,
+      "a_score_diff": 60,
+      "a_side": "BLUE",
+      "b_score": 0,
+      "public_trace_sha256": "5c4c09df627b4bcd7900e81db2f74e6cc9eb6d14e4eda75337896901202bd645",
+      "raw_terminal_scores": {
+        "BLUE": 60,
+        "RED": 0
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900062,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 116,
+        "steps": 9,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "RED",
+      "b_score": 10,
+      "public_trace_sha256": "dcca0337d6f431b1d9b5bac7b7c193f7a9afa273b023f2bd6ce6c6654dc40b56",
+      "raw_terminal_scores": {
+        "BLUE": 10,
+        "RED": 50
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900062,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 109,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "a_score": 50,
+      "a_score_diff": 40,
+      "a_side": "BLUE",
+      "b_score": 10,
+      "public_trace_sha256": "85abbe11e86b3acdcc17fb35ece2499a83fb9ba506f749e9c0a598a685982b17",
+      "raw_terminal_scores": {
+        "BLUE": 50,
+        "RED": 10
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "A",
+        "RED": "B"
+      },
+      "seed": 2900063,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 862,
+        "steps": 40,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "a_score": 40,
+      "a_score_diff": 20,
+      "a_side": "RED",
+      "b_score": 20,
+      "public_trace_sha256": "59a0491978114df7623db774fd23266778f81ff87e22cddfe56924007b75f4bf",
+      "raw_terminal_scores": {
+        "BLUE": 20,
+        "RED": 40
+      },
+      "result": "win",
+      "seats": {
+        "BLUE": "B",
+        "RED": "A"
+      },
+      "seed": 2900063,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 111,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    }
+  ],
+  "models": {
+    "A": {
+      "initial": false,
+      "source_sha256": "cf7fd0ec038313b67bf74ceaafc1d655f580a338a43bfd36cab8c678b3fb03f1",
+      "state_sha256": "8bf691c357ae54df0f4d4f2853da057b729cece51f4477e26c72b5ae44fe3a54",
+      "training_episodes_attempted": 500
+    },
+    "B": {
+      "initial": false,
+      "source_sha256": "895d827c1a311e8c04ef92a9626fdb01c62376d69594ae6dbbd7746e0b8c9486",
+      "state_sha256": "48a3e1a0ab16853254cb362eacd9e1e42c32c68d523192cf85ea7d6faa78c6c4",
+      "training_episodes_attempted": 100
+    }
+  },
+  "observation_schemas": {
+    "A": 2,
+    "B": 2
+  },
+  "paired": {
+    "complete_pairs": 64,
+    "excluded_pairs": 0,
+    "mean_a_score_diff": 27.578125,
+    "pairs": [
+      {
+        "complete": true,
+        "mean_a_score_diff": 20,
+        "seed": 2900000
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900001
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900002
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900003
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900004
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900005
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900006
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": -15,
+        "seed": 2900007
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900008
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 0,
+        "seed": 2900009
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900010
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900011
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900012
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900013
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 45,
+        "seed": 2900014
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900015
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900016
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900017
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900018
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900019
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900020
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900021
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900022
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900023
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900024
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900025
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 0,
+        "seed": 2900026
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900027
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900028
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900029
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900030
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900031
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 0,
+        "seed": 2900032
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900033
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 20,
+        "seed": 2900034
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900035
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900036
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900037
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900038
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": -20,
+        "seed": 2900039
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900040
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900041
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900042
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 0,
+        "seed": 2900043
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900044
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900045
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900046
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 15,
+        "seed": 2900047
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900048
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900049
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900050
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900051
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900052
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": -10,
+        "seed": 2900053
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900054
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900055
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900056
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 40,
+        "seed": 2900057
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900058
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 10,
+        "seed": 2900059
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900060
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900061
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 50,
+        "seed": 2900062
+      },
+      {
+        "complete": true,
+        "mean_a_score_diff": 30,
+        "seed": 2900063
+      }
+    ],
+    "sample_standard_error": 2.170761319468631
+  },
+  "schema_version": 1,
+  "seeds": [
+    2900000,
+    2900001,
+    2900002,
+    2900003,
+    2900004,
+    2900005,
+    2900006,
+    2900007,
+    2900008,
+    2900009,
+    2900010,
+    2900011,
+    2900012,
+    2900013,
+    2900014,
+    2900015,
+    2900016,
+    2900017,
+    2900018,
+    2900019,
+    2900020,
+    2900021,
+    2900022,
+    2900023,
+    2900024,
+    2900025,
+    2900026,
+    2900027,
+    2900028,
+    2900029,
+    2900030,
+    2900031,
+    2900032,
+    2900033,
+    2900034,
+    2900035,
+    2900036,
+    2900037,
+    2900038,
+    2900039,
+    2900040,
+    2900041,
+    2900042,
+    2900043,
+    2900044,
+    2900045,
+    2900046,
+    2900047,
+    2900048,
+    2900049,
+    2900050,
+    2900051,
+    2900052,
+    2900053,
+    2900054,
+    2900055,
+    2900056,
+    2900057,
+    2900058,
+    2900059,
+    2900060,
+    2900061,
+    2900062,
+    2900063
+  ],
+  "snapshot": {
+    "files": {
+      "cities.json": "c991a3bd30c37fd76ffdba1919128299a1f20fe3d796a05bf77c4899f30fbb0c",
+      "evaluation_provenance.json": "45df40e97c7e466006a458e0f4c3acaeda029f862e7f2a7bd09ce02d3b3d87d2",
+      "map_hexes.json": "9ef0d941e1bad1b4a955ea72e6c6ea51836f7de715f165b0875f6b0b79ab2a7f",
+      "units.json": "1fe5ab93bb598003a83bd48dabcaa1aeededfce24b266874810546536e853826"
+    },
+    "provenance": {
+      "generator": "tools/make_sample.py",
+      "note": "Original generated demo fixture, not a real scenario or external service snapshot. Existing game data and rules are unchanged.",
+      "origin": "original_synthetic",
+      "purpose": "offline_synthetic_game_software_tests"
+    },
+    "sha256": "c78e2a640bf404a754459fd07201182455290dc2c99e25ef999c201c94030c07"
+  },
+  "summary": {
+    "a_score": 43.90625,
+    "a_score_diff": 27.578125,
+    "b_score": 16.328125,
+    "completed": 128,
+    "draw": 12,
+    "games": 128,
+    "loss": 14,
+    "truncated": 0,
+    "win": 102
+  }
+}
