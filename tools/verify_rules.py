@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine import crt                                   # noqa: E402
+from engine import paths as _paths                       # noqa: E402
 from engine.game import Game, SUPPRESS_SEC               # noqa: E402
 from engine.equip import WEAPONS                         # noqa: E402
 from env.hexwar_env import HexwarEnv                     # noqa: E402
@@ -28,7 +29,7 @@ def best_gun(u):
             return w
     return u.wz[0] if u.wz else 0
 
-SNAP = os.environ.get("HEXWAR_SNAP", "samples/demo")
+SNAP = os.environ.get("HEXWAR_SNAP") or _paths.snapshot_dir()   # 默认=比赛初设（想定 7527）
 
 RESULTS: list[tuple[str, bool, str]] = []
 

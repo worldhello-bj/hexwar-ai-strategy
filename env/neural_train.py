@@ -277,7 +277,8 @@ class NeuralTrainer:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--snapshot", required=True, type=Path, help="explicit original synthetic snapshot, e.g. samples/demo")
+    parser.add_argument("--snapshot", required=True, type=Path,
+                        help="想定目录（比赛初设：scenario/7527；本地完整采集：snapshot/parsed）")
     parser.add_argument("--allow-real-map", action="store_true",
                         help="显式允许使用真实想定（scenario/7527 随仓库公开；本地完整采集 snapshot/parsed 不入库）")
     parser.add_argument("--move-radius", type=int, default=None,
