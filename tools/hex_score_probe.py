@@ -100,43 +100,80 @@ def weapon_range(wid):
     return info[2] if info else 0
 
 
-def pick_shooter(units):
-    """蓝方活着的地面单位里，选"武器射程最长"的那个当射手。"""
+def pick_engagement(units, target_color):
+    """选一对“能真打出战果”的交战组合。
+
+    ★ 不能按“射程最长”选射手：防空导弹射程 20，但对地面坦克的**预期攻级=None**
+      （实测：14 发全空、目标血不掉）。所以按**贴近到相邻格（距 1）时的预期攻级**
+      选：攻级最高的组合优先，同级取距离近的。
+    """
+    shooters = [k for k, a in units.items()
+                if a.get("color") == "BLUE" and str(a.get("blood")) not in ("0", "")
+                and str(a.get("typeid")) in ("1", "2")]
+    targets = [k for k, a in units.items()
+               if a.get("color") == target_color and str(a.get("blood")) not in ("0", "")
+               and str(a.get("typeid")) in ("1", "2")]
     best = None
-    for uid, a in units.items():
-        if a.get("color") != "BLUE" or str(a.get("blood")) in ("0", ""):
-            continue
-        if str(a.get("typeid")) == "4":
-            continue
-        ids = [int(x) for x in str(a.get("wz") or "").replace(" ", "").split(",")
-               if x.strip().isdigit()]
-        rng = max([weapon_range(w) for w in ids] or [0])
-        if best is None or rng > best[1]:
-            best = (uid, rng, ids)
-    return best
+    for a in shooters:
+        for t in targets:
+            dd = GEO.distance(int(units[a]["pos"]), int(units[t]["pos"]))
+            pick = C.best_weapon(units, a, t, 1)
+            lvl = pick[3] if pick else None
+            if lvl is None:
+                continue
+            key = (-lvl, dd)
+            if best is None or key < best[0]:
+                best = (key, a, t, pick, dd, int((units[t] or {}).get("blood") or 0))
+    if not best:
+        return None
+    _key, a, t, pick, dd, blood = best
+    return {"unit": a, "target": t, "weapon": pick[1], "weapon_name": pick[2][0],
+            "level_at_1": pick[3], "dist": dd, "blood": blood}
 
 
-def nearest(units, frm, want_color):
+def nearest(units, frm, want_color, prefer_weak=False):
+    """最近的敌方地面单位；`prefer_weak` 时同距离取血最少的（更好打出歼灭）。"""
     best = None
     for uid, a in units.items():
         if a.get("color") != want_color or str(a.get("blood")) in ("0", ""):
             continue
+        if str(a.get("typeid")) == "4":
+            continue
         d = GEO.distance(frm, int(a.get("pos") or 0))
-        if best is None or d < best[1]:
-            best = (uid, d, int(a.get("pos") or 0))
-    return best
+        try:
+            blood = int(a.get("blood"))
+        except (TypeError, ValueError):
+            blood = 99
+        key = (d, blood) if prefer_weak else (d, 0)
+        if best is None or key < best[0]:
+            best = (key, uid, d, int(a.get("pos") or 0))
+    return (best[1], best[2], best[3]) if best else None
+
+
+def live_positions(sess, base7, ids):
+    """用 **ObjAjax** 取实时位置（与 `hex_combat_round` 同一套）。
+
+    ⚠️ 不要用 `Obj_Get` 的 `pos`：那是静态快照。
+    """
+    return C.positions(sess, base7, ids)
 
 
 def step_toward(sess, base7, unit, frm, goal, rec, log_action):
-    """朝目标格走一格（选"离目标最近且 `updatePos` 不为 0"的邻格）。"""
+    """朝目标格走一格。
+
+    ★ 必须用 `hex_combat_round.move_step`（它把 `MoveEnd` 的 `ObjPos/ObjNewPos` 传成
+      **mapid**）；`hex_play_round.act_move` 传的是 hexid —— 服务端会把位置存成格号，
+      于是单位每 tick 跳到一个垃圾格（实测：第一步 3232→3233 之后就乱跳）。
+    """
+    color = (rec["units"].get(unit) or {}).get("color") or ""
     cands = sorted(GEO.neighbors(frm), key=lambda n: GEO.distance(n, goal))
     for to in cands[:3]:
-        step = P.act_move(sess, base7, unit, frm, to, rec)
+        st = C.move_step(sess, base7, unit, frm, to, color)
         log_action({"kind": "move", "unit": unit, "frm": frm, "to": to,
-                    "updatePos_ms": step.get("updatePos_ms"),
-                    "move_end": step.get("move_end"), "com_post": step.get("com_post")})
-        if str(step.get("updatePos_ms") or "0") != "0":
-            return to, step
+                    "update_pos": st.get("update_pos"), "move_end": st.get("move_end"),
+                    "com_post": st.get("com_post")})
+        if str(st.get("update_pos") or "0").strip() not in ("", "0"):
+            return to, st
     return None, None
 
 
@@ -242,7 +279,7 @@ def main():
     # 阶段状态
     state = {"unit": None, "city": None, "dest": None, "arrived": False,
              "taken": False, "hold": 0, "shots": 0, "moves": 0, "target": None,
-             "ready_early": False, "goal": None, "stuck": 0}
+             "ready_early": False, "goal": None, "stuck": 0, "killed_at": None}
 
     while time.time() < deadline:
         t0 = time.time()
@@ -275,6 +312,24 @@ def main():
 
         units, cities = rec["units"], [c for c in rec["cities"] if c.get("pos")]
 
+        # 权威实时位置（ObjAjax）写回 units，后面全程用它
+        if state["unit"]:
+            ids = [state["unit"]] + ([state["target"]] if state.get("target") else [])
+            seen = live_positions(sessA, base7, ids)
+            for k, v in (seen or {}).items():
+                if v:
+                    units.setdefault(k, {})["pos"] = str(v)
+        # 目标血量归零 ⇒ 歼灭达成，再采几 tick 把计分页的跳变抓住
+        if args.phase == "kill" and state.get("target"):
+            b = str((units.get(state["target"]) or {}).get("blood") or "")
+            if b == "0" and not state["killed_at"]:
+                state["killed_at"] = tick
+                w("★★ 目标 %s 已被歼灭（tick %d）—— 继续采样抓计分页跳变"
+                  % (state["target"], tick))
+            if state["killed_at"] and tick >= state["killed_at"] + 12:
+                w("- 歼灭后已采 12 tick，收工")
+                break
+
         # ---- 阶段目标选择 ----
         if args.phase == "capture":
             if state["unit"] is None:
@@ -295,20 +350,19 @@ def main():
                      uid_, units[uid_].get("ico"), dist))
         else:
             if state["unit"] is None:
-                sh = pick_shooter(units)
-                if not sh:
-                    w("- 找不到蓝方可射手，退出")
+                eng = pick_engagement(units, args.color2)
+                if not eng:
+                    w("- 找不到任何能打出战果的蓝方射手-红方目标组合，退出")
                     break
-                state["unit"], state["range"], state["wz"] = sh
-                w("→ 射手 %s (%s) 武器 %s 射程 %d"
-                  % (sh[0], units[sh[0]].get("ico"), sh[2], sh[1]))
-            if state["target"] is None and state["unit"] in units:
-                frm = int(units[state["unit"]].get("pos") or 0)
-                tg = nearest(units, frm, args.color2)
-                if tg:
-                    state["target"] = tg[0]
-                    w("→ 目标 %s (%s) @%s 距离 %d 格"
-                      % (tg[0], units[tg[0]].get("ico"), GEO.hexid(tg[2]), tg[1]))
+                state["unit"] = eng["unit"]
+                state["target"] = eng["target"]
+                state["range"] = weapon_range(eng["weapon"])
+                state["wz"] = [eng["weapon"]]
+                w("→ 交战对：%s (%s) → %s (%s)  当前距 %d 格，目标血 %s"
+                  % (eng["unit"], units[eng["unit"]].get("ico"),
+                     eng["target"], units[eng["target"]].get("ico"), eng["dist"], eng["blood"]))
+                w("   用 %s（贴到相邻格时预期攻级 %s，射程 %s）"
+                  % (eng["weapon_name"], eng["level_at_1"], state["range"]))
 
         uid_ = state["unit"]
         if uid_ not in units:
@@ -325,9 +379,9 @@ def main():
                     to, step = step_toward(sessA, base7, uid_, frm, city_pos, rec, log_action)
                     if to:
                         state["moves"] += 1
-                        w("  → 机动 %s %s→%s 耗时=%sms"
+                        w("  → 机动 %s %s→%s 耗时=%s"
                           % (uid_, GEO.hexid(frm), GEO.hexid(to),
-                             (step or {}).get("updatePos_ms")))
+                             (step or {}).get("update_pos")))
                     else:
                         w("  ! %s 无法朝 %s 机动（updatePos=0）"
                           % (uid_, GEO.hexid(city_pos)))
@@ -354,9 +408,12 @@ def main():
                 break
             tpos = int(units[tgt].get("pos") or 0)
             dist = GEO.distance(frm, tpos)
-            in_los = C.los_ok(frm, tpos)
+            in_los = C.los_ok(frm, tpos) or dist <= 1
             rng = state.get("range") or 0
-            if not in_los or dist > rng:
+            # ★ 贴近到**相邻格**：手册 4.4「相邻格必通视」，且攻级最高 ⇒ 最容易打出歼灭。
+            #   开局双方不通视，只靠“射程内”往往永远等不到开火机会。
+            can_fire = dist <= 1
+            if not can_fire:
                 if state["moves"] >= args.max_move:
                     w("- 机动步数用尽仍未进入射程/通视（距离 %d，通视 %s），收工" % (dist, in_los))
                     break
@@ -366,7 +423,7 @@ def main():
                     w("  → 接近 %s %s→%s（距目标 %d 格，通视 %s）"
                       % (uid_, GEO.hexid(frm), GEO.hexid(to), dist, in_los))
                 else:
-                    w("  ! 无法接近（updatePos=0）")
+                    w("  ! 无法接近（update_pos=0）")
                     state["stuck"] += 1
                     if state["stuck"] > 6:
                         break
@@ -375,8 +432,8 @@ def main():
                     w("- 达到最大开火次数 %d，收工" % args.max_shots)
                     break
                 pick = C.best_weapon(units, uid_, tgt, dist)
-                if not pick:
-                    w("- 没有可用武器（距离 %d），收工" % dist)
+                if not pick or pick[3] is None:
+                    w("- 射程/类型不匹配（距 %d，攻级 None），收工以免空打" % dist)
                     break
                 idx, wid, info, lvl = pick
                 rdy = weapon_ready(sessA, base7, uid_)
@@ -384,9 +441,10 @@ def main():
                 state["shots"] += 1
                 log_action({"kind": "fire", "weapon": wid, "weapon_name": info[0],
                             "expected_level": lvl, "weapon_ready": rdy, **step})
-                w("  → 开火#%d %s→%s 武器 %s(射程%s) 距%d 预期攻级=%s 返回=%r"
+                w("  → 开火#%d %s→%s 武器 %s(射程%s) 距%d 预期攻级=%s 返回=%r 目标血=%s"
                   % (state["shots"], uid_, tgt, info[0], info[2], dist, lvl,
-                     str(step.get("attack_resp"))[:60]))
+                     str(step.get("attack_resp"))[:50],
+                     (units[tgt] or {}).get("blood")))
 
         tick += 1
         time.sleep(max(0.2, args.tick - (time.time() - t0)))

@@ -177,19 +177,21 @@ class EnvContractTests(unittest.TestCase):
                                             "path": [self.start, self.neighbor]})
         self.assertFalse(info.get("invalid_action"), info)
         self.assertEqual(reward, obs["score"]["diff"] - before)
-        # 夺占 1 个夺控点：占位实现会给己方 +1 点、敌方 -1 点，但**默认奖励口径是
-        # `verified`（只用已确证分项）**，所以夺控点**不**应该影响 reward：
-        # 手册与实测都没给出每点分值，未确证值不得进入学习信号。
+        # 夺占 1 个夺控点：夺控分与歼灭分现在都**已实测**（进奖励），但这个合成 fixture 的
+        # 夺控点名称不在实测表里（主要 80 / 次要 50）⇒ **不得分**，并且要显式报出
+        # “名称没测过”——不猜、不静默当 10 分。所以这局走到相邻格后 reward 仍为 0。
         # 见 `docs/计分规则待确认.md`。
         self.assertEqual(reward, 0)
-        self.assertIn("captured_per_point", self.env.score()["pending_rules"])
-        # 显式选 `platform` 口径时才把它算进 diff（仅用于对账/展示）。
+        self.assertEqual(self.env.score()["pending_rules"], [])   # 没有悬而未决的规则
+        self.assertIn("establishment_from_load_blood", self.env.score()["unverified"])
+        # 合成 fixture 的夺控点名称不在实测表里（主要 80 / 次要 50）⇒ **两种口径都不得分**，
+        # 并且要显式报出“名称没测过”——不猜、不静默当 10 分。
         platform = HexwarEnv(snapshot=str(self.root), scoring_mode="platform")
         platform.reset(seed=17)
         _, platform_reward, _, _ = platform.step(
             {"type": "move", "unit": "a", "path": [self.start, self.neighbor]})
-        self.assertEqual(platform_reward,
-                         2 * HexwarEnv.CAPTURE_POINT_SCORE_PLACEHOLDER)
+        self.assertEqual(platform_reward, 0)
+        self.assertIn("capture_point_name_unknown", platform.score()["unverified"])
         self.assertEqual(platform.score()["mode"], "platform")
 
     def test_enumeration_is_readonly_and_every_action_is_accepted(self):

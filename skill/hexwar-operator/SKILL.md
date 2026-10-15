@@ -45,7 +45,7 @@ py -3.13 env/run_episode.py --agent random --episodes 50 --side RED --json out.j
 | 字段 | 含义 | 用法 |
 |---|---|---|
 | `time` / `time_left` | 已推演秒数 / 剩余秒数 | **时间是资源**，别把时间花在无意义机动上 |
-| `score` | `own/enemy` 各有 `remaining`(剩余兵力) `captured`(夺控) `killed`(歼敌) `total`，另有 `pending_rules` 列出未确证口径 | 决策的最终目标函数（`remaining` 已实测对账；`captured`/`killed` 未确证，见 references/action-schema.md） |
+| `score` | `own/enemy` 各有 `remaining`(剩余兵力) `captured`(夺控) `killed`(歼敌) `total`，另有 `pending_rules` 列出未实测口径（现为空） | 决策的最终目标函数（**三项分值与夺控边界均已实测**，见 references/action-schema.md） |
 | `objectives` | 夺控点：`pos` `hexid` `held_by` | `held_by != side` 的才是要抢的 |
 | `own` | 己方全部算子（**完整信息**） | 含 `weapons` 弹药与射程 |
 | `enemy_visible` | **当前可观察到的**敌方 | 只有这些能打 |

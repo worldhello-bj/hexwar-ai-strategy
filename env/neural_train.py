@@ -302,7 +302,7 @@ def main(argv=None):
     parser.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
                         default="verified",
                         help="reward scope: verified = only confirmed components (default); "
-                             "platform = also include assumed/placeholder components")
+                             "platform = use the platform-style three-component sum")
     parser.add_argument("--ppo-clip", type=float, default=None)
     parser.add_argument("--update-epochs", type=int, default=None)
     parser.add_argument("--resume", type=Path)

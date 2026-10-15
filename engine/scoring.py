@@ -1,28 +1,28 @@
 # -*- coding: utf-8 -*-
 """7527 计分口径（**唯一的定义处**）。
 
-## 已确证 / 未确证
+## 三项分值均已平台实测（2026-10-15，练习服 7527）
 
-**只有一项是已反推、并用平台实测数据对账过的**（证据 `docs/计分对账.md`，
-复现 `tools/hex_score_audit.py`）：
+| 分项 | 口径 | 证据 |
+|---|---|---|
+| **剩余兵力分** | `Σ上阵(score × blood) + Σ车内载员(score × 编制)` | 对 7527 开局**精确命中平台红 354 / 蓝 234**（`tools/hex_score_audit.py` 的断言） |
+| **夺控分** | **主要 +80 / 次要 +50，一次性**（占住 60 s 不增长） | 占下主要点→蓝 0→**80**；占下次要点→蓝 0→**50**（`7527_transport_capture/score_probe_capture_*`） |
+| **歼灭分** | `Σ(损失兵力 × 单位 score)`，与剩余兵力分**逐点互补** | 坦克（score 10）掉 1 血 → 红剩余 −10 且蓝歼敌 +10；掉满 4 血 → 双方各 ±40（`score_probe_kill_20261015-220112`） |
+| **夺控边界**（失守是否扣分 / 重夺是否重复计分） | **失守把该点的分从原主那里扣除，重夺方加上**（不衰减、不封顶） | 蓝方占下次要点 → 蓝 **50**；红方夺回后 → **红 50 / 蓝 0**（`score_flip_20261015-221433`） |
 
-    剩余兵力分 = Σ_上阵(score × blood) + Σ_车内载员(score × 编制兵力)
+⇒ 所以 **`PENDING_RULES` 现在是空的**：三项分值与夺控边界均已实测，
+`verified` 与 `total` 相等。下面保留两套口径是为了将来一旦出现新的未实测项能**自动挡在奖励外**。
 
-对 7527 开局同时精确命中平台计分页的两个数（**红 354 / 蓝 234**，误差 0）。
+⚠️ **已废弃的旧值**：`CAPTURE_POINT_SCORE_PLACEHOLDER = 10` 是**无依据占位**，与实测差 5~8 倍；
+`killed` 曾标为“假设”、夺控边界曾标为未确证，现均已被实测证实。
 
-其余两项官方未给、实测也无法反推（全部采集里恒为 0）：
-
-- **歼灭分**：按歼灭掉的兵力计（`score × (编制 − 现存)`）。⚠️ **这是假设** ——
-  官方是「整单位被歼」还是「按损失兵力」、载员是否与载具重复计算，都没有依据。
-- **夺控分**：`CAPTURE_POINT_SCORE_PLACEHOLDER`，**毫无依据**（手册没写、实测恒为 0）。
-
-所以每个阵营同时给出三个数，调用方必须自己选：
+所以每个阵营同时给出两个总分，调用方必须自己选：
 
 | 键 | 含义 | 用途 |
 |---|---|---|
-| `total` | 三个分项**全算**（平台式，含未确证项） | 只用于对账 / 展示 |
-| `verified` | **只算已确证分项**（当前 = `remaining`） | **默认奖励口径**：未确证分值不进训练 |
-| `unverified` | 本次实际涉及的未确证项清单（含"编制取自载入时 blood"这类前提） | 显式告警 |
+| `total` | 三个分项**全算**（平台式） | 只用于对账 / 展示 |
+| `verified` | **只算已实测分项**（现与 `total` 相等） | **默认奖励口径**：未实测分值不进训练 |
+| `unverified` | 本次实际涉及的未实测项清单（含“编制取自载入时 blood”这类前提） | 显式告警 |
 
 ## 载员归属：必须用稳定 ID，不能用格号现场匹配
 
@@ -39,7 +39,7 @@ from . import equip
 
 # 口径版本。任何改变分值语义的改动都必须 +1：检查点/续跑靠它绑定，
 # 以免旧模型与新公式混用（同一快照下两套奖励会污染训练）。
-SCORING_VERSION = 2
+SCORING_VERSION = 3
 
 # ---------------- 载员编制兵力 ----------------
 # 表本身在**装备层**（`engine/equip.py`）：引擎自己（下车、发射巡飞弹）也要用它，
@@ -47,13 +47,35 @@ SCORING_VERSION = 2
 CARRIED_ESTABLISHMENT = equip.CARRIED_ESTABLISHMENT
 carried_establishment = equip.carried_establishment
 
-# ---------------- 未确证的占位 ----------------
-CAPTURE_POINT_SCORE_PLACEHOLDER = 10
-PENDING_RULES = ("captured_per_point", "killed_formula")
-# 已确证分项（只有这些进 `verified`）。`remaining` 已由平台两个数同时验证；
-# `captured` / `killed` 都不是。
-VERIFIED_COMPONENTS = ("remaining",)
+# ---------------- 夺控分（★ 已实测，2026-10-15）----------------
+# 实测（练习服 7527，`tools/hex_score_probe.py --phase capture`）：
+#    占下「主要」→ 夺控点得分 **+80**；占下「次要」→ **+50**；
+#    且**一次性**：占住 60 秒不再增长（不是按时间累计）。
+# 证据产物：`7527_transport_capture/score_probe_capture_20261015-215720`（蓝 0→80）、
+#           `...-215820`（蓝 0→50）。
+# ⚠️ 之前的 `CAPTURE_POINT_SCORE_PLACEHOLDER = 10` 是**无依据占位**，与实测差 5~8 倍。
+CAPTURE_POINT_SCORE = {"主要": 80, "次要": 50}
+
+# 已实测分项（只有这些进 `verified`）。
+# `remaining` / `killed` / `captured` 的分值均已由平台实测对账，
+# 且夺控边界（失守扣分 / 重夺加分）也已实测。
+VERIFIED_COMPONENTS = ("remaining", "killed", "captured")
 SIDES = ("BLUE", "RED")
+
+
+def capture_point_value(name):
+    """夺控点分值；**未测到的名称返回 None**（调用方必须显式报出，不得猜）。"""
+    return CAPTURE_POINT_SCORE.get(str(name or "").strip())
+
+
+# 仍未确证的**规则**。**现在是空的**：夺控的最后一条边界（失守是否扣分 /
+# 重夺是否重复计分）已于 2026-10-15 用 `tools/hex_flip_probe.py` 实测：
+#     蓝方占下 `次要` → 蓝 50；蓝方撤到 2 格外（flag 仍为蓝）；红方走上格并 CityTake
+#     → 页面变成「红 50 / 蓝 0」⇒ **失守把分从原主扣除、重夺方加上**（不衰减、不封顶）。
+# 同一个实验还交叉验证了手册 3.13：蓝方单位留在**邻格**时红方夺控全被拒（返回空串），
+# 撤到 2 格外后才成功 ⇒ 平台确实要求“本格与相邻 6 格无敌方地面单位”。
+# 保留这个常量是为了以后一旦出现新的未实测规则，`score()` 能自动把它报出来并挡在奖励外。
+PENDING_RULES = ()
 
 
 def breakdown(game):
@@ -118,7 +140,7 @@ def _from_parts(parts, issues, side, cities=()):
             continue                       # 未知型号 / 载具已毁：不计入，并在下面报出
         remaining += carried.score * establishment
 
-    # ---- 歼灭分（⚠️ 假设：按歼灭的兵力计；载具被歼时其载员一并计入）----
+    # ---- 歼灭分（★ 已实测：Σ(损失兵力 × score)；载具被歼时其载员一并计入）----
     killed = sum(u.score * max(0, u.establishment - u.blood)
                  for u in other["deployed"])
     for carried, host in other["carried"]:
@@ -126,11 +148,23 @@ def _from_parts(parts, issues, side, cities=()):
         if establishment is not None and not host.alive():
             killed += carried.score * establishment
 
-    # ---- 夺控分（⚠️ 占位，无依据）----
-    captured = CAPTURE_POINT_SCORE_PLACEHOLDER * sum(
-        1 for city in cities if city.get("flag") == side)
+    # ---- 夺控分（★ 已实测：主要 +80 / 次要 +50，一次性）----
+    captured = 0
+    for city in cities:
+        if city.get("flag") != side:
+            continue
+        value = capture_point_value(city.get("name"))
+        if value is None:
+            continue                       # 名称没测过：不计入，并在下面报出
+        captured += value
 
-    unverified = list(PENDING_RULES) + ["establishment_from_load_blood"]
+    # ---- 未实测项（本次计算里实际涉及的）----
+    # 三个分项的分值与夺控边界**都已实测**（见模块文档头），这里只剩两类“前提”告警：
+    #   establishment_from_load_blood：编制取自载入时 blood（只对开局快照成立）
+    #   各类 carried_* / capture_point_name_unknown：数据本身没说清楚
+    unverified = ["establishment_from_load_blood"]
+    if any(u.detail.get("establishment_unverified") for u in mine["deployed"]):
+        unverified.append("establishment_unverified")
     own_ids = {u.id for u in mine["deployed"]} | {c.id for c, _h in mine["carried"]}
     if any(cid in own_ids for cid, _d in issues["carried_establishment_unknown"]):
         unverified.append("carried_establishment_unknown")
@@ -138,16 +172,16 @@ def _from_parts(parts, issues, side, cities=()):
         unverified.append("carried_unlinked")
     if any(cid in own_ids for cid, _h in issues["carried_ambiguous"]):
         unverified.append("carried_ambiguous")
-    if any(u.detail.get("establishment_unverified") for u in mine["deployed"]):
-        unverified.append("establishment_unverified")
     if any(u.detail.get("carrier") for u in mine["deployed"]):
         # 引擎的 `load` 不把载员的 blood 置 0（仍按上阵单位的 score×blood 计），
-        # 而平台的车内记录 blood=0、按编制计入。两者在中途装载时可能不一致，
-        # 所以显式报出，而不是静默按其中一套算。
+        # 而平台的车内记录 blood=0、按编制计入。两者在中途装载时可能不一致。
         unverified.append("aboard_counted_as_deployed")
+    for city in cities:
+        if city.get("flag") == side and capture_point_value(city.get("name")) is None:
+            unverified.append("capture_point_name_unknown")
     return {"remaining": remaining, "captured": captured, "killed": killed,
-            "total": remaining + captured + killed, "verified": remaining,
-            "unverified": unverified}
+            "total": remaining + captured + killed, "verified": remaining + captured + killed,
+            "unverified": sorted(set(unverified))}
 
 
 def _global_unverified(issues):
@@ -182,7 +216,7 @@ def both_scores(game):
 
 
 def reward_value(party, mode="verified"):
-    """按奖励口径取总分：`verified`（默认，只用已确证分项）或 `platform`（含未确证项）。"""
+    """按奖励口径取总分：`verified`（默认，只用已实测分项）或 `platform`（平台式三项和）。"""
     if mode == "verified":
         return party["verified"]
     if mode == "platform":

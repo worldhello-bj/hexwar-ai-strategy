@@ -210,7 +210,7 @@ def main(argv=None):
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
                         default="verified",
-                        help="奖励口径：verified（默认，只用已确证分项）/ platform（含假设与占位项）")
+                        help="奖励口径：verified（默认，只用已实测分项）/ platform（平台式三项和）")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--epsilon", type=float, default=0.2)
     parser.add_argument("--train-seed-start", type=int, default=0)

@@ -104,8 +104,8 @@ class TwoPlayerEpisode:
         # about a particular online UI. Detailed private score components stay out.
         score = observation.pop("score")
         if self._public_score:
-            # 公开比分与奖励用**同一个口径**：默认 `verified`（只用已确证分项），
-            # 以免占位/假设值既进观察又进奖励。口径本身是元数据，只在 `status()`
+            # 公开比分与奖励用**同一个口径**：默认 `verified`（只用已实测分项），
+            # 以免未实测值既进观察又进奖励。口径本身是元数据，只在 `status()`
             # 里给出（`scoring_mode`），不塞进公开比分，保持观察结构不变。
             observation["score"] = {
                 "own": reward_value(score["own"], self._scoring_mode),

@@ -45,10 +45,10 @@ def run_one(agent, side, seed, snapshot, max_seconds, fog, render=False, verbose
                   (obs["time"], s["own"][scoring_key], s["enemy"][scoring_key]))
         if verbose and steps == 20:
             s = env.score()
-            print("  口径=%s  已确证(剩余兵力)=%d/%d  平台式三项和=%d/%d  未确证=%s"
+            print("  口径=%s  已实测=%d/%d  平台式三项和=%d/%d  未确证=%s"
                   % (s["mode"], s["own"]["verified"], s["enemy"]["verified"],
                      s["own"]["total"], s["enemy"]["total"], s["unverified"]))
-            print("  [占位/假设不入奖励] 己方夺控=%d 歼\u654c=%d（仅展示）"
+            print("  [入奖励] 己方夺控=%d 歼\u654c=%d（均已实测）"
                   % (s["own"]["captured"], s["own"]["killed"]))
         if steps > 5000:      # 安全阀
             break
@@ -74,7 +74,7 @@ def main():
     ap.add_argument("--no-fog", action="store_true", help="关闭战争迷雾（上帝视角）")
     ap.add_argument("--scoring", dest="scoring_mode", choices=("verified", "platform"),
                     default="verified",
-                    help="奖励口径：verified（默认，只用已确证分项）/ platform（含假设与占位项）")
+                    help="奖励口径：verified（默认，只用已实测分项）/ platform（平台式三项和）")
     ap.add_argument("--render", action="store_true", help="打印文本态势")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--json", help="把结果写入 JSON")

@@ -78,7 +78,8 @@ class HexwarEnv:
         self.move_radius = move_radius
         self.deep_validate = deep_validate
         # 奖励口径：`verified`（默认）只用已确证分项（剩余兵力分）；
-        # `platform` 把假设的歼灭分与无依据的夺控占位也算进去（仅用于对账/展示）。
+        # `platform` 与 `verified` 现在数值相同（三项分值都已实测），保留两个口径是为了
+        # 将来一旦出现新的未实测项时能自动把它挡在奖励之外（仅用于对账/展示时才显式传 platform）。
         self.scoring_mode = scoring_mode
         self.game = None
         self.done = False
@@ -190,11 +191,15 @@ class HexwarEnv:
         }
 
     # ---------------- 计分 ----------------
-    # 口径全部在 `engine/scoring.py`：只有**剩余兵力分**是已反推并精确验证的
-    # （`Σ上阵(score×blood) + Σ车内载员(score×编制)`，命中平台计分页 红 354 / 蓝 234）；
-    # **歼灭分是假设**（按歼灭的兵力计）、**夺控分是占位**（无依据）。
-    # 待确认清单：`docs/计分规则待确认.md`；证据：`docs/计分对账.md`。
-    CAPTURE_POINT_SCORE_PLACEHOLDER = scoring.CAPTURE_POINT_SCORE_PLACEHOLDER
+    # 口径全部在 `engine/scoring.py`（唯一处），**三项分值都已平台实测**：
+    #   剩余兵力 `Σ上阵(score×blood) + Σ车内载员(score×编制)`（对账平台 红 354 / 蓝 234）
+    #   夺控      `主要 80 / 次要 50`，**一次性**（实测）
+    #   歼煍      `Σ(损失兵力 × score)`，与剩余兵力分逐点互补（实测）
+    # 夺控边界（失守扣分 / 重夺加分）也已实测 ⇒ `PENDING_RULES` 为空。
+    # 实测证据与探针：`docs/计分规则待确认.md`；开局对账：`docs/计分对账.md`。
+    # 实测的夺控点分值表（主要 80 / 次要 50，一次性）与“未知名称不加分”的入口
+    CAPTURE_POINT_SCORE = scoring.CAPTURE_POINT_SCORE
+    capture_point_value = staticmethod(scoring.capture_point_value)
     SCORE_RULES_PENDING = scoring.PENDING_RULES
 
     def score(self):
@@ -202,14 +207,13 @@ class HexwarEnv:
 
         每个阵营同时给出：
 
-        - `total`：三个分项**全算**（平台式，含未确证项）—— 只适合对账/展示
-        - `verified`：**只算已确证分项**（当前 = `remaining`）—— 默认奖励口径
-        - `unverified`：本次实际涉及的未确证项清单
+        - `total`：三个分项**全算**（平台式）—— 对账/展示
+        - `verified`：**只算已实测分项**（现与 `total` 相等）—— 默认奖励口径
+        - `unverified`：本次算分依赖了哪条**未实测前提 / 没说清的数据**
 
         `self.scoring_mode` 决定 `diff` 用哪一个（`"verified"` 默认 / `"platform"`）。
-        这样做是因为：歼灭分是**假设**、夺控分是**无依据占位**，即使在返回值里
-        标注了 `pending_rules`，只要它们进了 `total` 又拿 `total` 当奖励，
-        占位值就还是在参与学习。所以要分开两个数，让奖励默认只看已确证部分。
+        两套口径保留的意义：一旦将来出现新的未实测项（新规则、未知夺控点名称、
+        未知型号载员编制），它会自动**不进 `verified`**，而不是惄惄地进奖励。
         """
         both, issues = scoring.both_scores(self.game)
         own, opp = both[self.side], both["RED" if self.side == "BLUE" else "BLUE"]

@@ -1,15 +1,14 @@
 """计分口径回归测试（`engine/scoring.py`）。
 
-用**原创合成 fixture**（不依赖真实想定数据，`snapshot/parsed` 不入库）。覆盖：
+用**原创合成 fixture**（不依赖真实想定数据）。覆盖：
 
-1. `remaining` = `Σ上阵(score×blood)` + `Σ车内载员(score×编制)`（已反推口径）；
-2. **载员归属用稳定载具 ID**：载具机动后载员分值**守恒**（不能凭空消失）；
-3. 同格多辆载具时按 `son` 图标配对，不"取第一辆"；定不下来要显式报出；
-4. 未知型号载员编制 = `None`（不按 0 静默计分），并在 `unverified` 里报出；
-5. 下车后恢复阵营与兵力，分值不消失；
-6. 未确证分值（占位夺控分、假设歼灭分）**默认不进奖励**（`verified`），
-   `platform` 口径才包含它们；
-7. `total(BLUE) + total(RED)` 恒定（= 全部单位 `score×编制` 之和）。
+1. `remaining` = `Σ上阵(score×blood)` + `Σ车内载员(score×编制)`（已反推并对账）；
+2. **载员归属用稳定载具 ID**：载具机动后分值守恒；同格多辆载具按 `son`↔`ico` 配对；
+   定不下来要显式报出；未知型号编制 = `None`（不按 0 静默计分）；
+3. 下车后恢复阵营与兵力，分值不消失；
+4. **已实测的夺控分**：主要 80 / 次要 50，一次性；未测到的名称不计分且报出；
+5. **已实测的歼灭分**：`Σ(损失兵力 × score)`，与剩余兵力分逐点互补；
+6. `total`/`verified` 两个口径 + `unverified` 清单 + 口径版本。
 """
 import json
 import tempfile
@@ -26,7 +25,7 @@ RED_HEX = G.make_mapid(9, 9)
 FAR_HEX = G.make_mapid(11, 13)
 
 
-def build(snapshot, *, extra_carrier=False, unknown_data=False):
+def build(snapshot, *, extra_carrier=False, unknown_data=False, city_name="Synthetic"):
     """合成想定：蓝 1 个上阵单位 / 红 1 个上阵单位 + 1 辆载具 + 1 个车内载员。
 
     载具带 `son` 图标串、载员带 `ico`（与真实快照同形状），用于验证图标配对。
@@ -43,7 +42,7 @@ def build(snapshot, *, extra_carrier=False, unknown_data=False):
              pos2=CARRIER_HEX, ico="PLA2-191"),
     ]
     if extra_carrier:
-        # 同格第二辆载具，图标串里**没有**该载员的 ico → 必须能区分开
+        # 同格第二辆载具，图标串里**没有**该载员的 ico ⇒ 必须能区分开
         units.append(dict(id="truck2", data=0, typeid=2, color="RED", blood=3,
                           score=10, pos=CARRIER_HEX, ico="M113TW",
                           son="COD-M4,COD-FK"))
@@ -51,7 +50,7 @@ def build(snapshot, *, extra_carrier=False, unknown_data=False):
         units[3]["data"] = 99999
     (snapshot / "map_hexes.json").write_text(json.dumps(hexes))
     (snapshot / "cities.json").write_text(json.dumps(
-        [{"id": "obj", "pos": G.make_mapid(13, 13), "name": "Synthetic", "flag": None}]))
+        [{"id": "obj", "pos": G.make_mapid(13, 13), "name": city_name, "flag": None}]))
     (snapshot / "units.json").write_text(json.dumps(units))
 
 
@@ -70,8 +69,7 @@ class ScoringTests(unittest.TestCase):
         return env
 
     def sides(self, game=None):
-        both, issues = scoring.both_scores(game or self.game)
-        return both, issues
+        return scoring.both_scores(game or self.game)
 
     def unit(self, uid):
         return self.game.units[uid]
@@ -97,7 +95,7 @@ class ScoringTests(unittest.TestCase):
         both, _ = self.sides()
         self.assertEqual(both["BLUE"]["total"] + both["RED"]["total"], total)
 
-    # ---------- 载员-载具关联（评审点名的关键场景）----------
+    # ---------- 载员-载具关联 ----------
 
     def test_snapshot_carried_unit_is_linked_to_a_stable_carrier_id(self):
         self.assertEqual(self.unit("squad").detail["carrier"], "truck")
@@ -113,7 +111,7 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(after["RED"]["remaining"], before_red)
         self.assertEqual(after["BLUE"]["total"] + after["RED"]["total"], before_total)
         self.assertEqual(issues["carried_unlinked"], [])
-        self.assertEqual(self.unit("squad").pos2, CARRIER_HEX)   # pos2 保持旧格，但已不参与计分
+        self.assertEqual(self.unit("squad").pos2, CARRIER_HEX)   # pos2 是旧格，但不参与计分
 
     def test_carrier_movement_through_env_action_conserves_score(self):
         env = self.make()
@@ -122,7 +120,6 @@ class ScoringTests(unittest.TestCase):
         after = env.score()
         self.assertEqual(after["own"]["remaining"], before["own"]["remaining"])
         self.assertEqual(after["enemy"]["remaining"], before["enemy"]["remaining"])
-        self.assertEqual(after["enemy"]["unverified"].count("carried_unlinked"), 0)
 
     def test_two_carriers_in_one_hex_are_disambiguated_by_icon(self):
         build(self.root, extra_carrier=True)
@@ -130,23 +127,21 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(game.units["squad"].detail["carrier"], "truck")
         self.assertEqual(game.carried_ambiguous, [])
         both, issues = scoring.both_scores(game)
-        # 载员算红方 3×3；两辆载具各自 10×3
         self.assertEqual(both["RED"]["remaining"], 5 * 2 + 10 * 3 * 2 + 9)
-        self.assertEqual(issues["carried_linked"] if "carried_linked" in issues else [], [])
+        self.assertEqual(issues["carried_ambiguous"], [])
 
     def test_unlinkable_carried_unit_is_reported_not_silently_dropped(self):
         build(self.root)
         units = json.loads((self.root / "units.json").read_text())
         for entry in units:
             if entry["id"] == "truck":
-                entry["pos"] = FAR_HEX          # 载具不在 pos2 指的那一格，且图标也不匹配
-        self.root.joinpath("units.json").write_text(json.dumps(units))
+                entry["pos"] = FAR_HEX          # 载具既不在 pos2 指的那格，图标也不匹配
+        (self.root / "units.json").write_text(json.dumps(units))
         game = Game(seed=1, snapshot=str(self.root))
         both, issues = scoring.both_scores(game)
         self.assertEqual(game.carried_unlinked, ["squad"])
         self.assertEqual(issues["carried_unlinked"], ["squad"])
-        self.assertIn("carried_unlinked", both["BLUE"]["unverified"] +
-                      both["RED"]["unverified"])
+        self.assertIn("carried_unlinked", both["RED"]["unverified"])
         self.assertEqual(both["RED"]["remaining"], 40)      # 只剩 5×2 + 10×3
 
     # ---------- 未知型号 / 编制来源 ----------
@@ -183,62 +178,82 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(squad.color, "RED")
         self.assertEqual(squad.blood, 3)                    # 编制表补回
         self.assertNotIn("carrier", squad.detail)
-        after = env.score()["own"]["remaining"]
-        self.assertEqual(after, before)                     # 3×3 仍在（换了个身份）
+        self.assertEqual(env.score()["own"]["remaining"], before)
 
-    # ---------- 未确证分值不进奖励 ----------
+    # ---------- 已实测的夺控分 ----------
 
-    def test_verified_mode_excludes_placeholder_capture_points(self):
+    def test_capture_points_use_measured_values(self):
+        """实测：主要 +80 / 次要 +50（一次性）；**未测到的名称不计分**。"""
+        self.assertEqual(scoring.capture_point_value("主要"), 80)
+        self.assertEqual(scoring.capture_point_value("次要"), 50)
+        self.assertIsNone(scoring.capture_point_value("Synthetic"))
         env = self.make()
-        self.assertEqual(env.score()["mode"], "verified")
-        self.assertEqual(env.score()["own"]["total"], 12)
+        env.game.cities[0]["name"] = "次要"
         env.game.cities[0]["flag"] = "BLUE"
-        self.assertEqual(env.score()["own"]["captured"],
-                         scoring.CAPTURE_POINT_SCORE_PLACEHOLDER)
-        self.assertEqual(env.score()["own"]["verified"], 12)
-        self.assertEqual(env.score()["diff"], -37)          # 只用 remaining
-        platform = self.make(scoring_mode="platform")
-        platform.game.cities[0]["flag"] = "BLUE"
-        self.assertEqual(platform.score()["diff"], -37 + 10)
-        self.assertIn("captured_per_point", platform.score()["unverified"])
+        self.assertEqual(env.score()["own"]["captured"], 50)
+        env.game.cities[0]["name"] = "主要"
+        self.assertEqual(env.score()["own"]["captured"], 80)
+        env.game.cities[0]["name"] = "未知目标"
+        self.assertEqual(env.score()["own"]["captured"], 0)
+        self.assertIn("capture_point_name_unknown", env.score()["unverified"])
 
-    def test_verified_mode_excludes_assumed_kill_points(self):
+    def test_capture_bonus_counts_once_and_survives_losing_ownership(self):
+        """实测：
+
+        - 占住 60 s 不增长（一次性）；
+        - **失守会把该点的分从原主扣除、重夺方加上**（实测：红 50 / 蓝 0）。
+        """
+        env = self.make()
+        env.game.cities[0]["name"] = "次要"
+        env.game.cities[0]["flag"] = "BLUE"
+        first = env.score()["own"]["captured"]
+        self.assertEqual(first, 50)
+        env.game.second = 600                               # 十分钟后（模拟占住）
+        self.assertEqual(env.score()["own"]["captured"], first)
+        env.game.cities[0]["flag"] = "RED"                  # 归属被夺走
+        self.assertEqual(env.score()["own"]["captured"], 0)
+        self.assertEqual(env.score()["enemy"]["captured"], 50)
+
+    # ---------- 已实测的歼灭分 ----------
+
+    def test_measured_kill_points_complement_remaining(self):
+        """实测：掉 1 兵力 ⇒ 输方 remaining −score、赢方 killed +score（diff 变化 2×score）。"""
         env = self.make()
         before = env.score()["diff"]
-        env.game.units["red"].blood = 1                     # 敌方受损
+        env.game.units["red"].blood = 1                     # 掉 1 兵力（score=5）
         after = env.score()
-        # 歼灭分（**假设**）确实被算出来了，并如实报出
         self.assertEqual(after["own"]["killed"], 5)
-        self.assertIn("killed_formula", after["unverified"])
-        # 但奖励只动"敌方剩余兵力下降"这一份（-5 → diff +5），
-        # **不**叠加"己方歼灭分 +5"；否则同一个损失会在 diff 里被算两遍。
-        self.assertEqual(after["diff"] - before, 5)
-        self.assertEqual(after["own"]["verified"], 12)
+        self.assertEqual(after["enemy"]["remaining"], 44)
+        self.assertEqual(after["diff"] - before, 10)
+        self.assertEqual(after["own"]["verified"], after["own"]["total"])
 
-    def test_reward_follows_the_selected_mode(self):
-        # verified：损失只算敌方剩余下降 1 份（+5）；
-        # platform：再加上假设的歼灭分（+5），于是同一损失在 diff 里加倍（+10）。
-        # 这正是"口径不同不能混用"的最直接理由。
-        for mode, expected in (("verified", 5), ("platform", 10)):
-            env = self.make(scoring_mode=mode)
-            before = env.score()["diff"]
-            env.game.units["red"].blood = 1
-            self.assertEqual(env.score()["diff"] - before, expected, mode)
+    def test_verified_equals_total_now_that_all_three_are_measured(self):
+        env = self.make()
+        env.game.cities[0]["name"] = "次要"
+        env.game.cities[0]["flag"] = "BLUE"
+        env.game.units["red"].blood = 1
+        report = env.score()
+        self.assertEqual(report["own"]["verified"], report["own"]["total"])
+        self.assertEqual(report["own"]["verified"],
+                         12 + 50 + 5)                       # remaining + captured + killed
 
-    # ---------- 占位与版本 ----------
+    # ---------- 口径与版本 ----------
 
-    def test_placeholder_and_version_are_explicit(self):
-        self.assertEqual(scoring.CAPTURE_POINT_SCORE_PLACEHOLDER, 10)
-        self.assertEqual(scoring.PENDING_RULES, ("captured_per_point", "killed_formula"))
-        self.assertEqual(scoring.VERIFIED_COMPONENTS, ("remaining",))
+    def test_measured_tables_and_version_are_explicit(self):
+        self.assertEqual(scoring.CAPTURE_POINT_SCORE, {"主要": 80, "次要": 50})
+        self.assertEqual(scoring.PENDING_RULES, ())      # 三项 + 夺控边界都已实测
+        self.assertEqual(scoring.VERIFIED_COMPONENTS,
+                         ("remaining", "killed", "captured"))
         self.assertIsInstance(scoring.SCORING_VERSION, int)
-        self.assertEqual(HexwarEnv.CAPTURE_POINT_SCORE_PLACEHOLDER, 10)
+        self.assertEqual(HexwarEnv.CAPTURE_POINT_SCORE, {"主要": 80, "次要": 50})
+        self.assertEqual(HexwarEnv.capture_point_value("主要"), 80)
 
     def test_score_reports_version_mode_and_rules(self):
         report = self.make().score()
         self.assertEqual(report["scoring_version"], scoring.SCORING_VERSION)
         self.assertEqual(report["mode"], "verified")
         self.assertEqual(report["pending_rules"], list(scoring.PENDING_RULES))
+        self.assertEqual(report["pending_rules"], [])
         self.assertIn("issues", report)
 
 
