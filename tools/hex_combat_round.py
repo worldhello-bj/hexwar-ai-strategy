@@ -128,20 +128,26 @@ def cell(mid):
 def move_step(sess, base7, unit, frm, to, color):
     """向指定格走一步（ComPost -> updatePos -> MoveEnd）。
 
-    ★ 关键：照官方 `CommandUpdatePos` 的语义传参
-      - `MapID`  = 目标格的 **DOM id**（格号，形如 `011717`）
-      - `posIDhex` / `preIDhex` = 实测服务端拿它当**新位置的 mapid**（形如 170070）——
-        填格号会让单位跑到错误的格（踩过：单位被挪到图外）
-      - `posIDcond` = 目标格 `cond`、`GridType` = 目标格 `hextype`、`MapStep` = 目标格 `step`
+    ★ 参数真值（2026-10-15 从官方客户端实际发出的请求抓取，已核实）：
+
+        com/updatePos.asp?ObjID=<单位>&MapID=<目标格 mapid>&ObjRot=180
+          &GridType=<目标格 hextype>&MapStep=<目标格 step>
+          &preIDhex=<起格 hex 属性>&posIDhex=<目标格 hex 属性>&posIDcond=<目标格 cond>
+          &HuiHe=1&steep=0&ComID=0&Index=1&Speed=0&RoomDay=0&RoomWeather=0
+          &MineArea=0&GasArea=0&Bridge=0&EleLow=145&EleDiv=5
+
+    即：`MapID` 是 **mapid**（地图格 div 的 id 就是 mapid）；`preIDhex`/`posIDhex`
+    是格的 **`hex` 属性（地形贴图编号）**，不是格号。把格号填进去会让服务端把单位
+    存成错误的 pos（踩过）。
     """
     c = cmd(sess, base7, unit, color,
-            {unit: {"move": "%s,%s" % (GEO.hexid(frm), GEO.hexid(to)), "speed": 0}}, "机动",
+            {unit: {"move": "%d,%d" % (frm, to), "speed": 0}}, "机动",
             GEO.hexid(frm), GEO.hexid(to))
     tc = cell(to)
-    ms = jget(sess, base7, "com/updatePos.asp", ObjID=unit, MapID=GEO.hexid(to), ObjRot=180,
+    ms = jget(sess, base7, "com/updatePos.asp", ObjID=unit, MapID=to, ObjRot=180,
               GridType=tc.get("hextype", 1), MapStep=tc.get("step", 1),
-              preIDhex=int(frm), posIDhex=int(to),
-              posIDcond=tc.get("cond", 0), HuiHe=0, steep=0, ComID=c["com_id"] or 1,
+              preIDhex=cell(frm).get("hex", 0), posIDhex=tc.get("hex", 0),
+              posIDcond=tc.get("cond", 0), HuiHe=1, steep=0, ComID=0,
               Index=1, Speed=0, RoomDay=0, RoomWeather=0, MineArea=0, GasArea=0, Bridge=0,
               EleLow=145, EleDiv=5)
     me = jget(sess, base7, "com/MoveEnd.asp", ComID=c["com_id"] or 1, ObjID=unit,
