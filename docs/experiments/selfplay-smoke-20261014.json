@@ -1,0 +1,614 @@
+{
+  "algorithm": "first_visit_terminal_mc",
+  "training": [
+    {
+      "seed": 0,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 90,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        }
+      },
+      "decisions": {
+        "BLUE": 45,
+        "RED": 45
+      }
+    },
+    {
+      "seed": 1,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 96,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "RED",
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        }
+      },
+      "decisions": {
+        "BLUE": 48,
+        "RED": 48
+      }
+    },
+    {
+      "seed": 2,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 77,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 50,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 39,
+        "RED": 38
+      }
+    },
+    {
+      "seed": 3,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 73,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 37,
+        "RED": 36
+      }
+    },
+    {
+      "seed": 4,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 89,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        }
+      },
+      "decisions": {
+        "BLUE": 45,
+        "RED": 44
+      }
+    },
+    {
+      "seed": 5,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 90,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        }
+      },
+      "decisions": {
+        "BLUE": 45,
+        "RED": 45
+      }
+    },
+    {
+      "seed": 6,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 67,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        }
+      },
+      "decisions": {
+        "BLUE": 34,
+        "RED": 33
+      }
+    },
+    {
+      "seed": 7,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 96,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 48,
+        "RED": 48
+      }
+    },
+    {
+      "seed": 8,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 50,
+        "seconds": 1140,
+        "terminated": true,
+        "truncated": false,
+        "reason": "one_side_empty",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        }
+      },
+      "decisions": {
+        "BLUE": 25,
+        "RED": 25
+      }
+    },
+    {
+      "seed": 9,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 79,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 40,
+        "RED": 39
+      }
+    },
+    {
+      "seed": 10,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 88,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        }
+      },
+      "decisions": {
+        "BLUE": 44,
+        "RED": 44
+      }
+    },
+    {
+      "seed": 11,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 86,
+        "seconds": 1516,
+        "terminated": true,
+        "truncated": false,
+        "reason": "one_side_empty",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        }
+      },
+      "decisions": {
+        "BLUE": 43,
+        "RED": 43
+      }
+    },
+    {
+      "seed": 12,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 101,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "RED",
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        }
+      },
+      "decisions": {
+        "BLUE": 51,
+        "RED": 50
+      }
+    },
+    {
+      "seed": 13,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 77,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        }
+      },
+      "decisions": {
+        "BLUE": 39,
+        "RED": 38
+      }
+    },
+    {
+      "seed": 14,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 94,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 47,
+        "RED": 47
+      }
+    },
+    {
+      "seed": 15,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 93,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 47,
+        "RED": 46
+      }
+    },
+    {
+      "seed": 16,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 99,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        }
+      },
+      "decisions": {
+        "BLUE": 50,
+        "RED": 49
+      }
+    },
+    {
+      "seed": 17,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 88,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 44,
+        "RED": 44
+      }
+    },
+    {
+      "seed": 18,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 84,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        }
+      },
+      "decisions": {
+        "BLUE": 42,
+        "RED": 42
+      }
+    },
+    {
+      "seed": 19,
+      "training": true,
+      "status": {
+        "current_actor": null,
+        "steps": 75,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 38,
+        "RED": 37
+      }
+    }
+  ],
+  "evaluation": [
+    {
+      "seed": 1000000,
+      "training": false,
+      "status": {
+        "current_actor": null,
+        "steps": 87,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        }
+      },
+      "decisions": {
+        "BLUE": 44,
+        "RED": 43
+      }
+    },
+    {
+      "seed": 1000001,
+      "training": false,
+      "status": {
+        "current_actor": null,
+        "steps": 109,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "RED",
+        "final_scores": {
+          "BLUE": 10,
+          "RED": 50
+        },
+        "rewards": {
+          "BLUE": 10,
+          "RED": 50
+        }
+      },
+      "decisions": {
+        "BLUE": 55,
+        "RED": 54
+      }
+    },
+    {
+      "seed": 1000002,
+      "training": false,
+      "status": {
+        "current_actor": null,
+        "steps": 108,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "BLUE",
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        }
+      },
+      "decisions": {
+        "BLUE": 54,
+        "RED": 54
+      }
+    },
+    {
+      "seed": 1000003,
+      "training": false,
+      "status": {
+        "current_actor": null,
+        "steps": 103,
+        "seconds": 1800,
+        "terminated": true,
+        "truncated": false,
+        "reason": "game_clock",
+        "winner": "RED",
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        }
+      },
+      "decisions": {
+        "BLUE": 52,
+        "RED": 51
+      }
+    }
+  ],
+  "episodes_completed": 20,
+  "resources": {
+    "elapsed_seconds": 37.57106139700045,
+    "peak_traced_python_bytes": null,
+    "process_peak_rss_bytes": 18219008
+  },
+  "caveat": "Exact-observation baseline; evaluation is trained-vs-trained self-play, not a comparison against a random or strong opponent and establishes no playing-strength claim."
+}

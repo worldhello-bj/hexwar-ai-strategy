@@ -27,7 +27,7 @@ import os
 import sys
 import json
 import copy
-import random
+import math
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -46,14 +46,20 @@ AREA_FIRE_SEC = 10     # 一次集火射击（手册 3.16）
 # 手册未给出单车载员数，此处按堆叠上限（手册 4.2）假定为 4
 VEHICLE_SEATS = 4
 
-MAX_BLOOD = {}         # 初始兵力缓存（按 data 记）
-
 
 class HexwarEnv:
     """单方视角的兵推环境。"""
 
     def __init__(self, snapshot=None, side="BLUE", max_seconds=1800,
                  fog=True, dt=WAIT_SEC, victory="score"):
+        if side not in ("BLUE", "RED"):
+            raise ValueError("side must be BLUE or RED")
+        if not isinstance(max_seconds, int) or isinstance(max_seconds, bool) or max_seconds < 0:
+            raise ValueError("max_seconds must be a non-negative integer")
+        if not isinstance(dt, int) or isinstance(dt, bool) or dt <= 0:
+            raise ValueError("dt must be a positive integer")
+        if victory not in ("score", "capture"):
+            raise ValueError("victory must be score or capture")
         self.snapshot = snapshot
         self.side = side
         self.max_seconds = max_seconds
@@ -72,6 +78,7 @@ class HexwarEnv:
         self.done = False
         self._history = []
         self._remember()
+        self._check_done()
         return self.observe()
 
     def _remember(self):
@@ -79,9 +86,11 @@ class HexwarEnv:
         for u in self.game.units.values():
             if u.color == self.side or not u.alive():
                 continue
-            key = u.id
-            if key not in MAX_BLOOD:
-                MAX_BLOOD[key] = u.blood
+            if self.fog and not any(
+                    o.alive() and o.color == self.side and
+                    self.game.can_observe(o.id, u.id)
+                    for o in self.game.units.values()):
+                continue
             self._history.append({"t": self.game.second, "id": u.id,
                                   "pos": u.pos, "blood": u.blood})
 
@@ -185,6 +194,8 @@ class HexwarEnv:
     def legal_actions(self, unit_id=None, move_radius=6):
         """列出当前合法动作。move_radius 控制枚举范围（太大会爆炸）。"""
         g = self.game
+        if self.done:
+            return []
         acts = []
         units = [u for u in g.units.values()
                  if u.alive() and u.color == self.side
@@ -194,11 +205,11 @@ class HexwarEnv:
             if u.stunned(g.second):
                 continue
             # 机动：邻格逐步扩展（BFS，受通行与堆叠约束）
-            fronts = [(u.pos, [u.pos])]
+            fronts = [(u.pos, [u.pos], 0)]
             seenpos = {u.pos}
             for _ in range(move_radius):
                 nxt = []
-                for cur, path in fronts:
+                for cur, path, elapsed in fronts:
                     for nb in G.neighbors(cur):
                         if nb in seenpos:
                             continue
@@ -207,9 +218,9 @@ class HexwarEnv:
                             continue
                         seenpos.add(nb)
                         p2 = path + [nb]
-                        nxt.append((nb, p2))
+                        nxt.append((nb, p2, elapsed + sec))
                         acts.append({"type": "move", "unit": u.id,
-                                     "path": p2, "seconds": int(sec)})
+                                     "path": p2, "seconds": math.ceil(elapsed + sec)})
                 fronts = nxt
                 if not fronts:
                     break
@@ -273,59 +284,153 @@ class HexwarEnv:
         # 每个“有可见敌人的格子”一个动作，参与单位 = 能打到该格的己方单位。
         own_alive = [u for u in g.units.values()
                      if u.alive() and u.color == self.side
-                     and not u.detail.get("carrier") and not u.stunned(g.second)]
+                     and not u.detail.get("carrier") and not u.stunned(g.second)
+                     and (unit_id is None or u.id == unit_id)]
         hexes = {t.pos for t in g.units.values()
                  if t.alive() and t.color != self.side and t.pos}
-        for hx in hexes:
+        for hx in sorted(hexes):
             shooters = []
             for u in own_alive:
                 d = G.distance(u.pos, hx)
                 if any((WEAPONS.get(w) or (None, None, 0))[2] >= d for w in u.wz):
                     if g.can_observe(u.id, next((t.id for t in g.units.values()
-                                                 if t.alive() and t.pos == hx), u.id)):
+                                                 if t.alive() and t.pos == hx and t.color != self.side), u.id)):
                         shooters.append(u.id)
             if shooters:
                 acts.append({"type": "area_fire", "unit": shooters[0],
                              "units": shooters, "target_hex": hx})
-        return acts
+        # Validate candidates against the same transaction contract used by step.
+        return [a for a in acts if self._try_actions([a], commit=False)[0]]
 
     # ---------------- 执行 ----------------
-    def step(self, action):
-        """执行一个动作，推进时钟，返回 (obs, reward, done, info)。"""
-        if self.done:
-            return self.observe(), 0.0, True, {"msg": "已结束"}
+    def _validate(self, act):
+        """Reject malformed or unauthorized inputs before engine mutation."""
+        if not isinstance(act, dict):
+            raise ValueError("action must be an object")
+        kind = act.get("type")
+        if kind == "wait":
+            seconds = act.get("seconds", self.dt)
+            if not isinstance(seconds, int) or isinstance(seconds, bool) or seconds <= 0:
+                raise ValueError("wait seconds must be a positive integer")
+            return
+        if kind not in {"move", "attack", "stop_attack", "area_fire", "capture",
+                        "hide", "load", "unload", "grenade", "stop"}:
+            raise ValueError("unknown action type")
         g = self.game
-        before = self.score()
-        info = {"msg": ""}
-        cost = 0
+        u = g.units.get(act.get("unit"))
+        if not u or not u.alive() or u.color != self.side:
+            raise ValueError("unit must be a living own unit")
+        if u.detail.get("carrier") or u.stunned(g.second):
+            raise ValueError("unit cannot act in its current state")
+        if kind == "move":
+            path = act.get("path")
+            if not isinstance(path, (list, tuple)) or not path:
+                raise ValueError("move path must be nonempty")
+            cur = u.pos
+            for dest in path[1:] if path[0] == cur else path:
+                if not isinstance(dest, int) or isinstance(dest, bool) or dest not in G.neighbors(cur):
+                    raise ValueError("move path must contain adjacent integer hexes")
+                cur = dest
+            if cur == u.pos and len(path) == 1:
+                raise ValueError("move path must change position")
+        if kind == "attack":
+            target = g.units.get(act.get("target"))
+            if not target or not target.alive() or target.color == self.side or target.detail.get("carrier"):
+                raise ValueError("target must be a living, unloaded enemy")
+            if act.get("weapon") not in (None, 0) and act.get("weapon") not in u.wz:
+                raise ValueError("weapon is not equipped")
+        if kind == "hide" and act.get("on") not in (0, 1, False, True):
+            raise ValueError("hide on must be 0 or 1")
+        if kind == "load":
+            car = g.units.get(act.get("carrier"))
+            if (u.typeid != 1 or u.detail.get("carrier") or not car or
+                    car.id == u.id or car.color != self.side or car.typeid != 2 or
+                    car.detail.get("carrier")):
+                raise ValueError("load requires own infantry and own vehicle")
+        if kind == "unload" and (u.typeid != 2 or not u.detail.get("carried")):
+            raise ValueError("unload requires a loaded vehicle")
+        if kind in ("area_fire", "grenade"):
+            hx = act.get("target_hex")
+            if not isinstance(hx, int) or isinstance(hx, bool) or not g.hex(hx):
+                raise ValueError("target_hex must identify an existing hex")
+        if kind == "area_fire":
+            ids = act.get("units", [u.id])
+            if not isinstance(ids, (list, tuple)) or not ids or len(set(ids)) != len(ids):
+                raise ValueError("area_fire units must be nonempty and unique")
+            for uid in ids:
+                shooter = g.units.get(uid)
+                if (not shooter or not shooter.alive() or shooter.color != self.side or
+                        shooter.stunned(g.second) or shooter.detail.get("carrier")):
+                    raise ValueError("area_fire requires available own units")
 
-        if isinstance(action, (list, tuple)):
-            # 同时下达多条命令：逐条执行，时间取最大值
-            costs = []
-            for a in action:
-                _o, _r, _d, i2 = self._apply(a)
-                info["msg"] += i2.get("msg", "") + "; "
-                costs.append(i2.get("seconds", 0))
-            cost = max(costs) if costs else self.dt
-        else:
-            act = action
-            if not act:
-                act = {"type": "wait"}
-            if act.get("type") == "wait":
-                cost = int(act.get("seconds", self.dt))
-            else:
-                _o, _r, _d, info = self._apply(act)
-                cost = int(info.get("seconds", self.dt))
+    def _try_actions(self, actions, commit):
+        """Execute on an isolated state; invalid batches are atomic no-ops.
 
-        # 不允许越过推演总时长
-        cost = min(int(cost), max(0, self.max_seconds - g.second))
-        g.advance(cost)
+        The immutable map is shared to avoid copying it for each candidate. All
+        mutable game state, including the game's random stream, is copied.
+        """
+        original = self.game
+        self.game = copy.deepcopy(original, {id(original.hexes): original.hexes})
+        messages, costs = [], []
+        commanded = set()
+        accepted = False
+        try:
+            for act in actions:
+                self._validate(act)
+                if act["type"] != "wait":
+                    participants = set(act.get("units", [act["unit"]])) if act["type"] == "area_fire" else {act["unit"]}
+                    if commanded & participants:
+                        raise ValueError("a batch cannot command the same unit twice")
+                    commanded.update(participants)
+                if act["type"] == "wait":
+                    cost = act.get("seconds", self.dt)
+                    msg = "等待"
+                else:
+                    _, _, _, info = self._apply(act)
+                    cost, msg = info.get("seconds", 0), info.get("msg", "")
+                    if cost <= 0 and act["type"] not in ("stop", "stop_attack"):
+                        raise ValueError(msg or "action failed")
+                    if math.ceil(cost) > self.max_seconds - original.second:
+                        raise ValueError("action exceeds remaining episode time")
+                costs.append(cost)
+                messages.append(msg)
+            accepted = True
+            return True, {"msg": "; ".join(messages), "seconds": min(
+                math.ceil(max(costs, default=self.dt)), self.max_seconds - original.second)}
+        except (ValueError, TypeError, KeyError, OverflowError) as exc:
+            return False, {"msg": str(exc), "seconds": 0, "invalid_action": True}
+        finally:
+            if accepted and commit:
+                # Preserve public Game/Unit identities used by callers and bridges.
+                for uid, updated in self.game.units.items():
+                    current = original.units.get(uid)
+                    if current is not None:
+                        for slot in current.__slots__:
+                            setattr(current, slot, getattr(updated, slot))
+                        self.game.units[uid] = current
+                original.__dict__.clear()
+                original.__dict__.update(self.game.__dict__)
+            self.game = original
+
+    def step(self, action):
+        """Apply one action or an atomic batch and return the score-difference delta.
+
+        Invalid inputs return zero reward without advancing time or changing state.
+        Batches execute in order and advance time by their maximum action duration.
+        """
+        if self.done:
+            return self.observe(), 0.0, True, {"msg": "已结束", "seconds": 0}
+        before = self.score()["diff"]
+        actions = list(action) if isinstance(action, (list, tuple)) else [action]
+        if not actions:
+            actions = [{"type": "wait"}]
+        accepted, info = self._try_actions(actions, commit=True)
+        if not accepted:
+            return self.observe(), 0.0, self.done, info
+        self.game.advance(info["seconds"])
         self._remember()
         self._check_done()
-        after = self.score()
-        reward = (after["own"]["total"] - after["enemy"]["total"]) - \
-                 (before["own"]["total"] - before["enemy"]["total"])
-        return self.observe(), float(reward), self.done, info
+        return self.observe(), float(self.score()["diff"] - before), self.done, info
 
     def _apply(self, act):
         g = self.game
@@ -345,9 +450,9 @@ class HexwarEnv:
             total = 0
             cur = u.pos
             for step_to in path:
-                sec, why = g.step_seconds(u, cur, step_to)
+                sec, why = g.commit_step(u, cur, step_to)
                 if sec <= 0:
-                    return None, 0.0, False, {"msg": "机动受阻：%s" % why, "seconds": total}
+                    return None, 0.0, False, {"msg": "机动受阻：%s" % why, "seconds": 0}
                 u.pos2 = step_to
                 u.pos = step_to
                 u.rot = self._rot(cur, step_to)
@@ -372,6 +477,8 @@ class HexwarEnv:
                                               "seconds": 0}
                 r, err = g.attack(u.id, act.get("target"),
                                   weapon_id=int(act.get("weapon") or 0))
+                if err:
+                    return None, 0.0, False, {"msg": "射击失败：%s" % err, "seconds": 0}
                 u.detail["attacked_at"] = g.second
                 note = "" if err else "，首发 %s" % (r["result"],)
                 return None, 0.0, False, {
@@ -393,6 +500,8 @@ class HexwarEnv:
                                    weapon_id=act.get("weapon"))
             if err:
                 return None, 0.0, False, {"msg": "集火失败：%s" % err, "seconds": 0}
+            if res["result"] != "MISS" and not any(not shot.get("error") for shot in res["shots"]):
+                return None, 0.0, False, {"msg": "集火没有可执行的射击", "seconds": 0}
             for sid in unit_ids:
                 su = g.units.get(sid)
                 if su:
@@ -407,7 +516,7 @@ class HexwarEnv:
             c = g.apply_city_capture(u)
             return None, 0.0, False, {
                 "msg": "夺控成功" if c else "夺控条件不满足",
-                "seconds": CAPTURE_SEC}
+                "seconds": CAPTURE_SEC if c else 0}
         if t == "hide":
             if self._in_attack_gap(u):
                 return None, 0.0, False, {

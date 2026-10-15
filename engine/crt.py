@@ -14,18 +14,19 @@ except ImportError:  # 允许直接以脚本方式运行
     from equip import ANTI_AIR_CLASS, CRT_AIR_NAME
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-T = json.load(open(os.path.join(_HERE, "tables.json"), encoding="utf-8"))
+with open(os.path.join(_HERE, "tables.json"), encoding="utf-8") as stream:
+    T = json.load(stream)
 
 PUSH = "P"          # 压制
 INVALID = ""        # 无效
 
 
-def d6():
-    return random.randint(1, 6)
+def d6(rng=None):
+    return (rng if rng is not None else random).randint(1, 6)
 
 
-def roll2d6():
-    return d6() + d6()
+def roll2d6(rng=None):
+    return d6(rng) + d6(rng)
 
 
 # ---------------- 攻击等级 ----------------
@@ -175,12 +176,14 @@ def result_air(attack_level, roll):
 # ---------------- 高层裁决入口 ----------------
 
 def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
-                terrain=None, log=None):
+                terrain=None, log=None, rng=None):
     """一次直瞄射击裁决。
 
     返回 dict(result=..., kills=..., suppressed=..., roll=..., level=..., detail=...)
     shooter/target 需要有 typeid / armor / units / moving / stunned / hidden / stacked
     """
+    if isinstance(dist, bool) or not isinstance(dist, int) or dist < 0:
+        raise ValueError("dist must be a nonnegative integer")
     detail = []
     is_air_target = target.get("typeid") == 3
     is_person_target = target.get("typeid") in (1, 4) and target.get("typeid") != 3
@@ -227,7 +230,7 @@ def direct_fire(shooter, target, weapon_name, dist, dh_m=0, roll=None,
 
     # 3) 掷骰 + 状态修正
     if roll is None:
-        roll = roll2d6()
+        roll = roll2d6(rng)
     smod = situational_mod(
         shooter_stunned=shooter.get("stunned", False),
         shooter_moving=shooter.get("moving", False),

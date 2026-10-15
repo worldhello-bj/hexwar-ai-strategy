@@ -1,0 +1,11 @@
+{
+  "algorithm": "first_visit_terminal_mc",
+  "episodes_completed": 20,
+  "checkpoint_sha256": "33d8259e73684e98558f446bd4cc9155bb075c049016490bf8548f822b6eafbc",
+  "compression": "gzip",
+  "decompressed_bytes": 3906283,
+  "source_scenario": "samples/demo",
+  "seed": 7,
+  "purpose": "reproducible_training_baseline",
+  "playing_strength_established": false
+}

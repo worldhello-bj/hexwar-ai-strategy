@@ -1,0 +1,3387 @@
+{
+  "algorithm": "neural_terminal_reinforce_vs_random",
+  "episode_config": {
+    "max_seconds": 1800,
+    "max_steps": 1000,
+    "public_score": true
+  },
+  "episodes_attempted": 400,
+  "episodes_completed": 400,
+  "evaluation": {
+    "caveat": "Descriptive synthetic-game sample, not a strength claim; truncations excluded from score and W/D/L summaries.",
+    "comparison": "Frozen initial and trained stochastic policies versus uniform random; identical paired seeds and seats.",
+    "heldout_seeds": [
+      2200000,
+      2200001
+    ],
+    "initial": {
+      "by_seat": {
+        "BLUE": {
+          "completed": 2,
+          "draw": 1,
+          "games": 2,
+          "loss": 0,
+          "mean_own_score": 40.0,
+          "mean_score_diff": 20.0,
+          "truncated": 0,
+          "win": 1
+        },
+        "RED": {
+          "completed": 2,
+          "draw": 1,
+          "games": 2,
+          "loss": 1,
+          "mean_own_score": 15.0,
+          "mean_score_diff": -30.0,
+          "truncated": 0,
+          "win": 0
+        }
+      },
+      "games": [
+        {
+          "decisions": 40,
+          "elapsed_seconds": 1.96925968900905,
+          "learner_side": "BLUE",
+          "max_candidates": 48,
+          "mean_candidates": 29.55,
+          "mean_entropy": 3.245525108676469,
+          "own_score": 30,
+          "result": "draw",
+          "score_diff": 0,
+          "seed": 2200000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "seconds": 1800,
+            "steps": 79,
+            "terminated": true,
+            "truncated": false,
+            "winner": null
+          }
+        },
+        {
+          "decisions": 37,
+          "elapsed_seconds": 1.5657545639842283,
+          "learner_side": "RED",
+          "max_candidates": 21,
+          "mean_candidates": 11.945945945945946,
+          "mean_entropy": 2.2679642632471997,
+          "own_score": 0,
+          "result": "loss",
+          "score_diff": -60,
+          "seed": 2200000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 60,
+              "RED": 0
+            },
+            "reason": "one_side_empty",
+            "rewards": {
+              "BLUE": 60,
+              "RED": 0
+            },
+            "seconds": 1526,
+            "steps": 75,
+            "terminated": true,
+            "truncated": false,
+            "winner": "BLUE"
+          }
+        },
+        {
+          "decisions": 41,
+          "elapsed_seconds": 2.012518364004791,
+          "learner_side": "BLUE",
+          "max_candidates": 44,
+          "mean_candidates": 34.02439024390244,
+          "mean_entropy": 3.5153343335956495,
+          "own_score": 50,
+          "result": "win",
+          "score_diff": 40,
+          "seed": 2200001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 50,
+              "RED": 10
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 50,
+              "RED": 10
+            },
+            "seconds": 1800,
+            "steps": 82,
+            "terminated": true,
+            "truncated": false,
+            "winner": "BLUE"
+          }
+        },
+        {
+          "decisions": 43,
+          "elapsed_seconds": 1.6470777089998592,
+          "learner_side": "RED",
+          "max_candidates": 21,
+          "mean_candidates": 13.395348837209303,
+          "mean_entropy": 2.5413689049571775,
+          "own_score": 30,
+          "result": "draw",
+          "score_diff": 0,
+          "seed": 2200001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "seconds": 1800,
+            "steps": 87,
+            "terminated": true,
+            "truncated": false,
+            "winner": null
+          }
+        }
+      ],
+      "summary": {
+        "completed": 4,
+        "draw": 2,
+        "games": 4,
+        "loss": 1,
+        "mean_own_score": 27.5,
+        "mean_score_diff": -5.0,
+        "truncated": 0,
+        "win": 1
+      }
+    },
+    "trained": {
+      "by_seat": {
+        "BLUE": {
+          "completed": 2,
+          "draw": 0,
+          "games": 2,
+          "loss": 1,
+          "mean_own_score": 30.0,
+          "mean_score_diff": 0.0,
+          "truncated": 0,
+          "win": 1
+        },
+        "RED": {
+          "completed": 2,
+          "draw": 1,
+          "games": 2,
+          "loss": 1,
+          "mean_own_score": 25.0,
+          "mean_score_diff": -10.0,
+          "truncated": 0,
+          "win": 0
+        }
+      },
+      "games": [
+        {
+          "decisions": 45,
+          "elapsed_seconds": 1.8642206930089742,
+          "learner_side": "BLUE",
+          "max_candidates": 48,
+          "mean_candidates": 25.4,
+          "mean_entropy": 3.101952595251926,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2200000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 20,
+              "RED": 40
+            },
+            "seconds": 1800,
+            "steps": 90,
+            "terminated": true,
+            "truncated": false,
+            "winner": "RED"
+          }
+        },
+        {
+          "decisions": 39,
+          "elapsed_seconds": 1.7722128090099432,
+          "learner_side": "RED",
+          "max_candidates": 28,
+          "mean_candidates": 17.71794871794872,
+          "mean_entropy": 2.821912413807842,
+          "own_score": 30,
+          "result": "draw",
+          "score_diff": 0,
+          "seed": 2200000,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 30,
+              "RED": 30
+            },
+            "seconds": 1800,
+            "steps": 78,
+            "terminated": true,
+            "truncated": false,
+            "winner": null
+          }
+        },
+        {
+          "decisions": 42,
+          "elapsed_seconds": 2.047821498999838,
+          "learner_side": "BLUE",
+          "max_candidates": 45,
+          "mean_candidates": 33.30952380952381,
+          "mean_entropy": 3.463563166807553,
+          "own_score": 40,
+          "result": "win",
+          "score_diff": 20,
+          "seed": 2200001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 40,
+              "RED": 20
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 40,
+              "RED": 20
+            },
+            "seconds": 1800,
+            "steps": 84,
+            "terminated": true,
+            "truncated": false,
+            "winner": "BLUE"
+          }
+        },
+        {
+          "decisions": 43,
+          "elapsed_seconds": 1.5980717730126344,
+          "learner_side": "RED",
+          "max_candidates": 21,
+          "mean_candidates": 11.162790697674419,
+          "mean_entropy": 2.3499236018408576,
+          "own_score": 20,
+          "result": "loss",
+          "score_diff": -20,
+          "seed": 2200001,
+          "status": {
+            "current_actor": null,
+            "final_scores": {
+              "BLUE": 40,
+              "RED": 20
+            },
+            "reason": "game_clock",
+            "rewards": {
+              "BLUE": 40,
+              "RED": 20
+            },
+            "seconds": 1800,
+            "steps": 87,
+            "terminated": true,
+            "truncated": false,
+            "winner": "BLUE"
+          }
+        }
+      ],
+      "summary": {
+        "completed": 4,
+        "draw": 1,
+        "games": 4,
+        "loss": 2,
+        "mean_own_score": 27.5,
+        "mean_score_diff": -5.0,
+        "truncated": 0,
+        "win": 1
+      }
+    }
+  },
+  "observation_schema": 2,
+  "pending_completed_episodes": 0,
+  "policy_config": {
+    "buckets": 2048,
+    "hidden_dim": 32,
+    "learning_rate": 0.001,
+    "representation": "public_v2_split"
+  },
+  "resources": {
+    "elapsed_seconds": 237.19058505399153,
+    "process_peak_rss_bytes": 260354048
+  },
+  "snapshot": {
+    "files": {
+      "cities.json": "c991a3bd30c37fd76ffdba1919128299a1f20fe3d796a05bf77c4899f30fbb0c",
+      "evaluation_provenance.json": "45df40e97c7e466006a458e0f4c3acaeda029f862e7f2a7bd09ce02d3b3d87d2",
+      "map_hexes.json": "9ef0d941e1bad1b4a955ea72e6c6ea51836f7de715f165b0875f6b0b79ab2a7f",
+      "units.json": "1fe5ab93bb598003a83bd48dabcaa1aeededfce24b266874810546536e853826"
+    },
+    "provenance": {
+      "generator": "tools/make_sample.py",
+      "note": "Original generated demo fixture, not a real scenario or external service snapshot. Existing game data and rules are unchanged.",
+      "origin": "original_synthetic",
+      "purpose": "offline_synthetic_game_software_tests"
+    },
+    "sha256": "c78e2a640bf404a754459fd07201182455290dc2c99e25ef999c201c94030c07"
+  },
+  "training": [
+    {
+      "decisions": 31,
+      "elapsed_seconds": 1.7545751459838357,
+      "learner_side": "BLUE",
+      "max_candidates": 41,
+      "mean_candidates": 24.193548387096776,
+      "mean_entropy": 3.1080109022356908,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 300,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 61,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 52,
+      "elapsed_seconds": 2.3582461240002885,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 12.923076923076923,
+      "mean_entropy": 2.510295334782237,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 301,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 104,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 37,
+      "elapsed_seconds": 1.7282386329898145,
+      "learner_side": "BLUE",
+      "max_candidates": 49,
+      "mean_candidates": 23.243243243243242,
+      "mean_entropy": 3.0198297264027265,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 302,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 74,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 36,
+      "elapsed_seconds": 1.4551474640029483,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.527777777777779,
+      "mean_entropy": 2.530852343439596,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 303,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 72,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 156,
+        "gradient_norm": 122.95207915464886,
+        "loss": 2553.8830196453346
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 1.8508282050024718,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 23.133333333333333,
+      "mean_entropy": 3.073154905903375,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 304,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.3692256749782246,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 14.020408163265307,
+      "mean_entropy": 2.541344809961152,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 305,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.0102673819928896,
+      "learner_side": "BLUE",
+      "max_candidates": 42,
+      "mean_candidates": 20.91111111111111,
+      "mean_entropy": 2.9556582919195122,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 306,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 2.635102756001288,
+      "learner_side": "RED",
+      "max_candidates": 30,
+      "mean_candidates": 18.82608695652174,
+      "mean_entropy": 2.8653418436584217,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 307,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 185,
+        "gradient_norm": 120.81506836873864,
+        "loss": 3049.3658190395063
+      }
+    },
+    {
+      "decisions": 51,
+      "elapsed_seconds": 3.1347408989968244,
+      "learner_side": "BLUE",
+      "max_candidates": 48,
+      "mean_candidates": 34.294117647058826,
+      "mean_entropy": 3.51366631991192,
+      "own_score": 60,
+      "result": "win",
+      "score_diff": 60,
+      "seed": 308,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 60,
+          "RED": 0
+        },
+        "seconds": 1584,
+        "steps": 101,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.9435944569995627,
+      "learner_side": "RED",
+      "max_candidates": 26,
+      "mean_candidates": 16.285714285714285,
+      "mean_entropy": 2.7604154101501157,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 309,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 2.214311435993295,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 33.44736842105263,
+      "mean_entropy": 3.494858226939099,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 10,
+      "seed": 310,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 57,
+      "elapsed_seconds": 2.483485386997927,
+      "learner_side": "RED",
+      "max_candidates": 22,
+      "mean_candidates": 9.859649122807017,
+      "mean_entropy": 2.2228160466450313,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 311,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 115,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 188,
+        "gradient_norm": 218.01276536704924,
+        "loss": 6403.4444839658345
+      }
+    },
+    {
+      "decisions": 35,
+      "elapsed_seconds": 1.9503711489960551,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 30.428571428571427,
+      "mean_entropy": 3.3948477120605207,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 312,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 69,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 1.9920208519906737,
+      "learner_side": "RED",
+      "max_candidates": 13,
+      "mean_candidates": 8.5,
+      "mean_entropy": 2.1088039166712527,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 313,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 39,
+      "elapsed_seconds": 1.910153069999069,
+      "learner_side": "BLUE",
+      "max_candidates": 45,
+      "mean_candidates": 27.71794871794872,
+      "mean_entropy": 3.2856287917295575,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 314,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 77,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.9355793569993693,
+      "learner_side": "RED",
+      "max_candidates": 22,
+      "mean_candidates": 15.547619047619047,
+      "mean_entropy": 2.721851660561911,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 315,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 162,
+        "gradient_norm": 124.90671838182928,
+        "loss": 3120.465610755868
+      }
+    },
+    {
+      "decisions": 18,
+      "elapsed_seconds": 1.052937621017918,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 33.611111111111114,
+      "mean_entropy": 3.5062588016016525,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 316,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 614,
+        "steps": 35,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 48,
+      "elapsed_seconds": 2.3555892409931403,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 12.833333333333334,
+      "mean_entropy": 2.473415740314667,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 317,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 52,
+      "elapsed_seconds": 3.0196866869810037,
+      "learner_side": "BLUE",
+      "max_candidates": 46,
+      "mean_candidates": 30.46153846153846,
+      "mean_entropy": 3.377144016031509,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 318,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 104,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.3676663450023625,
+      "learner_side": "RED",
+      "max_candidates": 27,
+      "mean_candidates": 13.244444444444444,
+      "mean_entropy": 2.5070004261929273,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 319,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 163,
+        "gradient_norm": 197.89117392455023,
+        "loss": 4908.193181923779
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.247777710988885,
+      "learner_side": "BLUE",
+      "max_candidates": 48,
+      "mean_candidates": 21.022222222222222,
+      "mean_entropy": 2.9450035770570695,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -30,
+      "seed": 320,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 74,
+      "elapsed_seconds": 2.4933129730052315,
+      "learner_side": "RED",
+      "max_candidates": 18,
+      "mean_candidates": 7.513513513513513,
+      "mean_entropy": 1.8325877101690098,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 321,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 148,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 50,
+      "elapsed_seconds": 3.1834277359885164,
+      "learner_side": "BLUE",
+      "max_candidates": 47,
+      "mean_candidates": 33.1,
+      "mean_entropy": 3.4274849209494045,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 322,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 99,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.0052104409842286,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 11.26530612244898,
+      "mean_entropy": 2.304591655546249,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 323,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 218,
+        "gradient_norm": 165.74990575378806,
+        "loss": 4702.818763471399
+      }
+    },
+    {
+      "decisions": 34,
+      "elapsed_seconds": 1.7043760209926404,
+      "learner_side": "BLUE",
+      "max_candidates": 47,
+      "mean_candidates": 27.823529411764707,
+      "mean_entropy": 3.268633529880187,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 324,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 68,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 1.7830690589908045,
+      "learner_side": "RED",
+      "max_candidates": 15,
+      "mean_candidates": 7.666666666666667,
+      "mean_entropy": 1.8364454996117432,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 325,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 48,
+      "elapsed_seconds": 2.6058987499854993,
+      "learner_side": "BLUE",
+      "max_candidates": 44,
+      "mean_candidates": 26.479166666666668,
+      "mean_entropy": 3.1892393533349206,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 326,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 96,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 47,
+      "elapsed_seconds": 2.0325569080014247,
+      "learner_side": "RED",
+      "max_candidates": 26,
+      "mean_candidates": 16.872340425531913,
+      "mean_entropy": 2.7542884243863837,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 327,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 174,
+        "gradient_norm": 139.97221574557088,
+        "loss": 3412.8815328466003
+      }
+    },
+    {
+      "decisions": 51,
+      "elapsed_seconds": 2.3326019209926017,
+      "learner_side": "BLUE",
+      "max_candidates": 41,
+      "mean_candidates": 24.294117647058822,
+      "mean_entropy": 3.1507516321444995,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 328,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 102,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 47,
+      "elapsed_seconds": 2.1006823880015872,
+      "learner_side": "RED",
+      "max_candidates": 21,
+      "mean_candidates": 12.53191489361702,
+      "mean_entropy": 2.4276526542280616,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 329,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 47,
+      "elapsed_seconds": 2.5965452499804087,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 23.148936170212767,
+      "mean_entropy": 3.0492951320106627,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 330,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.5783256579888985,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.7,
+      "mean_entropy": 2.600289412313613,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 331,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 81,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      },
+      "update": {
+        "decisions": 185,
+        "gradient_norm": 171.98680321116427,
+        "loss": 4534.589347783947
+      }
+    },
+    {
+      "decisions": 29,
+      "elapsed_seconds": 1.3209168760222383,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 25.517241379310345,
+      "mean_entropy": 3.150468423250728,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 332,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 57,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.7089890080096666,
+      "learner_side": "RED",
+      "max_candidates": 22,
+      "mean_candidates": 14.075,
+      "mean_entropy": 2.489859440451002,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 333,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 81,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.6209734180010855,
+      "learner_side": "BLUE",
+      "max_candidates": 46,
+      "mean_candidates": 19.210526315789473,
+      "mean_entropy": 2.7540622929543104,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 334,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 75,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.6069366890005767,
+      "learner_side": "RED",
+      "max_candidates": 28,
+      "mean_candidates": 15.428571428571429,
+      "mean_entropy": 2.6467730609305,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 335,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 156,
+        "gradient_norm": 128.03008273113502,
+        "loss": 2721.930604097811
+      }
+    },
+    {
+      "decisions": 52,
+      "elapsed_seconds": 2.9895308749983087,
+      "learner_side": "BLUE",
+      "max_candidates": 50,
+      "mean_candidates": 29.03846153846154,
+      "mean_entropy": 3.294594447780246,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 336,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 103,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 41,
+      "elapsed_seconds": 2.008692464005435,
+      "learner_side": "RED",
+      "max_candidates": 21,
+      "mean_candidates": 12.902439024390244,
+      "mean_entropy": 2.534085376831716,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 337,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 83,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 2.32906265501515,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 29.785714285714285,
+      "mean_entropy": 3.308574731526934,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 338,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 83,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 57,
+      "elapsed_seconds": 2.535449578979751,
+      "learner_side": "RED",
+      "max_candidates": 28,
+      "mean_candidates": 10.719298245614034,
+      "mean_entropy": 2.18163047015448,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 339,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 115,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 192,
+        "gradient_norm": 124.98134057994385,
+        "loss": 3515.7771160925586
+      }
+    },
+    {
+      "decisions": 36,
+      "elapsed_seconds": 2.17744701099582,
+      "learner_side": "BLUE",
+      "max_candidates": 44,
+      "mean_candidates": 30.055555555555557,
+      "mean_entropy": 3.371982539261936,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 340,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 72,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.1288915790210012,
+      "learner_side": "RED",
+      "max_candidates": 28,
+      "mean_candidates": 9.244897959183673,
+      "mean_entropy": 1.5901541875107679,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 341,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1794,
+        "steps": 99,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 2.228697463986464,
+      "learner_side": "BLUE",
+      "max_candidates": 47,
+      "mean_candidates": 33.39473684210526,
+      "mean_entropy": 3.493850051406218,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 342,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.715760938997846,
+      "learner_side": "RED",
+      "max_candidates": 20,
+      "mean_candidates": 13.447368421052632,
+      "mean_entropy": 2.5526020139789174,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 343,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 161,
+        "gradient_norm": 143.187874471948,
+        "loss": 3404.486791193451
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 2.55983329800074,
+      "learner_side": "BLUE",
+      "max_candidates": 42,
+      "mean_candidates": 30.32608695652174,
+      "mean_entropy": 3.3424742709988413,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 344,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 91,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.6052162639971357,
+      "learner_side": "RED",
+      "max_candidates": 20,
+      "mean_candidates": 9.125,
+      "mean_entropy": 2.0831163897224765,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 345,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 81,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 2.1963631820108276,
+      "learner_side": "BLUE",
+      "max_candidates": 48,
+      "mean_candidates": 24.19047619047619,
+      "mean_entropy": 3.130885284241365,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 346,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 84,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 32,
+      "elapsed_seconds": 1.4161814789986238,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 15.65625,
+      "mean_entropy": 2.7297568083306123,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 347,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 65,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      },
+      "update": {
+        "decisions": 160,
+        "gradient_norm": 158.46787252063896,
+        "loss": 3648.7609141279545
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 2.1807377039804123,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 26.636363636363637,
+      "mean_entropy": 3.2548604049036327,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 348,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 87,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 24,
+      "elapsed_seconds": 0.9810983509814832,
+      "learner_side": "RED",
+      "max_candidates": 18,
+      "mean_candidates": 9.291666666666666,
+      "mean_entropy": 1.7856464706654205,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 349,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 840,
+        "steps": 49,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 41,
+      "elapsed_seconds": 2.347494754008949,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 36.146341463414636,
+      "mean_entropy": 3.567412906616946,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 350,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 82,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 37,
+      "elapsed_seconds": 1.707996887009358,
+      "learner_side": "RED",
+      "max_candidates": 26,
+      "mean_candidates": 16.945945945945947,
+      "mean_entropy": 2.8029655614934965,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 351,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 75,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      },
+      "update": {
+        "decisions": 146,
+        "gradient_norm": 172.51202031300608,
+        "loss": 4137.783030729549
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.7739079859748017,
+      "learner_side": "BLUE",
+      "max_candidates": 44,
+      "mean_candidates": 32.4,
+      "mean_entropy": 3.3873633890905497,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 352,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 37,
+      "elapsed_seconds": 1.5675600589893293,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.162162162162161,
+      "mean_entropy": 2.540580836451877,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 353,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 74,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.7265429490071256,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 22.36842105263158,
+      "mean_entropy": 3.058112472881181,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 354,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 2.12920165900141,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 12.608695652173912,
+      "mean_entropy": 2.439283558781259,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 355,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 93,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 166,
+        "gradient_norm": 131.6170373325365,
+        "loss": 3208.7348579054415
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.966233551996993,
+      "learner_side": "BLUE",
+      "max_candidates": 48,
+      "mean_candidates": 27.357142857142858,
+      "mean_entropy": 3.269370832107813,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 356,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1702,
+        "steps": 84,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.9384525140048936,
+      "learner_side": "RED",
+      "max_candidates": 24,
+      "mean_candidates": 11.476190476190476,
+      "mean_entropy": 2.350023525656659,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 357,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 84,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.3540513739862945,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 25.183673469387756,
+      "mean_entropy": 3.1592761459427177,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 358,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.6375700920179952,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 14.973684210526315,
+      "mean_entropy": 2.6747467261562403,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 359,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      },
+      "update": {
+        "decisions": 171,
+        "gradient_norm": 162.04969975571183,
+        "loss": 4098.854648772651
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 1.9496319660102017,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 22.488888888888887,
+      "mean_entropy": 3.061373186997644,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 360,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 1.6501399730041157,
+      "learner_side": "RED",
+      "max_candidates": 18,
+      "mean_candidates": 13.409090909090908,
+      "mean_entropy": 2.578852721615833,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 361,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.185845700005302,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 21.26530612244898,
+      "mean_entropy": 2.850243903443702,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 362,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 39,
+      "elapsed_seconds": 1.6847712439775933,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 12.384615384615385,
+      "mean_entropy": 2.447612326274344,
+      "own_score": 30,
+      "result": "loss",
+      "score_diff": -10,
+      "seed": 363,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 78,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 177,
+        "gradient_norm": 128.75696371935098,
+        "loss": 3045.032470214848
+      }
+    },
+    {
+      "decisions": 51,
+      "elapsed_seconds": 2.928522699017776,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 31.137254901960784,
+      "mean_entropy": 3.4059306869493473,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 364,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 101,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 43,
+      "elapsed_seconds": 2.0281181470199954,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.30232558139535,
+      "mean_entropy": 2.549814847539361,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 365,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 87,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 50,
+      "elapsed_seconds": 2.085155709995888,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 20.9,
+      "mean_entropy": 2.9709863680078894,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 366,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 99,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.7506694410112686,
+      "learner_side": "RED",
+      "max_candidates": 26,
+      "mean_candidates": 13.236842105263158,
+      "mean_entropy": 2.4775931277846777,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 367,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 77,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 182,
+        "gradient_norm": 167.1467521656601,
+        "loss": 4221.472849747114
+      }
+    },
+    {
+      "decisions": 54,
+      "elapsed_seconds": 3.4575782860047184,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 32.370370370370374,
+      "mean_entropy": 3.4498259790342645,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 368,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 107,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 48,
+      "elapsed_seconds": 2.055254822014831,
+      "learner_side": "RED",
+      "max_candidates": 21,
+      "mean_candidates": 10.3125,
+      "mean_entropy": 2.272472123179749,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 369,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 2.351422772015212,
+      "learner_side": "BLUE",
+      "max_candidates": 47,
+      "mean_candidates": 29.613636363636363,
+      "mean_entropy": 3.33295225608729,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 10,
+      "seed": 370,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.4598714800085872,
+      "learner_side": "RED",
+      "max_candidates": 30,
+      "mean_candidates": 19.733333333333334,
+      "mean_entropy": 2.932203611021075,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 371,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 191,
+        "gradient_norm": 160.05710410478252,
+        "loss": 4944.917595076834
+      }
+    },
+    {
+      "decisions": 55,
+      "elapsed_seconds": 2.451802267023595,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 25.636363636363637,
+      "mean_entropy": 3.218421397942702,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 372,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 110,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 42,
+      "elapsed_seconds": 1.8696871249994729,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 14.476190476190476,
+      "mean_entropy": 2.651904388971088,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 373,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 3.08942034500069,
+      "learner_side": "BLUE",
+      "max_candidates": 50,
+      "mean_candidates": 31.632653061224488,
+      "mean_entropy": 3.413390716577532,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 374,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 1.955371449002996,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 9.977777777777778,
+      "mean_entropy": 2.186084445794695,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 375,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 191,
+        "gradient_norm": 150.1224763582753,
+        "loss": 4173.927763856298
+      }
+    },
+    {
+      "decisions": 17,
+      "elapsed_seconds": 0.8633661780040711,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 30.647058823529413,
+      "mean_entropy": 3.372279831335505,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 376,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 658,
+        "steps": 33,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 47,
+      "elapsed_seconds": 1.6851955380116124,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 13.212765957446809,
+      "mean_entropy": 2.5180046911293767,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 377,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 43,
+      "elapsed_seconds": 2.19639140702202,
+      "learner_side": "BLUE",
+      "max_candidates": 41,
+      "mean_candidates": 27.511627906976745,
+      "mean_entropy": 3.270215330404931,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 378,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 86,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.048978120990796,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 12.224489795918368,
+      "mean_entropy": 2.4053195635822404,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 379,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 98,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 156,
+        "gradient_norm": 156.54504776427154,
+        "loss": 3481.0553592951264
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.6839491880091373,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 32.82222222222222,
+      "mean_entropy": 3.4642573244990986,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 380,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 1800,
+        "steps": 89,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 2.188335062994156,
+      "learner_side": "RED",
+      "max_candidates": 29,
+      "mean_candidates": 12.181818181818182,
+      "mean_entropy": 2.3962291625274896,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 381,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 28,
+      "elapsed_seconds": 1.5636704269854818,
+      "learner_side": "BLUE",
+      "max_candidates": 46,
+      "mean_candidates": 35.67857142857143,
+      "mean_entropy": 3.54507413620168,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 40,
+      "seed": 382,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 992,
+        "steps": 55,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 2.065599513996858,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.195652173913043,
+      "mean_entropy": 2.522013677637834,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 383,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 163,
+        "gradient_norm": 178.29860600070765,
+        "loss": 4635.263260402021
+      }
+    },
+    {
+      "decisions": 43,
+      "elapsed_seconds": 2.2386169570090715,
+      "learner_side": "BLUE",
+      "max_candidates": 48,
+      "mean_candidates": 29.6046511627907,
+      "mean_entropy": 3.34760948758553,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 384,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 86,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 33,
+      "elapsed_seconds": 1.4651295380026568,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 11.151515151515152,
+      "mean_entropy": 1.6977319675859073,
+      "own_score": 10,
+      "result": "loss",
+      "score_diff": -40,
+      "seed": 385,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "reason": "one_side_empty",
+        "rewards": {
+          "BLUE": 50,
+          "RED": 10
+        },
+        "seconds": 964,
+        "steps": 67,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 49,
+      "elapsed_seconds": 2.4468853599973954,
+      "learner_side": "BLUE",
+      "max_candidates": 46,
+      "mean_candidates": 22.3265306122449,
+      "mean_entropy": 3.004062687516619,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 386,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 97,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 47,
+      "elapsed_seconds": 1.9995097210048698,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 11.702127659574469,
+      "mean_entropy": 2.351307046352802,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 387,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 94,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      },
+      "update": {
+        "decisions": 172,
+        "gradient_norm": 92.64871344951447,
+        "loss": 2136.911911253257
+      }
+    },
+    {
+      "decisions": 45,
+      "elapsed_seconds": 2.2231097989715636,
+      "learner_side": "BLUE",
+      "max_candidates": 45,
+      "mean_candidates": 26.933333333333334,
+      "mean_entropy": 3.2351228608402915,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 388,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 90,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 1.7020804269996006,
+      "learner_side": "RED",
+      "max_candidates": 19,
+      "mean_candidates": 13.636363636363637,
+      "mean_entropy": 2.557675267948387,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 389,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 1.8262658170133363,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 19.795454545454547,
+      "mean_entropy": 2.8960746477865604,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 390,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 44,
+      "elapsed_seconds": 1.9513785479939543,
+      "learner_side": "RED",
+      "max_candidates": 21,
+      "mean_candidates": 12.909090909090908,
+      "mean_entropy": 2.489230203154466,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 391,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 88,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 177,
+        "gradient_norm": 158.0853409012107,
+        "loss": 3893.201771606481
+      }
+    },
+    {
+      "decisions": 38,
+      "elapsed_seconds": 1.941766990988981,
+      "learner_side": "BLUE",
+      "max_candidates": 43,
+      "mean_candidates": 25.5,
+      "mean_entropy": 3.179091723207779,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 392,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 76,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.9053121180040762,
+      "learner_side": "RED",
+      "max_candidates": 25,
+      "mean_candidates": 16.3,
+      "mean_entropy": 2.729804184047174,
+      "own_score": 50,
+      "result": "win",
+      "score_diff": 30,
+      "seed": 393,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 50
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 50
+        },
+        "seconds": 1800,
+        "steps": 80,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 40,
+      "elapsed_seconds": 1.4934996489901096,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 15.525,
+      "mean_entropy": 2.6132494595193227,
+      "own_score": 20,
+      "result": "loss",
+      "score_diff": -20,
+      "seed": 394,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 80,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      }
+    },
+    {
+      "decisions": 55,
+      "elapsed_seconds": 2.36012540399679,
+      "learner_side": "RED",
+      "max_candidates": 24,
+      "mean_candidates": 14.436363636363636,
+      "mean_entropy": 2.6384030950619404,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 395,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 111,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      },
+      "update": {
+        "decisions": 173,
+        "gradient_norm": 155.611453272417,
+        "loss": 3764.9591514510894
+      }
+    },
+    {
+      "decisions": 43,
+      "elapsed_seconds": 2.567918557993835,
+      "learner_side": "BLUE",
+      "max_candidates": 46,
+      "mean_candidates": 27.930232558139537,
+      "mean_entropy": 3.212158145691908,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 396,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 40,
+          "RED": 20
+        },
+        "seconds": 1800,
+        "steps": 85,
+        "terminated": true,
+        "truncated": false,
+        "winner": "BLUE"
+      }
+    },
+    {
+      "decisions": 46,
+      "elapsed_seconds": 2.3873297100071795,
+      "learner_side": "RED",
+      "max_candidates": 29,
+      "mean_candidates": 17.52173913043478,
+      "mean_entropy": 2.843866434069439,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 397,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 92,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 43,
+      "elapsed_seconds": 2.1343432319990825,
+      "learner_side": "BLUE",
+      "max_candidates": 40,
+      "mean_candidates": 25.558139534883722,
+      "mean_entropy": 3.1750826728739128,
+      "own_score": 30,
+      "result": "draw",
+      "score_diff": 0,
+      "seed": 398,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 30,
+          "RED": 30
+        },
+        "seconds": 1800,
+        "steps": 86,
+        "terminated": true,
+        "truncated": false,
+        "winner": null
+      }
+    },
+    {
+      "decisions": 59,
+      "elapsed_seconds": 2.260186729981797,
+      "learner_side": "RED",
+      "max_candidates": 23,
+      "mean_candidates": 15.288135593220339,
+      "mean_entropy": 2.662224104933798,
+      "own_score": 40,
+      "result": "win",
+      "score_diff": 20,
+      "seed": 399,
+      "status": {
+        "current_actor": null,
+        "final_scores": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "reason": "game_clock",
+        "rewards": {
+          "BLUE": 20,
+          "RED": 40
+        },
+        "seconds": 1800,
+        "steps": 118,
+        "terminated": true,
+        "truncated": false,
+        "winner": "RED"
+      },
+      "update": {
+        "decisions": 191,
+        "gradient_norm": 181.57140040909655,
+        "loss": 4787.122392010949
+      }
+    }
+  ],
+  "training_summary": {
+    "completed": 100,
+    "draw": 37,
+    "games": 100,
+    "loss": 27,
+    "mean_own_score": 31.2,
+    "mean_score_diff": 1.9,
+    "truncated": 0,
+    "win": 36
+  },
+  "updates": 100
+}

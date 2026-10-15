@@ -3,7 +3,7 @@
 让 AI **指挥算子、搜索好策略**的离线兵棋推演环境。
 
 面向：AI 智能体 / 强化学习 / LLM 规划器 / 想认真练战术的人。
-特点：**纯 Python、无第三方依赖、可复现、自带示例想定**。
+特点：**Python 核心引擎、可复现、自带示例想定**。核心引擎和表格基线只使用标准库；可选神经网络基线使用 NumPy。
 
 ---
 
@@ -80,6 +80,24 @@ while not env.done:
     obs, reward, done, info = env.step(acts[0])
 print(env.score())
 ```
+
+## 双边自博弈：仅终局给分
+
+新增 `TwoPlayerEpisode` 与 `env.selfplay`，提供双方独立迷雾视角、公开总分观察、合法意图菜单、终局原始分数奖励及检查点续跑。训练算法为表格蒙特卡洛基线，不使用下面的手写 greedy 策略，也不添加动作奖励。
+
+```bash
+python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 --max-steps 1000 --checkpoint /tmp/hexwar-20.json --report /tmp/hexwar-20-report.json
+```
+
+详细规则、复现与续跑方法见 [双边训练说明](docs/selfplay.md)。下方旧 `HexwarEnv` 接口仍返回分差增量；只需要终局奖励的调用方应使用新接口。
+
+## 共享特征的神经网络基线
+
+`env.neural_train` 使用小型 NumPy 网络与 REINFORCE，从玩家可见的 JSON 观察和候选动作学习共享特征。保留原始终局总分，不添加动作奖励。先对阵固定随机对手，再用保留种子比较训练前后模型。安装、续跑及实验口径见 [神经网络训练说明](docs/neural-learning.md)。
+
+## 完整公开棋盘输入
+
+可选的 `PublicObservationAdapter`（schema v2）补齐完整静态地图、结构化行列坐标和候选动作的公开空间上下文，保持原始动作与迷雾规则。已有检查点仍使用原格式；新接口说明见 [完整公开地图与坐标](docs/public-observation.md)。
 
 ## 环境接口
 
