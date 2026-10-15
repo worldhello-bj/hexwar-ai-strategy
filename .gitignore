@@ -7,11 +7,9 @@
 *.chlsj
 *.pcap
 
-# 官方前端镜像与其资源（版权归原厂商）
-offline/site/
-offline/assets/
-offline/mock/
-offline/data.js
+# 官方前端镜像与其资源（版权归原厂商）——★ 2026-10-15 起**随仓库分发**
+#   （使用者在本次会话中明确确认公开，见 NOTICE「第三方材料」一节）
+#   offline/site/  offline/assets/  offline/mock/  offline/data.js
 offline/server_access.log
 
 # 抓取到的服务端数据与本地会话（含 Set-Cookie）

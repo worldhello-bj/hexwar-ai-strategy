@@ -36,7 +36,9 @@ PATTERNS = [
     ("ASP 会话 ID", r"(?i)ASPSESSIONID[A-Z]*=", True),
     ("Authorization 头", r"(?i)\bAuthorization\s*:", True),
     ("表单账号字段", r"(?i)(UserName|UserPassword|PassWord|Pwd)\s*=", True),
-    ("本机账号名", r"(奶龙|奶蛙)", False),
+    # 账号名用通用模式（不在公开文件里写真实账号名）：
+    # 中文用户名 + 账号字段；额外名单可用环境变量 HEXWAR_SECRET_NAMES（逗号分隔）补充。
+    ("账号名", r"UserName=[^\s&\"']*[\u4e00-\u9fa5]", False),
     ("签名/appId", r"(?i)\b(sign|appId|appid)\s*[=:]\s*[\w\-]{6,}", True),
     ("抓包格式", r"(?i)(\"log\"\s*:\s*\{\s*\"version\"|chlsj|WebKitFormBoundary)", False),
 ]
