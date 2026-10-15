@@ -111,7 +111,7 @@ python -m env.selfplay --snapshot samples/demo --episodes 20 --max-seconds 1800 
 | `legal_actions(unit_id=None, move_radius=6)` | 枚举合法动作 |
 | `step(action)` | 执行动作（单个或数组=同时下令），推进时钟，返回 `(obs, reward, done, info)` |
 | `render(width, height)` | 文本态势图，调试用 |
-| `score()` | `own/enemy/diff` + `mode` / `scoring_version` / `pending_rules` / `unverified` / `issues`。每个阵营同时给 `total`（平台式三项和）与 `verified`（只用**已实测**分项）。**三项分值均已平台实测**：`remaining = Σ上阵(score×blood) + Σ车内载员(score×编制)`（命中平台 红 354 / 蓝 234）、`captured = 主要 80 / 次要 50（一次性）`、`killed = Σ(损失兵力 × score)`（与 remaining 逐点互补）；载员归属用**载具 ID**（载入时按 `son`↔`ico` 固化）。**奖励默认用 `verified`**，需平台式分数时显式 `scoring_mode="platform"` / `--scoring platform`；**夺控边界（失守扣分 / 重夺加分）也已实测**，`PENDING_RULES` 为空。见 `docs/计分规则待确认.md` |
+| `score()` | `own/enemy/diff` + `mode` / `scoring_version` / `pending_rules` / `unverified` / `issues`。每个阵营同时给 `total`（平台式三项和）与 `verified`（只用**已实测**分项）。**三项分值均已平台实测**：`remaining = Σ上阵(score×blood) + Σ车内载员(score×编制)`（命中平台 红 354 / 蓝 234）、`captured = 主要 80 / 次要 50（一次性）`、`killed = Σ(损失兵力 × score)`（与 remaining 逐点互补）；载员归属用**载具 ID**（载入时按 `son`↔`ico` 固化）。**奖励默认用 `verified`**，需平台式分数时显式 `scoring_mode="platform"` / `--scoring platform`；**夺控边界（失守扣分 / 重夺加分）也已实测**，`PENDING_RULES` 为空。**真装进车里的乘员随车被歼**（实测：装车后打掉车 −56 = 车 40 + 乘员 16），见 `docs/计分规则待确认.md` §4.2。见 `docs/计分规则待确认.md` |
 
 **动作类型**：`move` / `attack`(可 `track` 持续打击) / `area_fire`(集火) / `stop_attack` / `grenade` / `capture` / `load` / `unload` / `hide` / `stop` / `wait`
 **奖励**：`diff` 的增量，可直接当 RL 的稠密奖励。

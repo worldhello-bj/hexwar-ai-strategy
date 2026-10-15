@@ -146,6 +146,36 @@ class ScoringTests(unittest.TestCase):
 
     # ---------- 未知型号 / 编制来源 ----------
 
+    def test_carried_points_die_with_carrier(self):
+        """实测（`loadkill_20261015-223027`）：真装进车里的乘员**随车被歼**。
+
+        平台数：RED 354 → **298**（= 车 10×4 + 乘员 4×4 = 40 + 16），蓝方歼煍 +56；
+        之后 `Obj2_Out` 返回 `0`（放不出来）。本 fixture 对应：车 10×3 + 乘员 3×3 = 39。
+        """
+        both, _ = self.sides()
+        self.assertEqual(both["RED"]["remaining"], 49)
+        self.unit("truck").blood = 0                     # 载具被歼（3 血全打掉）
+        both, _ = self.sides()
+        self.assertEqual(both["RED"]["remaining"], 49 - 39)      # 车 30 + 乘员 9
+        self.assertEqual(both["BLUE"]["killed"], 39)             # 歼煍分一并计入乘员
+        self.assertEqual(self.unit("squad").detail["carrier"], "truck")   # 记录仍在（平台也不删）
+
+    def test_carrier_death_ignores_carried_that_is_not_linked(self):
+        """没关联上（`carried_unlinked`）的载员不能被当成“随车被歼”静默扣分。"""
+        build(self.root)
+        units = json.loads((self.root / "units.json").read_text())
+        for entry in units:
+            if entry["id"] == "truck":
+                entry["pos"] = FAR_HEX
+        (self.root / "units.json").write_text(json.dumps(units))
+        game = Game(seed=1, snapshot=str(self.root))
+        game.units["truck"].blood = 0
+        both, issues = scoring.both_scores(game)
+        self.assertEqual(issues["carried_unlinked"], ["squad"])
+        # 载员没关联 ⇒ 它既不在 deployed 也不在 carried 里，**任何一方都不计它的分**
+        # （并由 `unverified` 显式报出）；车体 0 血 ⇒ RED 只剩红方那个 5×2
+        self.assertEqual(both["RED"]["remaining"], 10)
+
     def test_unknown_carried_establishment_is_none_and_reported(self):
         build(self.root, unknown_data=True)
         game = Game(seed=1, snapshot=str(self.root))
@@ -239,12 +269,67 @@ class ScoringTests(unittest.TestCase):
 
     # ---------- 口径与版本 ----------
 
+    # ---------- 上车 / 下车（平台实测：上车 blood=0、按编制计分；下车按编制恢复）----------
+
+    def test_load_keeps_score_but_zeroes_blood(self):
+        """上车不改变计分（平台实测：装车那一刻计分页不变），但单位变成 blood=0。
+
+        证据：`tools/hex_load_kill_probe.py` 里 `上车 ObjInto=True` 后计分页仍为 354/234。
+        """
+        units = json.loads((self.root / "units.json").read_text())
+        for entry in units:
+            if entry["id"] == "squad":          # 把乘员改成“开局同格部署”（平台真实开局）
+                entry.update(color="RED", pos=CARRIER_HEX, blood=3)
+                entry.pop("pos2", None)
+        (self.root / "units.json").write_text(json.dumps(units))
+        env = self.make(side="RED")
+        before = env.score()["own"]["remaining"]
+        _, _, _, info = env.step({"type": "load", "unit": "squad", "carrier": "truck"})
+        self.assertFalse(info.get("invalid_action"), info)
+        squad = env.game.units["squad"]
+        self.assertEqual(squad.blood, 0)                     # 车内读不到兵力
+        self.assertEqual(squad.establishment, 3)             # 编制留着
+        self.assertEqual(env.score()["own"]["remaining"], before)   # 分值不变
+        self.assertNotIn("aboard_damage_forgotten", env.score()["unverified"])
+
+    def test_load_damaged_unit_is_flagged_and_unload_restores_establishment(self):
+        """带伤上车 → 显式告警（平台“车内不记伤”未经直接实测）；下车按编制回满。"""
+        units = json.loads((self.root / "units.json").read_text())
+        for entry in units:
+            if entry["id"] == "squad":
+                entry.update(color="RED", pos=CARRIER_HEX, blood=1)   # 带伤
+                entry.pop("pos2", None)
+        (self.root / "units.json").write_text(json.dumps(units))
+        env = self.make(side="RED")
+        env.step({"type": "load", "unit": "squad", "carrier": "truck"})
+        self.assertIn("aboard_damage_forgotten", env.score()["unverified"])
+        env.step({"type": "unload", "unit": "truck"})
+        squad = env.game.units["squad"]
+        self.assertEqual(squad.blood, 3)                     # 按编制回满
+        self.assertNotIn("carrier", squad.detail)
+
+    def test_loaded_unit_dies_with_carrier_after_engine_load(self):
+        """引擎自己的 `load` 也要跟平台一致：车毁 ⇒ 乘员一并被歼（分扣除并记给对手）。"""
+        units = json.loads((self.root / "units.json").read_text())
+        for entry in units:
+            if entry["id"] == "squad":
+                entry.update(color="RED", pos=CARRIER_HEX, blood=3)
+                entry.pop("pos2", None)
+        (self.root / "units.json").write_text(json.dumps(units))
+        env = self.make(side="RED")
+        env.step({"type": "load", "unit": "squad", "carrier": "truck"})
+        env.game.units["truck"].blood = 0                   # 载具被歼
+        report = env.score()
+        self.assertEqual(report["own"]["remaining"], 10)    # 只剩红方那个 5×2
+        self.assertEqual(report["enemy"]["killed"], 39)     # 车 30 + 乘员 9
+
     def test_measured_tables_and_version_are_explicit(self):
         self.assertEqual(scoring.CAPTURE_POINT_SCORE, {"主要": 80, "次要": 50})
         self.assertEqual(scoring.PENDING_RULES, ())      # 三项 + 夺控边界都已实测
         self.assertEqual(scoring.VERIFIED_COMPONENTS,
                          ("remaining", "killed", "captured"))
         self.assertIsInstance(scoring.SCORING_VERSION, int)
+        self.assertGreaterEqual(scoring.SCORING_VERSION, 5)   # v5 = 载员随车被歼的双重实测
         self.assertEqual(HexwarEnv.CAPTURE_POINT_SCORE, {"主要": 80, "次要": 50})
         self.assertEqual(HexwarEnv.capture_point_value("主要"), 80)
 

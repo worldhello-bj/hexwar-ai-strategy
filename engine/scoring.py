@@ -9,6 +9,7 @@
 | **夺控分** | **主要 +80 / 次要 +50，一次性**（占住 60 s 不增长） | 占下主要点→蓝 0→**80**；占下次要点→蓝 0→**50**（`7527_transport_capture/score_probe_capture_*`） |
 | **歼灭分** | `Σ(损失兵力 × 单位 score)`，与剩余兵力分**逐点互补** | 坦克（score 10）掉 1 血 → 红剩余 −10 且蓝歼敌 +10；掉满 4 血 → 双方各 ±40（`score_probe_kill_20261015-220112`） |
 | **夺控边界**（失守是否扣分 / 重夺是否重复计分） | **失守把该点的分从原主那里扣除，重夺方加上**（不衰减、不封顶） | 蓝方占下次要点 → 蓝 **50**；红方夺回后 → **红 50 / 蓝 0**（`score_flip_20261015-221433`） |
+| **载员与载具存亡** | **真在车内**的乘员随车被歼（分随之扣除并记给对手）；**开局同格部署**的乘员是独立单位，不受影响 | ① 开局实况：打掉同格 ZBD100 → 只变化 **40**（354→314，乘员是独立单位）；② `ObjInto` 装车后打掉 → **−56 = 车 40 + 乘员 4×4**，且之后 `Obj2_Out` 返回 `0`（`score_probe_kill_20261015-222414` / `loadkill_20261015-223027`） |
 
 ⇒ 所以 **`PENDING_RULES` 现在是空的**：三项分值与夺控边界均已实测，
 `verified` 与 `total` 相等。下面保留两套口径是为了将来一旦出现新的未实测项能**自动挡在奖励外**。
@@ -39,7 +40,9 @@ from . import equip
 
 # 口径版本。任何改变分值语义的改动都必须 +1：检查点/续跑靠它绑定，
 # 以免旧模型与新公式混用（同一快照下两套奖励会污染训练）。
-SCORING_VERSION = 3
+# v6：上车/下车语义也按实测对齐——上车 `blood=0`（编制留在 establishment，计分不变）、
+#     下车按**编制**回满；于是车毁时乘员随车被歼的扣除与平台一致。
+SCORING_VERSION = 6
 
 # ---------------- 载员编制兵力 ----------------
 # 表本身在**装备层**（`engine/equip.py`）：引擎自己（下车、发射巡飞弹）也要用它，
@@ -133,14 +136,24 @@ def _from_parts(parts, issues, side, cities=()):
     other = parts["RED" if side == "BLUE" else "BLUE"]
 
     # ---- 剩余兵力分（★ 已反推并精确验证）----
+    # ★★ 两种情形都已实测（2026-10-15）：
+    #  ① **开局**（实时 RoomStart 的 Obj_Get，以及 `2p_before_start.json`）：乘员与载具**同格**、
+    #     各自是**独立上阵单位**（36 个单位全部在场，没有一条 pos=0 记录）⇒ 打掉载具
+    #     只掉车体那 40 分（`score_probe_kill_20261015-222414`：354→314）。
+    #  ② **真用 ObjInto 装进车里**的乘员：车被歼时它**连带被歼**，其 `score × 编制` 从剩余兵力分里
+    #     扣除、并记给对手（`loadkill_20261015-223027`：354 → **298** = 车 40 + 乘员 4×4=16，
+    #     且之后 `Obj2_Out` 返回 `0` —— 放不出来了）。
+    #     ⇒ 所以这里只在**载具存活**时把车内载员按编制计入。
     remaining = sum(u.score * u.blood for u in mine["deployed"])
     for carried, host in mine["carried"]:
         establishment = carried_establishment(carried.data)
         if establishment is None or not host.alive():
-            continue                       # 未知型号 / 载具已毁：不计入，并在下面报出
+            continue                       # 未知型号 / 载具已毁（乘员随之被歼）：不计入
         remaining += carried.score * establishment
 
-    # ---- 歼灭分（★ 已实测：Σ(损失兵力 × score)；载具被歼时其载员一并计入）----
+    # ---- 歼灭分（★ 已实测：Σ(损失兵力 × score)，与剩余兵力分逐点互补）----
+    # 车里的人随车一起算：载具被歼 ⇒ 车体的 `score × 编制` **加上**其载员的 `score × 编制`
+    # （实测 56 = 40 + 16）。
     killed = sum(u.score * max(0, u.establishment - u.blood)
                  for u in other["deployed"])
     for carried, host in other["carried"]:
@@ -172,9 +185,12 @@ def _from_parts(parts, issues, side, cities=()):
         unverified.append("carried_unlinked")
     if any(cid in own_ids for cid, _h in issues["carried_ambiguous"]):
         unverified.append("carried_ambiguous")
+    if any(u.detail.get("aboard_damage_forgotten") for u in mine["deployed"] + [c for c, _h in mine["carried"]]):
+        # 带伤上车：平台模型是“车内不记伤、下车按编制回满”，但这一条**没有直接实测**。
+        unverified.append("aboard_damage_forgotten")
     if any(u.detail.get("carrier") for u in mine["deployed"]):
-        # 引擎的 `load` 不把载员的 blood 置 0（仍按上阵单位的 score×blood 计），
-        # 而平台的车内记录 blood=0、按编制计入。两者在中途装载时可能不一致。
+        # 理论上不该发生：上车后 blood 会被置 0，于是它应当落在 `carried` 而不是 `deployed`。
+        # 真出现了（外部构造的状态/旧测试）就报出来，避免惄惄地按“上阵单位”算。
         unverified.append("aboard_counted_as_deployed")
     for city in cities:
         if city.get("flag") == side and capture_point_value(city.get("name")) is None:

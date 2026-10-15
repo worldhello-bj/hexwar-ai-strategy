@@ -100,19 +100,23 @@ def weapon_range(wid):
     return info[2] if info else 0
 
 
-def pick_engagement(units, target_color):
+def pick_engagement(units, target_color, target_ico=None):
     """选一对“能真打出战果”的交战组合。
 
     ★ 不能按“射程最长”选射手：防空导弹射程 20，但对地面坦克的**预期攻级=None**
       （实测：14 发全空、目标血不掉）。所以按**贴近到相邻格（距 1）时的预期攻级**
       选：攻级最高的组合优先，同级取距离近的。
+
+    ★ `target_ico` 给定后只挑该图标的敌方单位（例：`--target-ico ZBD100` ⇒ 打红方
+      载具，用来测“**载员被歼是否计入歼灭分**”）。
     """
     shooters = [k for k, a in units.items()
                 if a.get("color") == "BLUE" and str(a.get("blood")) not in ("0", "")
                 and str(a.get("typeid")) in ("1", "2")]
     targets = [k for k, a in units.items()
                if a.get("color") == target_color and str(a.get("blood")) not in ("0", "")
-               and str(a.get("typeid")) in ("1", "2")]
+               and str(a.get("typeid")) in ("1", "2")
+               and (not target_ico or str(a.get("ico") or "") == target_ico)]
     best = None
     for a in shooters:
         for t in targets:
@@ -190,6 +194,8 @@ def main():
                     help="capture 成功后再占住采样的 tick 数（检测是否按时间重复加分）")
     ap.add_argument("--max-shots", type=int, default=12, help="kill 阶段最多开火次数")
     ap.add_argument("--max-move", type=int, default=60, help="kill 阶段最多机动步数")
+    ap.add_argument("--target-ico", default=None,
+                    help="kill 阶段只打该 ico 的敌方单位（例：ZBD100 = 红方载具 ⇒ 测“载员被歼”的歼灭分）")
     args = ap.parse_args()
 
     if urlsplit(H.HOST).hostname not in PRACTICE_HOSTS:
@@ -350,7 +356,7 @@ def main():
                      uid_, units[uid_].get("ico"), dist))
         else:
             if state["unit"] is None:
-                eng = pick_engagement(units, args.color2)
+                eng = pick_engagement(units, args.color2, args.target_ico)
                 if not eng:
                     w("- 找不到任何能打出战果的蓝方射手-红方目标组合，退出")
                     break

@@ -554,9 +554,11 @@ class HexwarEnv:
                 total += sec
                 cur = step_to
             # 手册 3.3：已完成上车的步兵随车辆机动
+            # ★ 不能用 `alive()` 过滤 —— 车内乘员 `blood=0`（平台实测就是这样），
+            #   那只表示“车内读不到兵力”，不是阵亡。
             for pid in list(u.detail.get("carried") or []):
                 p = g.units.get(pid)
-                if p and p.alive():
+                if p is not None:
                     p.pos = u.pos
                     p.pos2 = u.pos
             g.apply_city_capture(u)
@@ -629,6 +631,20 @@ class HexwarEnv:
                     "msg": "被压制不能上/下车（手册 4.6.3(1)）", "seconds": 0}
             if self._seat_left(car) <= 0:
                 return None, 0.0, False, {"msg": "载员已满", "seconds": 0}
+            # ★ 平台实测（`docs/运输机制实测.md` + `tools/hex_load_kill_probe.py`）：
+            #   上车后该单位变成 `blood=0 / color=''`（车内读不到兵力与阵营），**编制留在 establishment**，
+            #   平台按编制把它计入剩余兵力分；下车时**新建实体、blood = 编制、color = 载具那方**。
+            #   所以这里也要清 color：否则 `scoring.breakdown` 会把它当成“上阵单位”按 0 血计分。
+            establishment = (scoring.carried_establishment(u.data) or u.establishment or u.blood)
+            if scoring.carried_establishment(u.data) is None:
+                u.detail["establishment_unverified"] = True
+            if u.blood != establishment:
+                # 带伤上车：平台模型是“车内不记伤”，下车按编制回满。
+                # 这一条**没有直接实测**，所以显式报出（`aboard_damage_forgotten`）。
+                u.detail["aboard_damage_forgotten"] = True
+            u.establishment = establishment
+            u.blood = 0
+            u.color = ""
             u.detail["carrier"] = car.id
             car.detail.setdefault("carried", []).append(u.id)
             return None, 0.0, False, {"msg": "上车完成", "seconds": LOAD_SEC}
@@ -647,15 +663,13 @@ class HexwarEnv:
                 # （见 `docs/运输机制实测.md`）；不恢复的话，这个单位会一直“像载员”
                 # ——没有阵营就不进剩余兵力分，分值直接凭空消失。
                 p.color = u.color
-                establishment = p.establishment or scoring.carried_establishment(p.data)
-                if p.blood <= 0:
-                    # 血量为 0 = “在车内期间不可读”，只能用编制表补；补不了就不臆造，
-                    # 显式标记并让 `scoring` 报出（不静默算分）。
-                    if establishment is None:
-                        p.detail["establishment_unverified"] = True
-                        establishment = 0
-                    p.blood = establishment
-                p.establishment = p.blood
+                establishment = scoring.carried_establishment(p.data) or p.establishment or p.blood
+                if scoring.carried_establishment(p.data) is None:
+                    # 编制未知：不臆造，显式标记并让 `scoring` 报出（不静默算分）。
+                    p.detail["establishment_unverified"] = True
+                # ★ 平台实测：下车 = 新建实体，其 `blood` 就是**编制**（跟车内期间/之前的伤无关）。
+                p.blood = establishment
+                p.establishment = establishment
                 p.units = max(1, p.blood) if p.typeid in (1, 2) else 1
                 p.pos = u.pos
                 p.pos2 = u.pos
