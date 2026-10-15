@@ -118,8 +118,8 @@ py -3.13 env/run_episode.py --agent random --episodes 50 --side RED --json out.j
 | `jm` | **间瞄射击** | ❌ 未实现 |
 | `weapon` | 选择武器 | 隐含在 `attack.weapon` |
 | `arms` | 弹药 / 装填 | ❌ 未实现 |
-| `inside` | **上车 / 装载** | ❌ 未实现 |
-| `outside` | **下车 / 卸载** | ❌ 未实现 |
+| `inside` | **上车 / 装载** | ✅ `load`（手册 3.3：需同格、受载员位限制） |
+| `outside` | **下车 / 卸载** | ✅ `unload`（下车会恢复阵营与编制兵力） |
 | `on` / `off` | 上车到目标 / 解除任务 | 部分（`hide`） |
 | `bulei` | **布雷** | ❌ 未实现 |
 | `inter` | **干扰** | ❌ 未实现 |
