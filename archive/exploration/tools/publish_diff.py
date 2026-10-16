@@ -17,9 +17,9 @@ import sys
 
 PRIV = r"d:\兵推"
 PUB = r"d:\兵推-public"
-# 不随公开仓分发的路径前缀（与上一次发布一致）：探索封存区 + 依赖采集数据/凭据的脚本
+# 不随公开仓分发的路径：**只有探索封存区**（archive/）—— 其余已跟踪文件一律分发。
 EXCLUDE_PREFIX = ("archive/",)
-EXCLUDE_FILES = ("tests/test_crt_live.py",)
+EXCLUDE_FILES = ()
 
 
 def git(*args, cwd):
@@ -41,6 +41,8 @@ def sha(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", help="把结果写入该 JSON 文件")
+    ap.add_argument("--apply", action="store_true",
+                    help="把新增/不同的文件拷到公开克隆（只拷不改删；之后自行 commit/push）")
     args = ap.parse_args()
     priv = tracked(PRIV)
     pub = tracked(PUB)
@@ -71,6 +73,18 @@ def main():
         for p in result[key]:
             print("  *", p)
     print("逐字节相同：%d" % result["identical"])
+    if args.apply:
+        copied = 0
+        for rel in result["new"] + result["changed"]:
+            src = os.path.join(PRIV, rel.replace("/", os.sep))
+            dst = os.path.join(PUB, rel.replace("/", os.sep))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            with open(src, "rb") as fh:
+                data = fh.read()
+            with open(dst, "wb") as fh:
+                fh.write(data)
+            copied += 1
+        print("已拷入公开克隆：%d 个文件（下一步在公开仓 commit/push）" % copied)
     if args.json:
         with open(args.json, "w", encoding="utf-8") as fh:
             json.dump(result, fh, ensure_ascii=False, indent=1)
