@@ -43,6 +43,9 @@ def main():
     ap.add_argument("--json", help="把结果写入该 JSON 文件")
     ap.add_argument("--apply", action="store_true",
                     help="把新增/不同的文件拷到公开克隆（只拷不改删；之后自行 commit/push）")
+    ap.add_argument("--delete", action="store_true",
+                    help="额外在公开克隆里删掉「只在公开仓」的文件（git rm）—— 私有仓删了文件时"
+                         "必须带上它，否则公开仓会留过期副本（已踩过：train/configs/*.json）")
     args = ap.parse_args()
     priv = tracked(PRIV)
     pub = tracked(PUB)
@@ -85,6 +88,12 @@ def main():
                 fh.write(data)
             copied += 1
         print("已拷入公开克隆：%d 个文件（下一步在公开仓 commit/push）" % copied)
+    if args.delete and result["public_only"]:
+        # 只删本工具自己报告为「只在公开仓」的那些文件：私有仓已不跟踪它们 ⇒ 公开仓也不该留
+        git("rm", "--quiet", "--", *result["public_only"], cwd=PUB)
+        print("已从公开克隆删除：%d 个文件" % len(result["public_only"]))
+    elif args.delete:
+        print("公开仓没有多余文件，无需删除")
     if args.json:
         with open(args.json, "w", encoding="utf-8") as fh:
             json.dump(result, fh, ensure_ascii=False, indent=1)
